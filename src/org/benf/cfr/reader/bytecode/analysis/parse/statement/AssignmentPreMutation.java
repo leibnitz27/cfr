@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -42,20 +43,27 @@ public class AssignmentPreMutation extends AbstractAssignment {
     private LValue lvalue;
     private AbstractAssignmentExpression rvalue;
 
-    public AssignmentPreMutation(LValue lvalue, AbstractMutatingAssignmentExpression rvalue) {
+    public AssignmentPreMutation(BytecodeLoc loc, LValue lvalue, AbstractMutatingAssignmentExpression rvalue) {
+        super(loc);
         this.lvalue = lvalue;
         this.rvalue = rvalue;
         lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType());
     }
 
-    private AssignmentPreMutation(LValue lvalue, AbstractAssignmentExpression rvalue) {
+    private AssignmentPreMutation(BytecodeLoc loc, LValue lvalue, AbstractAssignmentExpression rvalue) {
+        super(loc);
         this.lvalue = lvalue;
         this.rvalue = rvalue;
     }
 
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        return new AssignmentPreMutation(cloneHelper.replaceOrClone(lvalue), (AbstractAssignmentExpression)cloneHelper.replaceOrClone(rvalue));
+        return new AssignmentPreMutation(getLoc(), cloneHelper.replaceOrClone(lvalue), (AbstractAssignmentExpression)cloneHelper.replaceOrClone(rvalue));
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -148,7 +156,7 @@ public class AssignmentPreMutation extends AbstractAssignment {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredExpressionStatement(rvalue, false);
+        return new StructuredExpressionStatement(getLoc(), rvalue, false);
     }
 
     @Override

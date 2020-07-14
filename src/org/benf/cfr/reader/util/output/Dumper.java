@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -54,6 +55,8 @@ public interface Dumper extends MethodErrorCollector {
 
     void indent(int diff);
 
+    int getIndentLevel();
+
     void close();
 
     @Override
@@ -95,5 +98,9 @@ public interface Dumper extends MethodErrorCollector {
     Dumper dump(JavaTypeInstance javaTypeInstance);
 
     Dumper dump(Dumpable d);
+
+    int getCurrentLine();
+
+    void informBytecodeLoc(HasByteCodeLoc loc);
 
 }

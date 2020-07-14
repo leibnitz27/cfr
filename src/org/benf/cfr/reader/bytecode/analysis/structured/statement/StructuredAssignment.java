@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -28,16 +29,23 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     private Expression rvalue;
     private boolean creator;
 
-    public StructuredAssignment(LValue lvalue, Expression rvalue) {
+    public StructuredAssignment(BytecodeLoc loc, LValue lvalue, Expression rvalue) {
+        super(loc);
         this.lvalue = lvalue;
         this.rvalue = rvalue;
         this.creator = false;
     }
 
-    public StructuredAssignment(LValue lvalue, Expression rvalue, boolean creator) {
+    public StructuredAssignment(BytecodeLoc loc, LValue lvalue, Expression rvalue, boolean creator) {
+        super(loc);
         this.lvalue = lvalue;
         this.rvalue = rvalue;
         this.creator = creator;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, rvalue);
     }
 
     public boolean isCreator(LValue lvalue) {

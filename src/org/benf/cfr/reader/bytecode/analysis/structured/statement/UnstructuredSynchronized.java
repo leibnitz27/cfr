@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -13,9 +14,15 @@ public class UnstructuredSynchronized extends AbstractUnStructuredStatement {
     private Expression monitor;
     private BlockIdentifier blockIdentifier;
 
-    public UnstructuredSynchronized(Expression monitor, BlockIdentifier blockIdentifier) {
+    public UnstructuredSynchronized(BytecodeLoc loc, Expression monitor, BlockIdentifier blockIdentifier) {
+        super(loc);
         this.monitor = monitor;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, monitor);
     }
 
     @Override
@@ -34,7 +41,7 @@ public class UnstructuredSynchronized extends AbstractUnStructuredStatement {
             throw new RuntimeException("MONITOREXIT statement claiming wrong block");
         }
 
-        return new StructuredSynchronized(monitor, innerBlock);
+        return new StructuredSynchronized(getLoc(), monitor, innerBlock);
     }
 
 }

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -48,8 +49,14 @@ public class Literal extends AbstractExpression {
     protected final TypedLiteral value;
 
     public Literal(TypedLiteral value) {
-        super(value.getInferredJavaType());
+        super(BytecodeLoc.NONE, value.getInferredJavaType());
         this.value = value;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        // Not strictly right, but we don't want every 'true' to be distinct!!
+        return BytecodeLoc.NONE;
     }
 
     public static Expression getLiteralOrNull(RawJavaType rawCastType, InferredJavaType inferredCastType, int intValue) {
@@ -61,7 +68,7 @@ public class Literal extends AbstractExpression {
             case BYTE:
             case CHAR:
             case SHORT:
-                return new CastExpression(inferredCastType, new Literal(TypedLiteral.getInt(intValue)));
+                return new CastExpression(BytecodeLoc.NONE, inferredCastType, new Literal(TypedLiteral.getInt(intValue)));
             case INT:
                 return new Literal(TypedLiteral.getInt(intValue));
             case LONG:
@@ -141,7 +148,7 @@ public class Literal extends AbstractExpression {
         if (type.getStackType() != StackType.INT) return this;
         if (type == RawJavaType.SHORT ||
             type == RawJavaType.BYTE ||
-            type == RawJavaType.CHAR) return new CastExpression(expected, this);
+            type == RawJavaType.CHAR) return new CastExpression(BytecodeLoc.NONE, expected, this);
         return this;
     }
 

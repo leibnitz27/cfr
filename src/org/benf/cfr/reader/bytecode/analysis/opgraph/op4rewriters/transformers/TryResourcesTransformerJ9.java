@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -44,12 +45,12 @@ public class TryResourcesTransformerJ9 extends TryResourceTransformerFinally {
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm, new MatchOneOf(
                 new MatchSequence(
                         new BeginBlock(null),
-                        new StructuredIf(new ComparisonOperation(wcm.getExpressionWildCard("resource"), Literal.NULL, CompOp.NE), null),
+                        new StructuredIf(BytecodeLoc.NONE, new ComparisonOperation(BytecodeLoc.NONE, wcm.getExpressionWildCard("resource"), Literal.NULL, CompOp.NE), null),
                         new BeginBlock(null),
                         new MatchOneOf(
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn", clazzType, RawJavaType.VOID, null,new CastExpression(inferredThrowable, new LValueExpression(wcm.getLValueWildCard("throwable"))), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn2", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn3", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new LValueExpression(wcm.getLValueWildCard("resource"))), false)
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getStaticFunction("fn", clazzType, RawJavaType.VOID, null,new CastExpression(BytecodeLoc.NONE, inferredThrowable, new LValueExpression(wcm.getLValueWildCard("throwable"))), new CastExpression(BytecodeLoc.NONE, inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getStaticFunction("fn2", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new CastExpression(BytecodeLoc.NONE, inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getStaticFunction("fn3", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new LValueExpression(wcm.getLValueWildCard("resource"))), false)
                         ),
                         new EndBlock(null),
                         new EndBlock(null)
@@ -57,9 +58,9 @@ public class TryResourcesTransformerJ9 extends TryResourceTransformerFinally {
                 new MatchSequence(
                         new BeginBlock(null),
                         new MatchOneOf(
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn", clazzType, RawJavaType.VOID, null,new CastExpression(inferredThrowable, new LValueExpression(wcm.getLValueWildCard("throwable"))), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn2", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn3", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new LValueExpression(wcm.getLValueWildCard("resource"))), false)
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getStaticFunction("fn", clazzType, RawJavaType.VOID, null,new CastExpression(BytecodeLoc.NONE, inferredThrowable, new LValueExpression(wcm.getLValueWildCard("throwable"))), new CastExpression(BytecodeLoc.NONE, inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getStaticFunction("fn2", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new CastExpression(BytecodeLoc.NONE, inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getStaticFunction("fn3", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new LValueExpression(wcm.getLValueWildCard("resource"))), false)
                         ),
                         new EndBlock(null)
                 )

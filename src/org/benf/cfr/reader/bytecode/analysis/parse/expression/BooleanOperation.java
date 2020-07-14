@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -25,8 +26,8 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     private ConditionalExpression rhs;
     private BoolOp op;
 
-    public BooleanOperation(ConditionalExpression lhs, ConditionalExpression rhs, BoolOp op) {
-        super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
+    public BooleanOperation(BytecodeLoc loc, ConditionalExpression lhs, ConditionalExpression rhs, BoolOp op) {
+        super(loc, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
@@ -35,10 +36,16 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new BooleanOperation(
+                getLoc(),
                 (ConditionalExpression) cloneHelper.replaceOrClone(lhs),
                 (ConditionalExpression) cloneHelper.replaceOrClone(rhs),
                 op);
 
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, lhs, rhs);
     }
 
     public ConditionalExpression getLhs() {
@@ -112,12 +119,12 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
 
     @Override
     public ConditionalExpression getNegated() {
-        return new NotOperation(this);
+        return new NotOperation(getLoc(),this);
     }
 
     @Override
     public ConditionalExpression getDemorganApplied(boolean amNegating) {
-        return new BooleanOperation(lhs.getDemorganApplied(amNegating), rhs.getDemorganApplied(amNegating), amNegating ? op.getDemorgan() : op);
+        return new BooleanOperation(getLoc(), lhs.getDemorganApplied(amNegating), rhs.getDemorganApplied(amNegating), amNegating ? op.getDemorgan() : op);
     }
 
     @Override
@@ -146,7 +153,7 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     public static ConditionalExpression makeRightDeep(List<ConditionalExpression> c, BoolOp op) {
         ConditionalExpression res = c.get(c.size()-1);
         for (int x=c.size()-2; x>=0;x--) {
-            res = new BooleanOperation(c.get(x), res, op);
+            res = new BooleanOperation(BytecodeLoc.NONE, /* lose info :( */ c.get(x), res, op);
         }
         return res;
     }

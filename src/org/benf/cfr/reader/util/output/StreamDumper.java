@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -166,12 +167,18 @@ public abstract class StreamDumper extends AbstractDumper {
             write("\n");
             context.atStart = true;
             context.pendingCR = false;
+            context.currentLine++;
         }
     }
 
     @Override
     public void indent(int diff) {
         context.indent += diff;
+    }
+
+    @Override
+    public int getIndentLevel() {
+        return context.indent;
     }
 
     @Override
@@ -202,5 +209,10 @@ public abstract class StreamDumper extends AbstractDumper {
     @Override
     public int getOutputCount() {
         return context.outputCount;
+    }
+
+    @Override
+    public int getCurrentLine() {
+        return context.currentLine;
     }
 }

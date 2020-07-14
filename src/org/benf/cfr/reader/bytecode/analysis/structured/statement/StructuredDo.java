@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -11,7 +12,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class StructuredDo extends AbstractStructuredConditionalLoopStatement {
 
     private StructuredDo(ConditionalExpression condition, Op04StructuredStatement body, BlockIdentifier block) {
-        super(condition, block, body);
+        super(BytecodeLoc.NONE, condition, block, body);
     }
 
     @Override
@@ -27,6 +28,11 @@ public class StructuredDo extends AbstractStructuredConditionalLoopStatement {
             dumper.dump(condition);
         }
         return dumper.print(");").newln();
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

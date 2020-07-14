@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -64,8 +65,8 @@ class WhileRewriter {
             IfExitingStatement ifExitingStatement = (IfExitingStatement) loopBodyStartStatement;
             Statement exitStatement = ifExitingStatement.getExitStatement();
             ConditionalExpression conditionalExpression = ifExitingStatement.getCondition();
-            WhileStatement replacementWhile = new WhileStatement(conditionalExpression.getNegated(), whileBlockIdentifier);
-            GotoStatement endGoto = new GotoStatement();
+            WhileStatement replacementWhile = new WhileStatement(BytecodeLoc.TODO, conditionalExpression.getNegated(), whileBlockIdentifier);
+            GotoStatement endGoto = new GotoStatement(BytecodeLoc.TODO);
             endGoto.setJumpType(JumpType.CONTINUE);
             end.replaceStatement(endGoto);
             Op03SimpleStatement after = new Op03SimpleStatement(doStart.getBlockIdentifiers(), exitStatement, end.getIndex().justAfter());

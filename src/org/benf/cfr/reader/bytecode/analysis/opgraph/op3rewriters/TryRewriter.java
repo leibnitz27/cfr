@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -125,7 +126,7 @@ class TryRewriter {
             }
             if (outTargets.size() == 1) {
                 Op03SimpleStatement replace = outTargets.iterator().next();
-                Op03SimpleStatement newJump = new Op03SimpleStatement(lastStatement.getBlockIdentifiers(), new GotoStatement(), lastStatement.getIndex().justAfter());
+                Op03SimpleStatement newJump = new Op03SimpleStatement(lastStatement.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), lastStatement.getIndex().justAfter());
                 newJump.addTarget(replace);
                 replace.addSource(newJump);
                 for (Op03SimpleStatement jump : jumps) {
@@ -206,7 +207,7 @@ class TryRewriter {
         // Insert a fake target after the final one.
         Op03SimpleStatement finalStatement = lastStatements.get(lastStatements.size() - 1);
         int beforeTgt = in.indexOf(finalStatement);
-        Op03SimpleStatement proxy = new Op03SimpleStatement(tryStatement.getBlockIdentifiers(), new GotoStatement(), finalStatement.getIndex().justAfter());
+        Op03SimpleStatement proxy = new Op03SimpleStatement(tryStatement.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), finalStatement.getIndex().justAfter());
         in.add(beforeTgt + 1, proxy);
         proxy.addTarget(target);
         target.addSource(proxy);
@@ -301,7 +302,7 @@ class TryRewriter {
                 blockSources.add(source);
             }
         }
-        Op03SimpleStatement indirect = new Op03SimpleStatement(next.getBlockIdentifiers(), new GotoStatement(), next.getIndex().justBefore());
+        Op03SimpleStatement indirect = new Op03SimpleStatement(next.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), next.getIndex().justBefore());
         for (Op03SimpleStatement source : blockSources) {
             Statement srcStatement = source.getStatement();
             if (srcStatement instanceof GotoStatement) {

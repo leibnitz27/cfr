@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -23,7 +24,8 @@ public class CatchStatement extends AbstractStatement {
     private BlockIdentifier catchBlockIdent;
     private LValue catching;
 
-    public CatchStatement(List<ExceptionGroup.Entry> exceptions, LValue catching) {
+    public CatchStatement(BytecodeLoc loc, List<ExceptionGroup.Entry> exceptions, LValue catching) {
+        super(loc);
         this.exceptions = exceptions;
         this.catching = catching;
         if (!exceptions.isEmpty()) {
@@ -31,6 +33,11 @@ public class CatchStatement extends AbstractStatement {
             InferredJavaType catchType = new InferredJavaType(collapsedCatchType, InferredJavaType.Source.EXCEPTION, true);
             this.catching.getInferredJavaType().chain(catchType);
         }
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     private static JavaTypeInstance determineType(List<ExceptionGroup.Entry> exceptions) {
@@ -48,7 +55,7 @@ public class CatchStatement extends AbstractStatement {
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
         // TODO: blockidents when cloning.
-        CatchStatement res = new CatchStatement(exceptions, cloneHelper.replaceOrClone(catching));
+        CatchStatement res = new CatchStatement(getLoc(), exceptions, cloneHelper.replaceOrClone(catching));
         res.setCatchBlockIdent(catchBlockIdent);
         return res;
     }

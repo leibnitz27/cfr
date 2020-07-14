@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -43,7 +44,7 @@ public class NakedNullCaster implements StructuredStatementTransformer, Expressi
                 // if calltype is null, there's not a lot we can do here.
                 if (callType != null) {
                     Map<Expression, Expression> replace = MapFactory.newMap();
-                    replace.put(object, new CastExpression(new InferredJavaType(callType, InferredJavaType.Source.LITERAL), object));
+                    replace.put(object, new CastExpression(BytecodeLoc.NONE, new InferredJavaType(callType, InferredJavaType.Source.LITERAL), object));
                     CloneHelper cloneHelper = new CloneHelper(replace);
                     expression = expression.deepClone(cloneHelper);
                 }

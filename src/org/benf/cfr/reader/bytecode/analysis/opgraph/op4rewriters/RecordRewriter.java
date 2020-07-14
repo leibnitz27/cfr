@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -165,7 +166,7 @@ public class RecordRewriter {
         if (method == null) return;
 
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement stm = new StructuredReturn(new CastExpression(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TEST),
+        StructuredStatement stm = new StructuredReturn(BytecodeLoc.NONE, new CastExpression(BytecodeLoc.NONE, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TEST),
                 wcm.getStaticFunction("func", TypeConstants.OBJECTMETHODS, TypeConstants.OBJECT, "bootstrap",
                         new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(MiscConstants.EQUALS))),
                         wcm.getExpressionWildCard("array"),
@@ -180,7 +181,7 @@ public class RecordRewriter {
         if (method == null) return;
 
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement stm = new StructuredReturn(
+        StructuredStatement stm = new StructuredReturn(BytecodeLoc.NONE,
                 wcm.getStaticFunction("func", TypeConstants.OBJECTMETHODS, TypeConstants.OBJECT, "bootstrap",
                         new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(MiscConstants.TOSTRING))),
                         wcm.getExpressionWildCard("array"),
@@ -194,7 +195,7 @@ public class RecordRewriter {
         if (method == null) return;
 
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement stm = new StructuredReturn(new CastExpression(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST),
+        StructuredStatement stm = new StructuredReturn(BytecodeLoc.NONE, new CastExpression(BytecodeLoc.NONE, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST),
                 wcm.getStaticFunction("func", TypeConstants.OBJECTMETHODS, TypeConstants.OBJECT, "bootstrap",
                         new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(MiscConstants.HASHCODE))),
                         wcm.getExpressionWildCard("array"),
@@ -288,7 +289,7 @@ public class RecordRewriter {
         StructuredStatement item = getSingleCodeLine(method);
         if (item == null) return;
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement s = new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("var")), classFileField.getField().getJavaTypeInstance());
+        StructuredStatement s = new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm.getLValueWildCard("var")), classFileField.getField().getJavaTypeInstance());
         if (!s.equals(item)) return;
         ClassFileField cff = getCFF(wcm.getLValueWildCard("var").getMatch(), thisType);
         if (cff != classFileField) return;

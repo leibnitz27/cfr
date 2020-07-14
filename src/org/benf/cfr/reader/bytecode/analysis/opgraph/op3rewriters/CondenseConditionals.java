@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -144,17 +145,19 @@ public class CondenseConditionals {
             }
         }
 
-        ConditionalExpression cond1 = ((IfStatement)if1.getStatement()).getCondition();
-        ConditionalExpression cond2 = ((IfStatement)if2.getStatement()).getCondition();
+        IfStatement ifStatement1 = (IfStatement) if1.getStatement();
+        IfStatement ifStatement2 = (IfStatement) if2.getStatement();
+        ConditionalExpression cond1 = ifStatement1.getCondition();
+        ConditionalExpression cond2 = ifStatement2.getCondition();
         if (negated1) {
             negate1 = !negate1;
         }
         if (negate1) cond1 = cond1.getNegated();
-        ConditionalExpression combined = new BooleanOperation(cond1, cond2, resOp);
+        ConditionalExpression combined = new BooleanOperation(BytecodeLoc.combineShallow(ifStatement1, ifStatement2), cond1, cond2, resOp);
         combined = combined.simplify();
         // We need to remove both the targets from the first if, all the sources from the second if (which should be just 1!).
         // Then first if becomes a NOP which points directly to second, and second gets new condition.
-        if2.replaceStatement(new IfStatement(combined));
+        if2.replaceStatement(new IfStatement(BytecodeLoc.NONE, combined));
 
         // HACK - we know this is how nopoutconditional will work.
         for (Op03SimpleStatement target1 : if1.getTargets()){
@@ -232,14 +235,14 @@ public class CondenseConditionals {
         IfStatement is1 = (IfStatement)s1;
         IfStatement is2 = (IfStatement)s2;
         IfStatement is4 = (IfStatement)s4;
-        ConditionalExpression cond = new BooleanExpression(new TernaryExpression(is1.getCondition(), is4.getCondition(), is2.getCondition().getNegated()));
+        ConditionalExpression cond = new BooleanExpression(new TernaryExpression(s1.getLoc(), is1.getCondition(), is4.getCondition(), is2.getCondition().getNegated()));
 
-        s1c.replaceStatement(new IfStatement(cond));
+        s1c.replaceStatement(new IfStatement(BytecodeLoc.combineShallow(s1, s2, s3, s4), cond));
         s1c.replaceTarget(s4c,y);
         y.replaceSource(s4c, s1c);
 
         // Fix sources / targets.
-        s2c.replaceStatement(new GotoStatement());
+        s2c.replaceStatement(new GotoStatement(BytecodeLoc.NONE));
         s2c.removeGotoTarget(s3c);
         s3c.removeSource(s2c);
         s3c.clear();
@@ -295,7 +298,7 @@ public class CondenseConditionals {
         if (!lv.equals(a2.getCreatedLValue())) return false;
         ConditionalExpression condition = innerIf.getCondition().getNegated();
         condition = condition.simplify();
-        ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
+        ifStatement.replaceStatement(new AssignmentSimple(innerIf.getLoc(), lv, new TernaryExpression(innerIf.getLoc(), condition, a1.getRValue(), a2.getRValue())));
         ifStatement.getSSAIdentifiers().consumeEntry(evTgt.getSSAIdentifiers());
         oneSource.replaceStatement(new Nop());
         oneSource.removeTarget(evTgt);
@@ -389,7 +392,7 @@ public class CondenseConditionals {
         IfStatement if3 = (IfStatement) ifStatement3.getStatement();
 
         ConditionalExpression newCond = new BooleanExpression(
-                new TernaryExpression(
+                new TernaryExpression(BytecodeLoc.combineShallow(if1, if2, if3),
                         if1.getCondition().getNegated().simplify(),
                         if2.getCondition().getNegated().simplify(),
                         if3.getCondition().getNegated().simplify())).getNegated();
@@ -416,7 +419,7 @@ public class CondenseConditionals {
         ifStatement2.removeTarget(taken3);
         ifStatement3.removeTarget(taken3);
 
-        ifStatement.replaceStatement(new IfStatement(newCond));
+        ifStatement.replaceStatement(new IfStatement(BytecodeLoc.NONE, newCond));
 
         /*
          * Now we're cleared up, see if nottaken2immed actually jumps straight to its target.

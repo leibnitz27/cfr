@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.LocalDeclarationRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -116,15 +117,15 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                          * This is more interesting - the cast doesn't work?  This means we might need to explicitly label
                          * the lambda expression type.
                          */
-                        Expression tmp = ((LambdaExpressionCommon) child).childCastForced() ? child : new CastExpression(child.getInferredJavaType(), child, true);
-                        res = new CastExpression(res.getInferredJavaType(), tmp);
+                        Expression tmp = ((LambdaExpressionCommon) child).childCastForced() ? child : new CastExpression(BytecodeLoc.NONE, child.getInferredJavaType(), child, true);
+                        res = new CastExpression(BytecodeLoc.NONE, res.getInferredJavaType(), tmp);
                         return res;
                     }
                 }
             } else if (res instanceof MemberFunctionInvokation) {
                 MemberFunctionInvokation invoke = (MemberFunctionInvokation) res;
                 if (invoke.getObject() instanceof LambdaExpressionCommon) {
-                    res = invoke.withReplacedObject(new CastExpression(invoke.getObject().getInferredJavaType(), invoke.getObject()));
+                    res = invoke.withReplacedObject(new CastExpression(BytecodeLoc.NONE, invoke.getObject().getInferredJavaType(), invoke.getObject()));
                 }
             }
             return res;
@@ -302,7 +303,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
          * what it was going to do....
          */
         if (classFile == null) {
-            return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFn, targetFnArgTypes, curriedArgs, instance);
+            return new LambdaExpressionFallback(BytecodeLoc.TODO, lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFn, targetFnArgTypes, curriedArgs, instance);
         }
 
         if (curriedArgs.size() + targetFnArgTypes.size() - (instance ? 1 : 0) != lambdaFnArgTypes.size()) {
@@ -329,9 +330,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             if (curriedArgType.getDeGenerifiedType().equals(TypeConstants.SUPPLIER)) {
                 if (curriedArg instanceof CastExpression) {
                     CastExpression castExpression = (CastExpression)curriedArg;
-                    curriedArg = new CastExpression(curriedArg.getInferredJavaType(), castExpression.getChild(), true);
+                    curriedArg = new CastExpression(BytecodeLoc.NONE, curriedArg.getInferredJavaType(), castExpression.getChild(), true);
                 } else if (!(curriedArg instanceof LValueExpression)) {
-                    curriedArg = new CastExpression(curriedArg.getInferredJavaType(), curriedArg, true);
+                    curriedArg = new CastExpression(BytecodeLoc.NONE, curriedArg.getInferredJavaType(), curriedArg, true);
                 }
             }
             curriedArgs.set(x, CastExpression.removeImplicit(curriedArg));
@@ -414,9 +415,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                          * Note also that we *COULD* tell original intent here.  Does the variable have a valid name?
                          * Then it wasn't a method reference.
                          */
-                        return new LambdaExpressionNewArray(dynamicExpression.getInferredJavaType(), expression.getInferredJavaType());
+                        return new LambdaExpressionNewArray(structuredReturn.getCombinedLoc(), dynamicExpression.getInferredJavaType(), expression.getInferredJavaType());
                     }
-                    lambdaStatement = new StructuredExpressionStatement(expression, true);
+                    lambdaStatement = new StructuredExpressionStatement(structuredReturn.getCombinedLoc(), expression, true);
                 }
 
 
@@ -435,13 +436,13 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 StructuredScope scope = new StructuredScope();
                 placeHolder.transform(new LocalDeclarationRemover(), scope);
 
-                return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, null, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
+                return new LambdaExpression(lambdaStatement.getCombinedLoc(), dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, null, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
             } catch (CannotDelambaException ignore) {
             }
         }
 
         // Ok, just call the synthetic method directly.
-        return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFn, targetFnArgTypes, curriedArgs, instance);
+        return new LambdaExpressionFallback(BytecodeLoc.TODO, lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFn, targetFnArgTypes, curriedArgs, instance);
     }
 
     private static boolean isNewArrayLambda(Expression e, List<Expression> curriedArgs, List<LValue> anonymousLambdaArgs) {

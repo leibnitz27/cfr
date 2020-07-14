@@ -236,7 +236,7 @@ public class Misc {
     }
 
     static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue, Set<Expression> poison) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
+        AssignmentExpression needle = new AssignmentExpression(statement.getLoc(), lValue, rValue);
         NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle, poison);
 
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
@@ -244,7 +244,7 @@ public class Misc {
     }
 
     static void replaceHiddenIter(Statement statement, LValue lValue, Expression rValue) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
+        AssignmentExpression needle = new AssignmentExpression(statement.getLoc(), lValue, rValue);
         ExpressionReplacingRewriter finder = new ExpressionReplacingRewriter(needle, new LValueExpression(lValue));
 
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());

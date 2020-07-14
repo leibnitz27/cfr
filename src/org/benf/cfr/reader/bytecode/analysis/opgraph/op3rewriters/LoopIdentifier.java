@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -181,7 +182,7 @@ public class LoopIdentifier {
             WhileStatement whileStatement = (WhileStatement) statement;
             ConditionalExpression condition = whileStatement.getCondition();
             if (oldEnd.getTargets().size() == 2) {
-                IfStatement repl = new IfStatement(condition);
+                IfStatement repl = new IfStatement(BytecodeLoc.TODO, condition);
                 repl.setKnownBlocks(loopBlock, null);
                 repl.setJumpType(JumpType.CONTINUE);
                 oldEnd.replaceStatement(repl);
@@ -189,7 +190,7 @@ public class LoopIdentifier {
                     oldEnd.clearThisComparisonBlock();
                 }
             } else if (oldEnd.getTargets().size() == 1 && condition == null) {
-                GotoStatement repl = new GotoStatement();
+                GotoStatement repl = new GotoStatement(BytecodeLoc.TODO);
                 repl.setJumpType(JumpType.CONTINUE);
                 oldEnd.replaceStatement(repl);
                 if (oldEnd.getThisComparisonBlock() == loopBlock) {
@@ -206,7 +207,7 @@ public class LoopIdentifier {
     private static void considerAsPathologicalLoop(final Op03SimpleStatement start, List<Op03SimpleStatement> statements) {
         if (start.getStatement().getClass() != GotoStatement.class) return;
         if (start.getTargets().get(0) != start) return;
-        Op03SimpleStatement next = new Op03SimpleStatement(start.getBlockIdentifiers(), new GotoStatement(), start.getIndex().justAfter());
+        Op03SimpleStatement next = new Op03SimpleStatement(start.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), start.getIndex().justAfter());
         start.replaceStatement(new CommentStatement("Infinite loop"));
         start.replaceTarget(start, next);
         start.replaceSource(start, next);
@@ -281,7 +282,7 @@ public class LoopIdentifier {
 
         // Add a 'do' statement infront of the block (which does not belong to the block)
         // transform the test to a 'POST_WHILE' statement.
-        Op03SimpleStatement doStatement = new Op03SimpleStatement(start.getBlockIdentifiers(), new DoStatement(blockIdentifier), start.getIndex().justBefore());
+        Op03SimpleStatement doStatement = new Op03SimpleStatement(start.getBlockIdentifiers(), new DoStatement(BytecodeLoc.TODO, blockIdentifier), start.getIndex().justBefore());
         doStatement.getBlockIdentifiers().remove(blockIdentifier);
         // we need to link the do statement in between all the sources of start WHICH
         // are NOT in blockIdentifier.
@@ -312,7 +313,7 @@ public class LoopIdentifier {
                 Op03SimpleStatement oldFallthrough = lastJump.getTargets().get(0);
                 Op03SimpleStatement oldTaken = lastJump.getTargets().get(1);
                 // Now, lastJump EXPLICTLY has to jump to tgt1 (was fallthrough), and falls through to GOTO tgt2 (was jumps to tgt2).
-                Op03SimpleStatement newBackJump = new Op03SimpleStatement(lastJump.getBlockIdentifiers(), new GotoStatement(), lastJump.getIndex().justAfter());
+                Op03SimpleStatement newBackJump = new Op03SimpleStatement(lastJump.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), lastJump.getIndex().justAfter());
                 // ULGY - need primitive operator!
                 lastJump.getTargets().set(0, newBackJump);
                 lastJump.getTargets().set(1, oldFallthrough);
@@ -326,7 +327,7 @@ public class LoopIdentifier {
             int newIdx = statements.indexOf(lastJump) + 1;
 
             if (newIdx >= statements.size()) {
-                postBlock = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new ReturnNothingStatement(), lastJump.getIndex().justAfter());
+                postBlock = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new ReturnNothingStatement(BytecodeLoc.TODO), lastJump.getIndex().justAfter());
                 statements.add(postBlock);
 
 //                return false;
@@ -409,14 +410,14 @@ public class LoopIdentifier {
                     // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
                     // We can insert a BACK jump to lastJump's target
                     //
-                    newBackJump = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new GotoStatement(), beforeNewJump.getIndex().justAfter());
+                    newBackJump = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new GotoStatement(BytecodeLoc.TODO), beforeNewJump.getIndex().justAfter());
                 } else {
                     afterNewJump = statements.get(lastPostBlock);
                     // Find after statement.  Insert a jump forward (out) here, and then insert
                     // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
                     // We can insert a BACK jump to lastJump's target
                     //
-                    newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(), afterNewJump.getIndex().justBefore());
+                    newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), afterNewJump.getIndex().justBefore());
                 }
 
                 newBackJump.addTarget(start);
@@ -429,7 +430,7 @@ public class LoopIdentifier {
                  */
                 Op03SimpleStatement preNewJump = statements.get(lastPostBlock - 1);
                 if (afterNewJump != null && afterNewJump.getSources().contains(preNewJump)) {
-                    Op03SimpleStatement interstit = new Op03SimpleStatement(preNewJump.getBlockIdentifiers(), new GotoStatement(), newBackJump.getIndex().justBefore());
+                    Op03SimpleStatement interstit = new Op03SimpleStatement(preNewJump.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), newBackJump.getIndex().justBefore());
                     preNewJump.replaceTarget(afterNewJump, interstit);
                     afterNewJump.replaceSource(preNewJump, interstit);
                     interstit.addSource(preNewJump);
@@ -521,7 +522,7 @@ public class LoopIdentifier {
             IfStatement ifStatement = (IfStatement)stm;
             ifStatement.negateCondition();
 
-            Op03SimpleStatement backJump = new Op03SimpleStatement(conditional.getBlockIdentifiers(), new GotoStatement(), conditional.getIndex().justAfter());
+            Op03SimpleStatement backJump = new Op03SimpleStatement(conditional.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), conditional.getIndex().justAfter());
             Op03SimpleStatement notTaken = conditional.getTargets().get(0);
             conditional.replaceTarget(notTaken, backJump);
             conditional.replaceSource(conditional, backJump);
@@ -608,7 +609,7 @@ public class LoopIdentifier {
         postBlockCache.put(blockIdentifier, blockEnd);
 
         if (lastInBlock.getStatement().fallsToNext() && lastInBlock.getTargets().size() == 1) {
-            Op03SimpleStatement afterFallThrough = new Op03SimpleStatement(lastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
+            Op03SimpleStatement afterFallThrough = new Op03SimpleStatement(lastInBlock.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), lastInBlock.getIndex().justAfter());
             // Fixme - could do this in a seperate pass, but at that point we'd have to do it all the time.
             // Refector introduction of new loop end?
             SwitchUtils.checkFixNewCase(afterFallThrough, lastInBlock);
@@ -627,7 +628,7 @@ public class LoopIdentifier {
         Op03SimpleStatement afterLastInBlock = (lastIdx + 1) < statements.size() ? statements.get(lastIdx + 1) : null;
         loopBreak = conditional.getTargets().get(1);
         if (afterLastInBlock != null && afterLastInBlock != loopBreak) {
-            Op03SimpleStatement newAfterLast = new Op03SimpleStatement(afterLastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
+            Op03SimpleStatement newAfterLast = new Op03SimpleStatement(afterLastInBlock.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), lastInBlock.getIndex().justAfter());
             conditional.replaceTarget(loopBreak, newAfterLast);
             newAfterLast.addSource(conditional);
             loopBreak.replaceSource(conditional, newAfterLast);

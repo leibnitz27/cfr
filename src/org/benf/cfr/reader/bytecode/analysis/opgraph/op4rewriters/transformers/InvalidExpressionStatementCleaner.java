@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
@@ -32,7 +33,7 @@ public class InvalidExpressionStatementCleaner extends AbstractExpressionRewrite
                  * We prefer not to discard, as that involves detecting side effects
                  * and hides bytecode.
                  */
-                return new StructuredAssignment(variableFactory.ignoredVariable(exp.getInferredJavaType()), exp, true);
+                return new StructuredAssignment(BytecodeLoc.TODO, variableFactory.ignoredVariable(exp.getInferredJavaType()), exp, true);
             }
         }
         return in;

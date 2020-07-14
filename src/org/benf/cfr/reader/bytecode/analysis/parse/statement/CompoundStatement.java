@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -20,8 +21,14 @@ import java.util.List;
 public class CompoundStatement extends AbstractStatement {
     private List<Statement> statements;
 
-    public CompoundStatement(Statement... statements) {
+    public CompoundStatement(BytecodeLoc loc, Statement... statements) {
+        super(loc);
         this.statements = ListFactory.newImmutableList(statements);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -45,7 +52,7 @@ public class CompoundStatement extends AbstractStatement {
         for (Statement stm : statements) {
             res.add(stm.deepClone(cloneHelper));
         }
-        return new CompoundStatement(res.toArray(new Statement[0]));
+        return new CompoundStatement(getLoc(), res.toArray(new Statement[0]));
     }
 
     @Override

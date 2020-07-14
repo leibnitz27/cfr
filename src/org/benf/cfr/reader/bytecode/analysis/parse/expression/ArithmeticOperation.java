@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -27,18 +28,23 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     private Expression rhs;
     private final ArithOp op;
 
-    public ArithmeticOperation(Expression lhs, Expression rhs, ArithOp op) {
-        super(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType(), op));
+    public ArithmeticOperation(BytecodeLoc loc, Expression lhs, Expression rhs, ArithOp op) {
+        super(loc, inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType(), op));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
     }
 
-    public ArithmeticOperation(InferredJavaType knownType, Expression lhs, Expression rhs, ArithOp op) {
-        super(knownType);
+    public ArithmeticOperation(BytecodeLoc loc, InferredJavaType knownType, Expression lhs, Expression rhs, ArithOp op) {
+        super(loc, knownType);
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, lhs, rhs);
     }
 
     @Override
@@ -49,7 +55,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArithmeticOperation(cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
+        return new ArithmeticOperation(getLoc(), cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
     }
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b, ArithOp op) {
@@ -107,7 +113,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     }
 
     public Expression getReplacementXorM1() {
-        return new ArithmeticMonOperation(lhs, ArithOp.NEG);
+        return new ArithmeticMonOperation(getLoc(), lhs, ArithOp.NEG);
     }
 
     public boolean isMutationOf(LValue lValue) {
@@ -126,10 +132,10 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
             switch (op) {
                 case PLUS:
                 case MINUS:
-                    return new ArithmeticPreMutationOperation(lValue, op);
+                    return new ArithmeticPreMutationOperation(getLoc(), lValue, op);
             }
         }
-        return new ArithmeticMutationOperation(lValue, rhs, op);
+        return new ArithmeticMutationOperation(getLoc(), lValue, rhs, op);
     }
 
     @Override
@@ -371,10 +377,10 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
          */
         compOp = rewriteXCMPCompOp(compOp, litVal);
         if (acceptsNaN) {
-            ConditionalExpression comp = new ComparisonOperation(this.lhs, this.rhs, compOp.getInverted(), false);
-            comp = new NotOperation(comp);
+            ConditionalExpression comp = new ComparisonOperation(getLoc(), this.lhs, this.rhs, compOp.getInverted(), false);
+            comp = new NotOperation(getLoc(), comp);
             return comp;
         }
-        return new ComparisonOperation(this.lhs, this.rhs, compOp, canNegate);
+        return new ComparisonOperation(getLoc(), this.lhs, this.rhs, compOp, canNegate);
     }
 }

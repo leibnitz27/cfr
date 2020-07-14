@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ResourceReleaseDetector;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
@@ -40,7 +41,7 @@ public class TryResourcesTransformerJ7 extends TryResourceTransformerFinally {
                 new ResetAfterTest(wcm,
                     new MatchSequence(
                         new BeginBlock(null),
-                        new StructuredIf(new ComparisonOperation(new LValueExpression(autoclose), Literal.NULL, CompOp.NE), null),
+                        new StructuredIf(BytecodeLoc.NONE, new ComparisonOperation(BytecodeLoc.TODO, new LValueExpression(autoclose), Literal.NULL, CompOp.NE), null),
                         subMatch,
                         new EndBlock(null)
                     )

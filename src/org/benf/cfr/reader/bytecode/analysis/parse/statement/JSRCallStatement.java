@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -10,12 +11,18 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 public class JSRCallStatement extends AbstractStatement {
 
-    public JSRCallStatement() {
+    public JSRCallStatement(BytecodeLoc loc) {
+        super(loc);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        return new JSRCallStatement();
+        return new JSRCallStatement(getLoc());
     }
 
     /*

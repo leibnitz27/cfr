@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.BoolOp;
@@ -37,10 +38,10 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
     public InfiniteAssertRewriter(StaticVariable assertionStatic) {
 
         match1 = new BooleanExpression(new LValueExpression(assertionStatic));
-        match2 = new BooleanOperation(new BooleanExpression(new LValueExpression(assertionStatic)),
+        match2 = new BooleanOperation(BytecodeLoc.TODO, new BooleanExpression(new LValueExpression(assertionStatic)),
                         wcm1.getConditionalExpressionWildcard("condition"),
                         BoolOp.OR);
-        thrw = new StructuredThrow(wcm1.getConstructorSimpleWildcard("ignore", TypeConstants.ASSERTION_ERROR));
+        thrw = new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("ignore", TypeConstants.ASSERTION_ERROR));
     }
 
     /*
@@ -103,7 +104,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
         }
         Block bodyBlock = (Block)bodyContent;
         bodyBlock.addStatement(new Op04StructuredStatement(
-            new StructuredIf(new NotOperation(cond), new Op04StructuredStatement(new Block(new Op04StructuredStatement(throwInner))))));
+            new StructuredIf(BytecodeLoc.TODO, new NotOperation(BytecodeLoc.TODO, cond), new Op04StructuredStatement(new Block(new Op04StructuredStatement(throwInner))))));
         thrw.nopOut();
     }
 

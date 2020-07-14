@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
@@ -418,7 +419,7 @@ lbl10: // 1 sources:
                                 return false;
                             }
 
-                            Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.getBlockIdentifiers(), new GotoStatement(), statementCurrent.getIndex().justBefore());
+                            Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), statementCurrent.getIndex().justBefore());
                             if (statementCurrent != ifStatement.getTargets().get(0)) {
                                 Op03SimpleStatement oldTarget = ifStatement.getTargets().get(1);
                                 newJump.addTarget(oldTarget);
@@ -598,12 +599,12 @@ lbl10: // 1 sources:
             ConditionalExpression conditionalExpression = innerIfStatement.getCondition().getNegated().simplify();
             Expression rhs = ternary.isPointlessBoolean() ?
                     conditionalExpression :
-                    new TernaryExpression(
+                    new TernaryExpression(BytecodeLoc.TODO,
                             conditionalExpression,
                             ternary.e1, ternary.e2);
 
             ifStatement.replaceStatement(
-                    new AssignmentSimple(
+                    new AssignmentSimple(BytecodeLoc.TODO,
                             ternary.lValue,
                             rhs
                     )

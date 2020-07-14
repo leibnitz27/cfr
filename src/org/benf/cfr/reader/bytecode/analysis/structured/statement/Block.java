@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
@@ -35,6 +36,7 @@ public class Block extends AbstractStructuredStatement {
     private BlockIdentifier blockIdentifier;
 
     public Block(Op04StructuredStatement statement) {
+        super(BytecodeLoc.NONE);
         LinkedList<Op04StructuredStatement> stm = new LinkedList<Op04StructuredStatement>();
         stm.add(statement);
         this.containedStatements = stm;
@@ -47,9 +49,15 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public Block(LinkedList<Op04StructuredStatement> containedStatements, boolean indenting, BlockIdentifier blockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.containedStatements = containedStatements;
         this.indenting = indenting;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     public void flattenOthersIn() {

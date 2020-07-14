@@ -29,7 +29,7 @@ class ReturnRewriter {
         } while (true);
         Statement tgtStatement = tgt.getStatement();
         if (tgtStatement instanceof ReturnStatement) {
-            ifStatement.replaceStatement(new IfExitingStatement(innerIf.getCondition(), tgtStatement));
+            ifStatement.replaceStatement(new IfExitingStatement(innerIf.getLoc(), innerIf.getCondition(), tgtStatement));
             Op03SimpleStatement origfall = ifStatement.getTargets().get(0);
             origfall.setFirstStatementInThisBlock(null);
             BlockIdentifier ifBlock = innerIf.getKnownIfBlock();

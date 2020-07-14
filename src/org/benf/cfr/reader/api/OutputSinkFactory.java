@@ -29,7 +29,11 @@ public interface OutputSinkFactory {
          *
          * Note that these tokens may be reused, and should not be cached.
          */
-        TOKEN_STREAM(SinkReturns.Token.class);
+        TOKEN_STREAM(SinkReturns.Token.class),
+        /**
+         *
+         */
+        LINE_NUMBER_MAPPING(SinkReturns.LineNumberMapping_DO_NOT_USE.class);
 
         /**
          * Get the type of message that the sink will be expected to take.
@@ -52,7 +56,9 @@ public interface OutputSinkFactory {
         /** This sink will receive updates on files being processed. */
         PROGRESS,
         /** This sink will receive any exceptions that occur */
-        EXCEPTION
+        EXCEPTION,
+        /** This sink will receive line number information */
+        LINENUMBER
     }
 
     /**

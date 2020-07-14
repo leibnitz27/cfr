@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -43,18 +44,23 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new StaticFunctionInvokation(getFunction(), cloneHelper.replaceOrClone(args), cloneHelper.replaceOrClone(object));
+        return new StaticFunctionInvokation(getLoc(), getFunction(), cloneHelper.replaceOrClone(args), cloneHelper.replaceOrClone(object));
     }
 
-    private StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args, Expression object) {
-        super(function, getTypeForFunction(function, args));
+    private StaticFunctionInvokation(BytecodeLoc loc, ConstantPoolEntryMethodRef function, List<Expression> args, Expression object) {
+        super(loc, function, getTypeForFunction(function, args));
         this.args = args;
         this.clazz = function.getClassEntry().getTypeInstance();
         this.object = object;
     }
 
-    public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {
-        this(function, args, null);
+    public StaticFunctionInvokation(BytecodeLoc loc, ConstantPoolEntryMethodRef function, List<Expression> args) {
+        this(loc, function, args, null);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, args, object);
     }
 
     public void forceObject(Expression object) {

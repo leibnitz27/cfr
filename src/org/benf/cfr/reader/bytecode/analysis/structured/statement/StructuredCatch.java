@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -30,6 +31,7 @@ public class StructuredCatch extends AbstractStructuredStatement {
     private final Set<BlockIdentifier> possibleTryBlocks;
 
     public StructuredCatch(Collection<JavaRefTypeInstance> catchTypes, Op04StructuredStatement catchBlock, LValue catching, Set<BlockIdentifier> possibleTryBlocks) {
+        super(BytecodeLoc.NONE);
         this.catchTypes = catchTypes == null ? null : ListFactory.newList(catchTypes);
         this.catchBlock = catchBlock;
         this.catching = catching;
@@ -41,6 +43,11 @@ public class StructuredCatch extends AbstractStructuredStatement {
         collector.collect(catchTypes);
         if (!collector.isStatementRecursive()) return;
         catchBlock.collectTypeUsages(collector);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     public List<JavaRefTypeInstance> getCatchTypes() {
@@ -104,7 +111,7 @@ public class StructuredCatch extends AbstractStructuredStatement {
         Optional<Op04StructuredStatement> maybeStatement = block.getMaybeJustOneStatement();
         if (!maybeStatement.isSet()) return false;
         StructuredStatement inBlock = maybeStatement.getValue().getStatement();
-        StructuredThrow test = new StructuredThrow(new LValueExpression(catching));
+        StructuredThrow test = new StructuredThrow(BytecodeLoc.NONE, new LValueExpression(catching));
         return (test.equals(inBlock));
     }
 

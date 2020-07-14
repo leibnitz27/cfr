@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -26,8 +27,8 @@ public abstract class AbstractFunctionInvokationExplicit extends AbstractExpress
     private final String method;
     private final List<Expression> args;
 
-    AbstractFunctionInvokationExplicit(InferredJavaType res, JavaTypeInstance clazz, String method, List<Expression> args) {
-        super(res);
+    AbstractFunctionInvokationExplicit(BytecodeLoc loc, InferredJavaType res, JavaTypeInstance clazz, String method, List<Expression> args) {
+        super(loc, res);
         this.clazz = clazz;
         this.method = method;
         this.args = args;

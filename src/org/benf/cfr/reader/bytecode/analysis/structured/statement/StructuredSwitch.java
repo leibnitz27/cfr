@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
@@ -25,15 +26,20 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
     // Not checked by match.
     private final boolean safeExpression;
 
-    public StructuredSwitch(Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean safeExpression) {
-        super(body);
+    public StructuredSwitch(BytecodeLoc loc, Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean safeExpression) {
+        super(loc, body);
         this.switchOn = switchOn;
         this.blockIdentifier = blockIdentifier;
         this.safeExpression = safeExpression;
     }
 
-    public StructuredSwitch(Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
-        this(switchOn, body, blockIdentifier, false);
+    public StructuredSwitch(BytecodeLoc loc, Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+        this(loc, switchOn, body, blockIdentifier, false);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, switchOn);
     }
 
     public Expression getSwitchOn() {

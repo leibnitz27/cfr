@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -12,7 +13,13 @@ public class AnonBreakTarget extends AbstractStatement {
     private final BlockIdentifier blockIdentifier;
 
     public AnonBreakTarget(BlockIdentifier blockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

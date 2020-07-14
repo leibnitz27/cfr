@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -17,6 +18,7 @@ public class StructuredFinally extends AbstractStructuredStatement {
     private final Op04StructuredStatement catchBlock;
 
     public StructuredFinally(Op04StructuredStatement catchBlock) {
+        super(BytecodeLoc.NONE);
         this.catchBlock = catchBlock;
     }
 
@@ -25,6 +27,11 @@ public class StructuredFinally extends AbstractStructuredStatement {
         dumper.keyword("finally ");
         catchBlock.dump(dumper);
         return dumper;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

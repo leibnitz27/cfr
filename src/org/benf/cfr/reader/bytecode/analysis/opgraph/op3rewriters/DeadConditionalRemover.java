@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -40,7 +41,7 @@ public class DeadConditionalRemover {
         if (Literal.TRUE.equals(val)) {
             removeTarget = stm.getTargets().get(0);
             // would have required a jump, so goto.
-            replacement = new GotoStatement();
+            replacement = new GotoStatement(BytecodeLoc.TODO);
         } else if (Literal.FALSE.equals(val)) {
             removeTarget = stm.getTargets().get(1);
             // This would have fallen through, so nop.

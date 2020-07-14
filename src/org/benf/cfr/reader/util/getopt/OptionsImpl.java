@@ -531,6 +531,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> OBFUSCATION_PATH = register(new PermittedOptionProvider.Argument<String>(
             "obfuscationpath", defaultNullStringDecoder,
             "Path to obfuscation symbol remapping file"));
+    public static final PermittedOptionProvider.Argument<Boolean> TRACK_BYTECODE_LOC = register(new PermittedOptionProvider.Argument<Boolean>(
+            "trackbytecodeloc", defaultFalseBooleanDecoder,
+            "Propagate bytecode location info."));
 
 
     public OptionsImpl(Map<String, String> opts) {

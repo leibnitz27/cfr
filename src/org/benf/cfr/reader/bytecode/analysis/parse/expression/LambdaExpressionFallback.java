@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -40,8 +41,8 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         return lambdaFnName.equals(MiscConstants.INIT_METHOD) ? MiscConstants.NEW : lambdaFnName;
     }
 
-    public LambdaExpressionFallback(JavaTypeInstance callClassType, InferredJavaType castJavaType, MethodPrototype lambdaFn, List<JavaTypeInstance> targetFnArgTypes, List<Expression> curriedArgs, boolean instance) {
-        super(castJavaType);
+    public LambdaExpressionFallback(BytecodeLoc loc, JavaTypeInstance callClassType, InferredJavaType castJavaType, MethodPrototype lambdaFn, List<JavaTypeInstance> targetFnArgTypes, List<Expression> curriedArgs, boolean instance) {
+        super(loc, castJavaType);
         this.callClassType = callClassType;
         this.lambdaFn = lambdaFn;
         this.targetFnArgTypes = targetFnArgTypes;
@@ -63,8 +64,8 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         this.methodRef = isMethodRef;
     }
 
-    private LambdaExpressionFallback(InferredJavaType inferredJavaType, boolean methodRef, boolean instance, List<Expression> curriedArgs, List<JavaTypeInstance> targetFnArgTypes, MethodPrototype lambdaFn, JavaTypeInstance callClassType) {
-        super(inferredJavaType);
+    private LambdaExpressionFallback(BytecodeLoc loc, InferredJavaType inferredJavaType, boolean methodRef, boolean instance, List<Expression> curriedArgs, List<JavaTypeInstance> targetFnArgTypes, MethodPrototype lambdaFn, JavaTypeInstance callClassType) {
+        super(loc, inferredJavaType);
         this.methodRef = methodRef;
         this.instance = instance;
         this.curriedArgs = curriedArgs;
@@ -74,8 +75,13 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, curriedArgs);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new LambdaExpressionFallback(getInferredJavaType(), methodRef, instance, cloneHelper.replaceOrClone(curriedArgs), targetFnArgTypes, lambdaFn, callClassType);
+        return new LambdaExpressionFallback(getLoc(), getInferredJavaType(), methodRef, instance, cloneHelper.replaceOrClone(curriedArgs), targetFnArgTypes, lambdaFn, callClassType);
     }
 
     @Override

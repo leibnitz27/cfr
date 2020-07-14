@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -22,8 +23,8 @@ import java.util.List;
  */
 public class ConstructorInvokationExplicit extends AbstractFunctionInvokationExplicit {
 
-    ConstructorInvokationExplicit(InferredJavaType res, JavaTypeInstance clazz, List<Expression> args) {
-        super(res, clazz, null, args);
+    ConstructorInvokationExplicit(BytecodeLoc loc, InferredJavaType res, JavaTypeInstance clazz, List<Expression> args) {
+        super(loc, res, clazz, null, args);
     }
 
     @Override
@@ -33,6 +34,11 @@ public class ConstructorInvokationExplicit extends AbstractFunctionInvokationExp
         if (!(o instanceof ConstructorInvokationExplicit)) return false;
         ConstructorInvokationExplicit other = (ConstructorInvokationExplicit)o;
         return getClazz().equals(other.getClazz()) && getArgs().equals(other.getArgs());
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, getArgs());
     }
 
     @Override
@@ -65,6 +71,6 @@ public class ConstructorInvokationExplicit extends AbstractFunctionInvokationExp
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ConstructorInvokationExplicit(getInferredJavaType(), getClazz(), cloneHelper.replaceOrClone(getArgs()));
+        return new ConstructorInvokationExplicit(getLoc(), getInferredJavaType(), getClazz(), cloneHelper.replaceOrClone(getArgs()));
     }
 }

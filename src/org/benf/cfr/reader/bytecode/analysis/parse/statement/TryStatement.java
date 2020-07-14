@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -20,8 +21,14 @@ public class TryStatement extends AbstractStatement {
     // We keep track of what mutexes this finally leaves.
     private final Set<Expression> monitors = SetFactory.newSet();
 
-    public TryStatement(ExceptionGroup exceptionGroup) {
+    public TryStatement(BytecodeLoc loc, ExceptionGroup exceptionGroup) {
+        super(loc);
         this.exceptionGroup = exceptionGroup;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     public void addExitMutex(Expression e) {
@@ -34,7 +41,7 @@ public class TryStatement extends AbstractStatement {
 
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        TryStatement res = new TryStatement(exceptionGroup);
+        TryStatement res = new TryStatement(getLoc(), exceptionGroup);
         for (Expression monitor : monitors) {
             res.monitors.add(cloneHelper.replaceOrClone(monitor));
         }

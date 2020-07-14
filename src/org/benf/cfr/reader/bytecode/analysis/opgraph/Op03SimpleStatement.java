@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.CompareByIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
@@ -413,7 +414,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (pullOutJump) {
                     Set<BlockIdentifier> backJumpContainedIn = SetFactory.newSet(containedInBlocks);
                     backJumpContainedIn.remove(blockIdentifier);
-                    Op03SimpleStatement backJump = new Op03SimpleStatement(backJumpContainedIn, new GotoStatement(), blockEnd.index.justBefore());
+                    Op03SimpleStatement backJump = new Op03SimpleStatement(backJumpContainedIn, new GotoStatement(BytecodeLoc.NONE), blockEnd.index.justBefore());
                     whileEndTarget.replaceSource(this, backJump);
                     replaceTarget(whileEndTarget, backJump);
                     backJump.addSource(this);
@@ -431,7 +432,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 break;
             }
             case UNCONDITIONALDOLOOP: {
-                containedStatement.getContainer().replaceStatement(new WhileStatement(null, blockIdentifier));
+                containedStatement.getContainer().replaceStatement(new WhileStatement(BytecodeLoc.TODO,null, blockIdentifier));
                 break;
             }
             case DOLOOP: {
@@ -805,11 +806,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public String toString() {
+        BytecodeLoc loc = getStatement().getCombinedLoc();
+
         Set<Integer> blockIds = SetFactory.newSet();
         for (BlockIdentifier b : containedInBlocks) {
             blockIds.add(b.getIndex());
         }
-        return "" + blockIds + " " + index + " : " + containedStatement;
+        return "@" + loc + ", blocks:" + blockIds + " " + index + " : " + containedStatement;
     }
 
 }

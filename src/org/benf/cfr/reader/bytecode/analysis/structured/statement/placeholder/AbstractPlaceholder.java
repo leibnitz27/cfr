@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -26,6 +27,16 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.NONE;
+    }
+
+    @Override
+    public BytecodeLoc getLoc() {
+        return BytecodeLoc.NONE;
     }
 
     @Override

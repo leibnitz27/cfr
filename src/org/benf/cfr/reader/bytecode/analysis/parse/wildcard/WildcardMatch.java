@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.wildcard;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -486,6 +487,16 @@ public class WildcardMatch {
     }
 
     private static abstract class AbstractBaseExpressionWildcard extends DebugDumpable implements Expression {
+
+        @Override
+        public BytecodeLoc getCombinedLoc() {
+            throw new ConfusedCFRException("Should not be getting loc of wildcard");
+        }
+
+        @Override
+        public BytecodeLoc getLoc() {
+            throw new ConfusedCFRException("Should not be getting loc of wildcard");
+        }
 
         @Override
         public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {

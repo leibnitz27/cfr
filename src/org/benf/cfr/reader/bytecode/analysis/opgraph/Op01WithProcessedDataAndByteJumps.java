@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.util.UnverifiableJumpException;
@@ -49,8 +51,8 @@ public class Op01WithProcessedDataAndByteJumps {
         return data;
     }
 
-    public Op02WithProcessedDataAndRefs createOp2(ConstantPool cp, int index) {
-        return new Op02WithProcessedDataAndRefs(instruction, data, index, cp, constantPoolEntries, originalRawOffset);
+    public Op02WithProcessedDataAndRefs createOp2(ConstantPool cp, int index, BytecodeLocFactory locFactory, Method method) {
+        return new Op02WithProcessedDataAndRefs(instruction, data, index, cp, constantPoolEntries, originalRawOffset, locFactory.at(originalRawOffset, method));
     }
 
     public int[] getAbsoluteIndexJumps(int thisOpByteIndex, Map<Integer, Integer> lutByOffset) {

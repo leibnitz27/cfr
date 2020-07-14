@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -49,10 +50,10 @@ public class TernaryCastCleaner extends AbstractExpressionRewriter implements St
 
             if (lhs instanceof Literal) {
                 lhs = ((Literal) lhs).appropriatelyCasted(inferredJavaType);
-                return new TernaryExpression(inferredJavaType, condition, lhs, rhs);
+                return new TernaryExpression(BytecodeLoc.TODO, inferredJavaType, condition, lhs, rhs);
             } else if (rhs instanceof Literal) {
                 rhs = ((Literal) rhs).appropriatelyCasted(inferredJavaType);
-                return new TernaryExpression(inferredJavaType, condition, lhs, rhs);
+                return new TernaryExpression(BytecodeLoc.TODO, inferredJavaType, condition, lhs, rhs);
             }
             return t;
         }
@@ -66,10 +67,10 @@ public class TernaryCastCleaner extends AbstractExpressionRewriter implements St
             BoxingHelper.isBoxedTypeInclNumber(rhs.getInferredJavaType().getJavaTypeInstance()) &&
             !BoxingHelper.isBoxedType(t.getInferredJavaType().getJavaTypeInstance())) {
             InferredJavaType typ = t.getInferredJavaType();
-            return new TernaryExpression(t.getInferredJavaType(),
+            return new TernaryExpression(BytecodeLoc.TODO, t.getInferredJavaType(),
                     condition,
-                    new CastExpression(typ, lhs),
-                    new CastExpression(typ, rhs));
+                    new CastExpression(BytecodeLoc.NONE, typ, lhs),
+                    new CastExpression(BytecodeLoc.NONE, typ, rhs));
         }
         return t;
     }

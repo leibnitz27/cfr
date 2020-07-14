@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -17,9 +18,14 @@ import java.util.Map;
 public class StackValue extends AbstractExpression {
     private StackSSALabel stackValue;
 
-    public StackValue(StackSSALabel stackValue) {
-        super(stackValue.getInferredJavaType());
+    public StackValue(BytecodeLoc loc, StackSSALabel stackValue) {
+        super(loc, stackValue.getInferredJavaType());
         this.stackValue = stackValue;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

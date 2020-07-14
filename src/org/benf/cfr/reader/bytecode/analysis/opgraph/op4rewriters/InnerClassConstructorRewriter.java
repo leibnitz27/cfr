@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -34,7 +35,7 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
 
         WildcardMatch wcm1 = new WildcardMatch();
 
-        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredAssignment(wcm1.getLValueWildCard("outercopy"), new LValueExpression(outerArg)));
+        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("outercopy"), new LValueExpression(outerArg)));
 
 
         /* The first usage of this variable needs to be an assignment to a final synthetic member */

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.state;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -186,5 +187,19 @@ public class TypeUsageCollectingDumper implements Dumper {
     public Dumper dump(Dumpable d) {
         d.dump(this);
         return this;
+    }
+
+    @Override
+    public int getCurrentLine() {
+        return 0;
+    }
+
+    @Override
+    public int getIndentLevel() {
+        return 0;
+    }
+
+    @Override
+    public void informBytecodeLoc(HasByteCodeLoc loc) {
     }
 }

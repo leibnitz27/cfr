@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -17,7 +18,13 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
 
     public UnstructuredDo(BlockIdentifier blockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -87,7 +94,7 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
         Op04StructuredStatement last = block.getLast();
         if (last != null) {
             if (last.getStatement().canFall()) {
-                block.addStatement(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
+                block.addStatement(new Op04StructuredStatement(new StructuredBreak(getLoc(), blockIdentifier, true)));
             }
         }
         return StructuredDo.create(null, innerBlock, blockIdentifier);

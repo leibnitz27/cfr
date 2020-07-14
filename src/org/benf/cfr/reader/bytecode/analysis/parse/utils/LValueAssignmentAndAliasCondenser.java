@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -270,7 +271,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             res = res.replaceSingleUsageLValues(this, ssaIdentifiers, lvSc);
         }
 
-        cache.put(new StackValue(stackSSALabel), prev);
+        cache.put(new StackValue(BytecodeLoc.NONE, stackSSALabel), prev);
 
         return prev;
     }

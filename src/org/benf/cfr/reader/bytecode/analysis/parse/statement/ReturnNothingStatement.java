@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -9,12 +10,18 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class ReturnNothingStatement extends ReturnStatement {
-    public ReturnNothingStatement() {
+    public ReturnNothingStatement(BytecodeLoc loc) {
+        super(loc);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
     public ReturnStatement deepClone(CloneHelper cloneHelper) {
-        return new ReturnNothingStatement();
+        return new ReturnNothingStatement(getLoc());
     }
 
     @Override
@@ -37,7 +44,7 @@ public class ReturnNothingStatement extends ReturnStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredReturn();
+        return new StructuredReturn(getLoc());
     }
 
     @Override

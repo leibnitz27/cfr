@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -22,8 +23,13 @@ import java.util.List;
  * A static call that doesn't necessarily exist, for a type we don't necessarily have.
  */
 public class StaticFunctionInvokationExplicit extends AbstractFunctionInvokationExplicit {
-    public StaticFunctionInvokationExplicit(InferredJavaType res, JavaTypeInstance clazz, String method, List<Expression> args) {
-        super(res, clazz, method, args);
+    public StaticFunctionInvokationExplicit(BytecodeLoc loc, InferredJavaType res, JavaTypeInstance clazz, String method, List<Expression> args) {
+        super(loc, res, clazz, method, args);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, getArgs());
     }
 
     @Override
@@ -66,6 +72,6 @@ public class StaticFunctionInvokationExplicit extends AbstractFunctionInvokation
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new StaticFunctionInvokationExplicit(getInferredJavaType(), getClazz(), getMethod(), cloneHelper.replaceOrClone(getArgs()));
+        return new StaticFunctionInvokationExplicit(getLoc(), getInferredJavaType(), getClazz(), getMethod(), cloneHelper.replaceOrClone(getArgs()));
     }
 }

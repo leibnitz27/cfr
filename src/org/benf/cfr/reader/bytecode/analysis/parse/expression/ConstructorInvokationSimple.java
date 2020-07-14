@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -24,17 +25,23 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
     private final MemberFunctionInvokation constructorInvokation;
     private InferredJavaType constructionType;
 
-    public ConstructorInvokationSimple(MemberFunctionInvokation constructorInvokation,
+    public ConstructorInvokationSimple(BytecodeLoc loc,
+                                       MemberFunctionInvokation constructorInvokation,
                                        InferredJavaType inferredJavaType, InferredJavaType constructionType,
                                        List<Expression> args) {
-        super(inferredJavaType, constructorInvokation.getFunction(), args);
+        super(loc, inferredJavaType, constructorInvokation.getFunction(), args);
         this.constructorInvokation = constructorInvokation;
         this.constructionType = constructionType;
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, getArgs(), constructorInvokation);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ConstructorInvokationSimple(constructorInvokation, getInferredJavaType(), constructionType, cloneHelper.replaceOrClone(getArgs()));
+        return new ConstructorInvokationSimple(getLoc(), constructorInvokation, getInferredJavaType(), constructionType, cloneHelper.replaceOrClone(getArgs()));
     }
 
     @Override

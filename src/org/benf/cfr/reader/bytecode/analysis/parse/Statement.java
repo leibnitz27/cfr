@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -19,7 +21,7 @@ import java.util.Set;
  *   label
  *   goto label
  */
-public interface Statement extends Dumpable, ComparableUnderEC, DeepCloneable<Statement> {
+public interface Statement extends Dumpable, ComparableUnderEC, DeepCloneable<Statement>, HasByteCodeLoc {
     void setContainer(StatementContainer<Statement> container);
 
     void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector);

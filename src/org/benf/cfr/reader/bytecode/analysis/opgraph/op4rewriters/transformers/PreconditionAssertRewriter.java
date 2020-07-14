@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.BoolOp;
@@ -45,7 +46,7 @@ public class PreconditionAssertRewriter implements StructuredStatementTransforme
     private Expression test;
 
     public PreconditionAssertRewriter(StaticVariable assertionStatic) {
-        this.test = new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic)));
+        this.test = new NotOperation(BytecodeLoc.NONE, new BooleanExpression(new LValueExpression(assertionStatic)));
     }
 
 
@@ -77,8 +78,10 @@ public class PreconditionAssertRewriter implements StructuredStatementTransforme
                 if (x==0) return in;
                 ConditionalExpression c1 = BooleanOperation.makeRightDeep(cnf.subList(0,x), BoolOp.AND);
                 ConditionalExpression c2 = BooleanOperation.makeRightDeep(cnf.subList(x, cnf.size()), BoolOp.AND);
-                return new StructuredIf(c1,
-                        new Op04StructuredStatement(new StructuredIf(c2,
+                return new StructuredIf(BytecodeLoc.TODO, c1,
+                        new Op04StructuredStatement(new StructuredIf(
+                                BytecodeLoc.TODO,
+                                c2,
                                 in.getIfTaken())));
             }
         }

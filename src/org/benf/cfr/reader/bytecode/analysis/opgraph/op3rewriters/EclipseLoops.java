@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -68,7 +69,7 @@ public class EclipseLoops {
 //            if (statements.indexOf(afterTest) != statements.indexOf(target) + 1) continue;
 
             // OK - we're in the right boat!
-            IfStatement topTest = new IfStatement(ifStatement.getCondition().getNegated().simplify());
+            IfStatement topTest = new IfStatement(ifStatement.getLoc(), ifStatement.getCondition().getNegated().simplify());
             statement.replaceStatement(topTest);
             statement.replaceTarget(target, bodyStart);
             bodyStart.addSource(statement);
@@ -78,7 +79,7 @@ public class EclipseLoops {
             target.removeSource(statement);
             target.removeTarget(afterTest);
             target.replaceTarget(bodyStart, statement);
-            target.replaceStatement(new GotoStatement());
+            target.replaceStatement(new GotoStatement(BytecodeLoc.NONE));
             bodyStart.removeSource(target);
             statement.addSource(target);
 

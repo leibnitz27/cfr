@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -22,15 +23,20 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     private Expression lhs;
     private Expression rhs;
 
-    public TernaryExpression(ConditionalExpression condition, Expression lhs, Expression rhs) {
-        this(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType()), condition, lhs, rhs);
+    public TernaryExpression(BytecodeLoc loc, ConditionalExpression condition, Expression lhs, Expression rhs) {
+        this(loc, inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType()), condition, lhs, rhs);
     }
 
-    public TernaryExpression(InferredJavaType type, ConditionalExpression condition, Expression lhs, Expression rhs) {
-        super(type);
+    public TernaryExpression(BytecodeLoc loc, InferredJavaType type, ConditionalExpression condition, Expression lhs, Expression rhs) {
+        super(loc, type);
         this.condition = condition;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, condition, lhs, rhs);
     }
 
     @Override
@@ -42,7 +48,7 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new TernaryExpression((ConditionalExpression) cloneHelper.replaceOrClone(condition), cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs));
+        return new TernaryExpression(getLoc(), (ConditionalExpression) cloneHelper.replaceOrClone(condition), cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs));
     }
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b) {

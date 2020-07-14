@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -15,7 +16,17 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class AbstractStatement implements Statement {
+    private final BytecodeLoc loc;
     private StatementContainer<Statement> container;
+
+    public AbstractStatement(BytecodeLoc loc) {
+        this.loc = loc;
+    }
+
+    @Override
+    public BytecodeLoc getLoc() {
+        return loc;
+    }
 
     @Override
     public void setContainer(StatementContainer<Statement> container) {

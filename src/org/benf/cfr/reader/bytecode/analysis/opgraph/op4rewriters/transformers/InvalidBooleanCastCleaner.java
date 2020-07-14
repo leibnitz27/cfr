@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -48,7 +49,7 @@ public class InvalidBooleanCastCleaner extends AbstractExpressionRewriter implem
                 // This may happen if an optimizer has reused a non-boolean as a boolean.
                 // (See SootOptimizationTest).
                 // This *could* be done in an extra pass......
-                return new ComparisonOperation(child, Literal.INT_ZERO, CompOp.NE);
+                return new ComparisonOperation(BytecodeLoc.NONE, child, Literal.INT_ZERO, CompOp.NE);
             }
         } else if (childType == RawJavaType.BOOLEAN && castType instanceof RawJavaType) {
             // This is only liable to happen with hand crafted bytecode (iload, i2f etc), but it's still annoying!

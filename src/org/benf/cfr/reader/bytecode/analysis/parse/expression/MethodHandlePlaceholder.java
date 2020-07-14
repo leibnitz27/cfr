@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -48,8 +49,8 @@ public class MethodHandlePlaceholder extends AbstractExpression {
     private ConstantPoolEntryMethodHandle handle;
     private FakeMethod fake;
 
-    public MethodHandlePlaceholder(ConstantPoolEntryMethodHandle handle) {
-        super(new InferredJavaType(TypeConstants.METHOD_HANDLE, InferredJavaType.Source.FUNCTION, true));
+    public MethodHandlePlaceholder(BytecodeLoc loc, ConstantPoolEntryMethodHandle handle) {
+        super(loc, new InferredJavaType(TypeConstants.METHOD_HANDLE, InferredJavaType.Source.FUNCTION, true));
         this.handle = handle;
     }
 
@@ -59,6 +60,11 @@ public class MethodHandlePlaceholder extends AbstractExpression {
         if (o == null) return false;
         if (!(o instanceof MethodHandlePlaceholder)) return false;
         return handle.equals(((MethodHandlePlaceholder) o).handle);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -110,7 +116,7 @@ public class MethodHandlePlaceholder extends AbstractExpression {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new MethodHandlePlaceholder(handle);
+        return new MethodHandlePlaceholder(getLoc(), handle);
     }
 
     public FakeMethod addFakeMethod(ClassFile classFile) {
@@ -126,15 +132,15 @@ public class MethodHandlePlaceholder extends AbstractExpression {
     private FakeMethod generateFake(String name) {
         BlockIdentifier identifier = new BlockIdentifier(-1, BlockType.TRYBLOCK);
         StructuredTry trys = new StructuredTry(
-                new Op04StructuredStatement(Block.getBlockFor(true, new StructuredReturn(from(handle), TypeConstants.METHOD_HANDLE))),
+                new Op04StructuredStatement(Block.getBlockFor(true, new StructuredReturn(BytecodeLoc.TODO, from(handle), TypeConstants.METHOD_HANDLE))),
                 identifier);
         LValue caught = new LocalVariable("except", new InferredJavaType(TypeConstants.THROWABLE, InferredJavaType.Source.EXPRESSION));
         List<JavaRefTypeInstance> catchTypes = ListFactory.newList(TypeConstants.NOSUCHMETHOD_EXCEPTION, TypeConstants.ILLEGALACCESS_EXCEPTION);
         StructuredCatch catche = new StructuredCatch(
                 catchTypes,
                 new Op04StructuredStatement(Block.getBlockFor(true,
-                        new StructuredThrow(
-                                new ConstructorInvokationExplicit(
+                        new StructuredThrow(BytecodeLoc.TODO,
+                                new ConstructorInvokationExplicit(getLoc(),
                                         new InferredJavaType(TypeConstants.ILLEGALARGUMENT_EXCEPTION, InferredJavaType.Source.CONSTRUCTOR),
                                         TypeConstants.ILLEGALARGUMENT_EXCEPTION,
                                         ListFactory.<Expression>newList(new LValueExpression(caught)))))),
@@ -152,7 +158,7 @@ public class MethodHandlePlaceholder extends AbstractExpression {
     }
 
     private static Expression from(ConstantPoolEntryMethodHandle cpe) {
-        Expression lookup = new StaticFunctionInvokationExplicit(
+        Expression lookup = new StaticFunctionInvokationExplicit(BytecodeLoc.TODO,
                 new InferredJavaType(
                         TypeConstants.METHOD_HANDLES$LOOKUP, InferredJavaType.Source.EXPRESSION), TypeConstants.METHOD_HANDLES, "lookup",
                 Collections.<Expression>emptyList()
@@ -163,7 +169,7 @@ public class MethodHandlePlaceholder extends AbstractExpression {
         MethodPrototype refProto = ref.getMethodPrototype();
         String descriptor = ref.getNameAndTypeEntry().getDescriptor().getValue();
 
-        return new MemberFunctionInvokationExplicit(
+        return new MemberFunctionInvokationExplicit(BytecodeLoc.TODO,
                 new InferredJavaType(TypeConstants.METHOD_HANDLE, InferredJavaType.Source.EXPRESSION), TypeConstants.METHOD_HANDLES$LOOKUP, lookup, behaviourName
                 , ListFactory.newList(
                 new Literal(TypedLiteral.getClass(refProto.getClassType())),
@@ -241,7 +247,7 @@ public class MethodHandlePlaceholder extends AbstractExpression {
 
     // This isn't the right place for this.  Needs moving into a 'HandleUtils' or some such.
     public static Expression getMethodType(Expression descriptorString) {
-        return new StaticFunctionInvokationExplicit(
+        return new StaticFunctionInvokationExplicit(BytecodeLoc.TODO,
                 new InferredJavaType(
                         TypeConstants.METHOD_TYPE, InferredJavaType.Source.EXPRESSION), TypeConstants.METHOD_TYPE, TypeConstants.fromMethodDescriptorString,
                 Arrays.asList(descriptorString, new Literal(TypedLiteral.getNull()))

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -26,15 +27,15 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
     private final MethodPrototype methodPrototype;
     private final List<Expression> args;
 
-    AbstractConstructorInvokation(InferredJavaType inferredJavaType, ConstantPoolEntryMethodRef function, List<Expression> args) {
-        super(inferredJavaType);
+    AbstractConstructorInvokation(BytecodeLoc loc, InferredJavaType inferredJavaType, ConstantPoolEntryMethodRef function, List<Expression> args) {
+        super(loc, inferredJavaType);
         this.args = args;
         this.function = function;
         this.methodPrototype = function.getMethodPrototype();
     }
 
-    AbstractConstructorInvokation(AbstractConstructorInvokation other, CloneHelper cloneHelper) {
-        super(other.getInferredJavaType());
+    AbstractConstructorInvokation(BytecodeLoc loc, AbstractConstructorInvokation other, CloneHelper cloneHelper) {
+        super(loc, other.getInferredJavaType());
         this.args = cloneHelper.replaceOrClone(other.args);
         this.function = other.function;
         this.methodPrototype = other.methodPrototype;
@@ -184,7 +185,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
                             || arg instanceof LambdaExpressionFallback;
                 }
                 if (!ignore) {
-                    arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+                    arg = new CastExpression(BytecodeLoc.NONE, new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
                 }
             }
 

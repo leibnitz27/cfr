@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.api;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -61,6 +62,15 @@ public interface SinkReturns {
          * @return visible from JRE version.
          */
         int getRuntimeFrom();
+    }
+
+    interface LineNumberMapping_DO_NOT_USE {
+        /**
+         * Get mapping from line number to bytecode loc in contained function.
+         *
+         * @return
+         */
+        Map<Integer, Integer> getMapping();
     }
 
     enum TokenTypeFlags {

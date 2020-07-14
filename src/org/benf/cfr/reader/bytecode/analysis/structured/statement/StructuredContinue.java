@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
@@ -16,7 +17,8 @@ public class StructuredContinue extends AbstractStructuredContinue {
     private final BlockIdentifier continueTgt;
     private final boolean localContinue;
 
-    StructuredContinue(BlockIdentifier continueTgt, boolean localContinue) {
+    StructuredContinue(BytecodeLoc loc, BlockIdentifier continueTgt, boolean localContinue) {
+        super(loc);
         this.continueTgt = continueTgt;
         this.localContinue = localContinue;
     }
@@ -30,6 +32,11 @@ public class StructuredContinue extends AbstractStructuredContinue {
         }
         dumper.newln();
         return dumper;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -23,9 +24,15 @@ public class RawSwitchStatement extends AbstractStatement {
     private Expression switchOn;
     private final DecodedSwitch switchData;
 
-    public RawSwitchStatement(Expression switchOn, DecodedSwitch switchData) {
+    public RawSwitchStatement(BytecodeLoc loc, Expression switchOn, DecodedSwitch switchData) {
+        super(loc);
         this.switchOn = switchOn;
         this.switchData = switchData;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, switchOn);
     }
 
     @Override
@@ -45,7 +52,7 @@ public class RawSwitchStatement extends AbstractStatement {
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
         // we should really never get here!
-        return new RawSwitchStatement(cloneHelper.replaceOrClone(switchOn), switchData);
+        return new RawSwitchStatement(getLoc(), cloneHelper.replaceOrClone(switchOn), switchData);
     }
 
     @Override
@@ -77,7 +84,7 @@ public class RawSwitchStatement extends AbstractStatement {
     }
 
     public SwitchStatement getSwitchStatement(BlockIdentifier blockIdentifier) {
-        return new SwitchStatement(switchOn, blockIdentifier);
+        return new SwitchStatement(getLoc(), switchOn, blockIdentifier);
     }
 
     @Override

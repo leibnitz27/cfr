@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -141,10 +142,10 @@ public class JumpsIntoLoopCloneRewriter {
             if (condition == null) {
                 condition = new BooleanExpression(Literal.TRUE);
             }
-            IfStatement newConditionStatement = new IfStatement(condition);
+            IfStatement newConditionStatement = new IfStatement(BytecodeLoc.TODO, condition);
             // we'll move these indices later.
             Op03SimpleStatement newCondition = new Op03SimpleStatement(caller.getBlockIdentifiers(), newConditionStatement, possLast.getSSAIdentifiers(), idx);
-            Op03SimpleStatement jumpToAfterWhile = new Op03SimpleStatement(caller.getBlockIdentifiers(), new GotoStatement(), caller.getSSAIdentifiers(), idx);
+            Op03SimpleStatement jumpToAfterWhile = new Op03SimpleStatement(caller.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), caller.getSSAIdentifiers(), idx);
             copies.put(afterWhile, jumpToAfterWhile);
             copies.put(possLast, newCondition);
             Set<Op03SimpleStatement> addSources = SetFactory.newSet(newCondition, jumpToAfterWhile);
@@ -381,7 +382,7 @@ public class JumpsIntoLoopCloneRewriter {
             }
 
             if (s instanceof GotoStatement && copyThis.getTargets().contains(stm)) {
-                s = new GotoStatement();
+                s = new GotoStatement(BytecodeLoc.TODO);
             }
             // TODO: Assuming block identifiers here means we don't copy complex things.
             Op03SimpleStatement copy = new Op03SimpleStatement(caller.getBlockIdentifiers(), s.deepClone(cloneHelper), copyThis.getSSAIdentifiers(), idx);

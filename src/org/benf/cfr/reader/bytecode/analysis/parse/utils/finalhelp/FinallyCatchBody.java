@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.CatchStatement;
@@ -51,7 +52,7 @@ public class FinallyCatchBody {
         if (catchBody.isEmpty()) {
             return new FinallyCatchBody(null, true, null, catchBody);
         }
-        ThrowStatement testThrow = new ThrowStatement(new LValueExpression(catchStatement.getCreatedLValue()));
+        ThrowStatement testThrow = new ThrowStatement(BytecodeLoc.TODO, new LValueExpression(catchStatement.getCreatedLValue()));
         Op03SimpleStatement throwOp = null;
         if (testThrow.equals(catchBody.getLast().getStatement())) {
             throwOp = catchBody.removeLast();

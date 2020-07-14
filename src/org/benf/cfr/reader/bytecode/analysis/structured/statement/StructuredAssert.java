@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -22,13 +23,19 @@ public class StructuredAssert extends AbstractStructuredStatement {
     private ConditionalExpression conditionalExpression;
     private Expression arg;
 
-    private StructuredAssert(ConditionalExpression conditionalExpression, Expression arg) {
+    private StructuredAssert(BytecodeLoc loc, ConditionalExpression conditionalExpression, Expression arg) {
+        super(loc);
         this.conditionalExpression = conditionalExpression;
         this.arg = arg;
     }
 
-    public static StructuredAssert mkStructuredAssert(ConditionalExpression conditionalExpression, Expression arg) {
-        return new StructuredAssert(conditionalExpression, CastExpression.tryRemoveCast(arg));
+    public static StructuredAssert mkStructuredAssert(BytecodeLoc loc, ConditionalExpression conditionalExpression, Expression arg) {
+        return new StructuredAssert(loc, conditionalExpression, CastExpression.tryRemoveCast(arg));
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, conditionalExpression, arg);
     }
 
     @Override

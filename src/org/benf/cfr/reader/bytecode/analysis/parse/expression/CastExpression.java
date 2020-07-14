@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -19,8 +20,8 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     private Expression child;
     private boolean forced;
 
-    public CastExpression(InferredJavaType knownType, Expression child) {
-        super(knownType);
+    public CastExpression(BytecodeLoc loc, InferredJavaType knownType, Expression child) {
+        super(loc, knownType);
         InferredJavaType childInferredJavaType = child.getInferredJavaType();
         if (knownType.getJavaTypeInstance() == RawJavaType.LONG &&
             childInferredJavaType.getJavaTypeInstance() == RawJavaType.BOOLEAN) {
@@ -30,14 +31,14 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         // It's ok to insert Boolean -> XX explicit casts at construction time, as we
         // don't have booleans early.
         if (childInferredJavaType.getRawType() == RawJavaType.BOOLEAN && knownTypeRawType != RawJavaType.BOOLEAN && knownTypeRawType.getStackType() == StackType.INT) {
-            child = new TernaryExpression(new BooleanExpression(child), Literal.INT_ONE, Literal.INT_ZERO);
+            child = new TernaryExpression(loc, new BooleanExpression(child), Literal.INT_ONE, Literal.INT_ZERO);
         }
         this.child = child;
         this.forced = false;
     }
 
-    public CastExpression(InferredJavaType knownType, Expression child, boolean forced) {
-        super(knownType);
+    public CastExpression(BytecodeLoc loc, InferredJavaType knownType, Expression child, boolean forced) {
+        super(loc, knownType);
         this.child = child;
         this.forced = forced;
     }
@@ -47,8 +48,13 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, child);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new CastExpression(getInferredJavaType(), cloneHelper.replaceOrClone(child), forced);
+        return new CastExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(child), forced);
     }
 
     public boolean couldBeImplicit(GenericTypeBinder gtb) {

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -18,6 +19,7 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
     private final InferredJavaType caseType;
 
     public UnstructuredCase(List<Expression> values, InferredJavaType caseType, BlockIdentifier blockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.values = values;
         this.caseType = caseType;
         this.blockIdentifier = blockIdentifier;
@@ -36,6 +38,11 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
+    }
+
+    @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collectFrom(values);
         collector.collect(caseType.getJavaTypeInstance());
@@ -43,7 +50,7 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
 
     StructuredStatement getEmptyStructuredCase() {
         Op04StructuredStatement container = getContainer();
-        return new StructuredCase(values, caseType,
+        return new StructuredCase(BytecodeLoc.TODO, values, caseType,
                 new Op04StructuredStatement(
                         container.getIndex().justAfter(),
                         container.getBlockMembership(),
@@ -56,6 +63,6 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
         if (blockIdentifier != this.blockIdentifier) {
             throw new ConfusedCFRException("Unstructured case being asked to claim wrong block. [" + blockIdentifier + " != " + this.blockIdentifier + "]");
         }
-        return new StructuredCase(values, caseType, innerBlock, blockIdentifier);
+        return new StructuredCase(BytecodeLoc.TODO, values, caseType, innerBlock, blockIdentifier);
     }
 }

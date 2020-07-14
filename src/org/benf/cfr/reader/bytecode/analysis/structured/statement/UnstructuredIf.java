@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -21,10 +22,16 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
     private BlockIdentifier knownIfBlock;
     private BlockIdentifier knownElseBlock;
 
-    public UnstructuredIf(ConditionalExpression conditionalExpression, BlockIdentifier knownIfBlock, BlockIdentifier knownElseBlock) {
+    public UnstructuredIf(BytecodeLoc loc, ConditionalExpression conditionalExpression, BlockIdentifier knownIfBlock, BlockIdentifier knownElseBlock) {
+        super(loc);
         this.conditionalExpression = conditionalExpression;
         this.knownIfBlock = knownIfBlock;
         this.knownElseBlock = knownElseBlock;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, conditionalExpression);
     }
 
     @Override
@@ -45,14 +52,14 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == knownIfBlock) {
             if (knownElseBlock == null) {
-                Op04StructuredStatement fakeElse = new Op04StructuredStatement(new UnstructuredGoto());
+                Op04StructuredStatement fakeElse = new Op04StructuredStatement(new UnstructuredGoto(BytecodeLoc.TODO));
                 Op04StructuredStatement fakeElseTarget = getContainer().getTargets().get(1);
                 fakeElse.addTarget(fakeElseTarget);
                 fakeElseTarget.addSource(fakeElse);
                 LinkedList<Op04StructuredStatement> fakeBlockContent = ListFactory.newLinkedList();
                 fakeBlockContent.add(fakeElse);
                 Op04StructuredStatement fakeElseBlock = new Op04StructuredStatement(new Block(fakeBlockContent, true));
-                return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), innerBlock, fakeElseBlock);
+                return new StructuredIf(getLoc(), ConditionalUtils.simplify(conditionalExpression.getNegated()), innerBlock, fakeElseBlock);
             } else {
                 setIfBlock = innerBlock;
                 return this;
@@ -68,7 +75,7 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
                 setIfBlock.removeLastGoto();
             }
             innerBlock = unpackElseIfBlock(innerBlock);
-            return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), setIfBlock, innerBlock);
+            return new StructuredIf(getLoc(), ConditionalUtils.simplify(conditionalExpression.getNegated()), setIfBlock, innerBlock);
         } else {
             return null;
 //            throw new ConfusedCFRException("IF statement given blocks it doesn't recognise");
@@ -102,12 +109,12 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
     public StructuredStatement convertEmptyToGoto() {
         if (!(knownIfBlock == null && knownElseBlock == null && setIfBlock == null)) return this;
         Op04StructuredStatement gotoStm = new Op04StructuredStatement(
-                new UnstructuredGoto()
+                new UnstructuredGoto(BytecodeLoc.TODO)
         );
         Op04StructuredStatement target = getContainer().getTargets().get(1);
         gotoStm.addTarget(target);
         target.getSources().remove(this.getContainer());
         target.addSource(gotoStm);
-        return new StructuredIf(conditionalExpression, gotoStm);
+        return new StructuredIf(getLoc(), conditionalExpression, gotoStm);
     }
 }

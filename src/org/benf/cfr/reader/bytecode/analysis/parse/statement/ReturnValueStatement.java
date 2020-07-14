@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -19,17 +20,23 @@ public class ReturnValueStatement extends ReturnStatement {
     private Expression rvalue;
     private final JavaTypeInstance fnReturnType;
 
-    public ReturnValueStatement(Expression rvalue, JavaTypeInstance fnReturnType) {
+    public ReturnValueStatement(BytecodeLoc loc, Expression rvalue, JavaTypeInstance fnReturnType) {
+        super(loc);
         this.rvalue = rvalue;
         if (fnReturnType instanceof JavaGenericPlaceholderTypeInstance) {
-            this.rvalue = new CastExpression(new InferredJavaType(fnReturnType, InferredJavaType.Source.FUNCTION, true), this.rvalue);
+            this.rvalue = new CastExpression(BytecodeLoc.NONE, new InferredJavaType(fnReturnType, InferredJavaType.Source.FUNCTION, true), this.rvalue);
         }
         this.fnReturnType = fnReturnType;
     }
 
     @Override
     public ReturnStatement deepClone(CloneHelper cloneHelper) {
-        return new ReturnValueStatement(cloneHelper.replaceOrClone(rvalue), fnReturnType);
+        return new ReturnValueStatement(getLoc(), cloneHelper.replaceOrClone(rvalue), fnReturnType);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, rvalue);
     }
 
     @Override
@@ -70,10 +77,10 @@ public class ReturnValueStatement extends ReturnStatement {
         if (fnReturnType instanceof RawJavaType) {
             if (!rvalue.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(fnReturnType, null)) {
                 InferredJavaType inferredJavaType = new InferredJavaType(fnReturnType, InferredJavaType.Source.FUNCTION, true);
-                rvalueUse = new CastExpression(inferredJavaType, rvalue, true);
+                rvalueUse = new CastExpression(BytecodeLoc.NONE, inferredJavaType, rvalue, true);
             }
         }
-        return new StructuredReturn(rvalueUse, fnReturnType);
+        return new StructuredReturn(getLoc(), rvalueUse, fnReturnType);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -14,7 +15,8 @@ public class GotoStatement extends JumpingStatement {
 
     private JumpType jumpType;
 
-    public GotoStatement() {
+    public GotoStatement(BytecodeLoc loc) {
+        super(loc);
         this.jumpType = JumpType.GOTO;
     }
 
@@ -28,8 +30,13 @@ public class GotoStatement extends JumpingStatement {
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
+    }
+
+    @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        GotoStatement res = new GotoStatement();
+        GotoStatement res = new GotoStatement(getLoc());
         res.jumpType = jumpType;
         return res;
     }
@@ -104,11 +111,11 @@ public class GotoStatement extends JumpingStatement {
                 return StructuredComment.EMPTY_COMMENT;
             case GOTO:
             case GOTO_OUT_OF_IF:
-                return new UnstructuredGoto();
+                return new UnstructuredGoto(getLoc());
             case CONTINUE:
-                return new UnstructuredContinue(getTargetStartBlock());
+                return new UnstructuredContinue(getLoc(), getTargetStartBlock());
             case BREAK:
-                return new UnstructuredBreak(getJumpTarget().getContainer().getBlocksEnded());
+                return new UnstructuredBreak(getLoc(), getJumpTarget().getContainer().getBlocksEnded());
             case BREAK_ANONYMOUS: {
                 Statement target = getJumpTarget();
                 if (!(target instanceof AnonBreakTarget)) {
@@ -116,7 +123,7 @@ public class GotoStatement extends JumpingStatement {
                 }
                 AnonBreakTarget anonBreakTarget = (AnonBreakTarget) target;
                 BlockIdentifier breakFrom = anonBreakTarget.getBlockIdentifier();
-                return new UnstructuredAnonymousBreak(breakFrom);
+                return new UnstructuredAnonymousBreak(getLoc(), breakFrom);
             }
         }
         throw new UnsupportedOperationException();

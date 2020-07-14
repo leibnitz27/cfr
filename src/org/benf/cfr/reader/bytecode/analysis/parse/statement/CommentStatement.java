@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -23,16 +24,22 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class CommentStatement extends AbstractStatement {
     private final Expression text;
 
-    public CommentStatement(String text) {
-        this.text = new Literal(TypedLiteral.getString(text));
-    }
-
     private CommentStatement(Expression expression) {
+        super(BytecodeLoc.NONE);
         this.text = expression;
     }
 
+    public CommentStatement(String text) {
+        this(new Literal(TypedLiteral.getString(text)));
+    }
+
     public CommentStatement(Statement statement) {
-        this.text = new StatementExpression(statement);
+        this(new StatementExpression(statement));
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -89,13 +96,18 @@ public class CommentStatement extends AbstractStatement {
         private static InferredJavaType javaType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.EXPRESSION);
 
         private StatementExpression(Statement statement) {
-            super(javaType);
+            super(BytecodeLoc.NONE, javaType);
             this.statement = statement;
         }
 
         @Override
         public boolean equals(Object o) {
             return false;
+        }
+
+        @Override
+        public BytecodeLoc getCombinedLoc() {
+            return getLoc();
         }
 
         @Override

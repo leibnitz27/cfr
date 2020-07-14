@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -24,10 +25,15 @@ public class ArithmeticMonOperation extends AbstractExpression {
         return res;
     }
 
-    public ArithmeticMonOperation(Expression lhs, ArithOp op) {
-        super(inferredType(lhs.getInferredJavaType()));
+    public ArithmeticMonOperation(BytecodeLoc loc, Expression lhs, ArithOp op) {
+        super(loc, inferredType(lhs.getInferredJavaType()));
         this.lhs = lhs;
         this.op = op;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, lhs);
     }
 
     @Override
@@ -37,7 +43,7 @@ public class ArithmeticMonOperation extends AbstractExpression {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArithmeticMonOperation(cloneHelper.replaceOrClone(lhs), op);
+        return new ArithmeticMonOperation(getLoc(), cloneHelper.replaceOrClone(lhs), op);
     }
 
     @Override

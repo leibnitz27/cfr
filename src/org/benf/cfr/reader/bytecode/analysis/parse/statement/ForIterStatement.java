@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -17,11 +18,17 @@ public class ForIterStatement extends AbstractStatement {
     private Expression list; // or array!
     private LValue hiddenList;
 
-    public ForIterStatement(BlockIdentifier blockIdentifier, LValue iterator, Expression list, LValue hiddenList) {
+    public ForIterStatement(BytecodeLoc loc, BlockIdentifier blockIdentifier, LValue iterator, Expression list, LValue hiddenList) {
+        super(loc);
         this.blockIdentifier = blockIdentifier;
         this.iterator = iterator;
         this.list = list;
         this.hiddenList = hiddenList;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(list, this);
     }
 
     @Override
@@ -39,7 +46,7 @@ public class ForIterStatement extends AbstractStatement {
 
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        return new ForIterStatement(blockIdentifier, cloneHelper.replaceOrClone(iterator), cloneHelper.replaceOrClone(list), cloneHelper.replaceOrClone(hiddenList));
+        return new ForIterStatement(getLoc(), blockIdentifier, cloneHelper.replaceOrClone(iterator), cloneHelper.replaceOrClone(list), cloneHelper.replaceOrClone(hiddenList));
     }
 
     @Override
@@ -69,7 +76,7 @@ public class ForIterStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredIter(blockIdentifier, iterator, list);
+        return new UnstructuredIter(getLoc(), blockIdentifier, iterator, list);
     }
 
     public BlockIdentifier getBlockIdentifier() {

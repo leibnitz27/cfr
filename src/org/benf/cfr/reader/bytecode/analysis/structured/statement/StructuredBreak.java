@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -23,7 +24,8 @@ public class StructuredBreak extends AbstractStructuredStatement {
 
     private final boolean localBreak;
 
-    public StructuredBreak(BlockIdentifier breakBlock, boolean localBreak) {
+    public StructuredBreak(BytecodeLoc loc, BlockIdentifier breakBlock, boolean localBreak) {
+        super(loc);
         this.breakBlock = breakBlock;
         this.localBreak = localBreak;
     }
@@ -37,6 +39,11 @@ public class StructuredBreak extends AbstractStructuredStatement {
         }
         dumper.newln();
         return dumper;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -104,7 +111,7 @@ public class StructuredBreak extends AbstractStructuredStatement {
                 Set<Op04StructuredStatement> actualNext = scope.getThird();
                 if (localNext.containsAll(actualNext)) {
                     breakBlock.releaseForeignRef();
-                    return new StructuredBreak(local.getSecond(), true);
+                    return new StructuredBreak(getLoc(), local.getSecond(), true);
                 } else {
                     return this;
                 }

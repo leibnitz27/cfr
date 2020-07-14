@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -56,13 +57,13 @@ public class ExceptionRewriters {
             maybeAssign = maybeAssign.getTargets().get(0);
         }
         WildcardMatch match = new WildcardMatch();
-        if (!match.match(new AssignmentSimple(match.getLValueWildCard("caught"), new StackValue(catchingSSA)),
+        if (!match.match(new AssignmentSimple(BytecodeLoc.NONE, match.getLValueWildCard("caught"), new StackValue(BytecodeLoc.NONE, catchingSSA)),
                 maybeAssign.getStatement())) {
             return false;
         }
 
         // Hurrah - maybeAssign is an assignment of the caught value.
-        catchh.replaceStatement(new CatchStatement(catchStatement.getExceptions(), match.getLValueWildCard("caught").getMatch()));
+        catchh.replaceStatement(new CatchStatement(BytecodeLoc.TODO, catchStatement.getExceptions(), match.getLValueWildCard("caught").getMatch()));
         maybeAssign.nopOut();
         return true;
     }

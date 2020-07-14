@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -217,7 +218,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         InferredJavaType inferredJavaType = new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.STRING_TRANSFORM, true);
         for (--x; x >= 0; --x) {
             Expression appendee = revList.get(x);
-            head = new ArithmeticOperation(inferredJavaType, head, appendee, ArithOp.PLUS);
+            head = new ArithmeticOperation(BytecodeLoc.TODO, inferredJavaType, head, appendee, ArithOp.PLUS);
         }
         return head;
     }

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -27,16 +28,21 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
     private List<JavaTypeInstance> explicitArgTypes;
     private Expression result;
 
-    public LambdaExpression(InferredJavaType castJavaType, List<LValue> args, List<JavaTypeInstance> explicitArgType, Expression result) {
-        super(castJavaType);
+    public LambdaExpression(BytecodeLoc loc, InferredJavaType castJavaType, List<LValue> args, List<JavaTypeInstance> explicitArgType, Expression result) {
+        super(loc, castJavaType);
         this.args = args;
         this.explicitArgTypes = explicitArgType;
         this.result = result;
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, result);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new LambdaExpression(getInferredJavaType(), cloneHelper.replaceOrClone(args), explicitArgTypes(), cloneHelper.replaceOrClone(result));
+        return new LambdaExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(args), explicitArgTypes(), cloneHelper.replaceOrClone(result));
     }
 
     @Override

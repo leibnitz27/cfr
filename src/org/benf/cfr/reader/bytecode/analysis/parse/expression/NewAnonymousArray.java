@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -28,8 +29,8 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     private List<Expression> values;
     private boolean isCompletelyAnonymous;
 
-    public NewAnonymousArray(InferredJavaType type, int numDims, List<Expression> values, boolean isCompletelyAnonymous) {
-        super(type);
+    public NewAnonymousArray(BytecodeLoc loc, InferredJavaType type, int numDims, List<Expression> values, boolean isCompletelyAnonymous) {
+        super(loc, type);
         this.values = ListFactory.newList();
         this.numDims = numDims;
         this.allocatedType = type.getJavaTypeInstance().getArrayStrippedType();
@@ -53,6 +54,11 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, values);
+    }
+
+    @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(allocatedType);
         collector.collectFrom(values);
@@ -72,7 +78,7 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new NewAnonymousArray(getInferredJavaType(), numDims, cloneHelper.replaceOrClone(values), isCompletelyAnonymous);
+        return new NewAnonymousArray(getLoc(), getInferredJavaType(), numDims, cloneHelper.replaceOrClone(values), isCompletelyAnonymous);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
@@ -17,7 +18,8 @@ public class StructuredExpressionYield extends AbstractStructuredStatement {
 
     private Expression value;
 
-    public StructuredExpressionYield(Expression value) {
+    public StructuredExpressionYield(BytecodeLoc loc, Expression value) {
+        super(loc);
         this.value = value;
     }
 
@@ -29,6 +31,11 @@ public class StructuredExpressionYield extends AbstractStructuredStatement {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         value.collectTypeUsages(collector);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, value);
     }
 
     @Override

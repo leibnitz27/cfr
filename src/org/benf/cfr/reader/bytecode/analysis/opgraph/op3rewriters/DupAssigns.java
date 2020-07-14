@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -49,7 +50,7 @@ public class DupAssigns {
         next.nopOut();
         // And copy ssa identifiers from next.
         stm.forceSSAIdentifiers(next.getSSAIdentifiers());
-        stm.replaceStatement(new AssignmentSimple(l1, new AssignmentExpression(l2, r1)));
+        stm.replaceStatement(new AssignmentSimple(inner1.getLoc(), l1, new AssignmentExpression(BytecodeLoc.NONE, l2, r1)));
         return true;
     }
 

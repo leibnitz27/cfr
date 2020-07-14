@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.AbstractMatchResultIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.CollectMatch;
@@ -96,17 +97,17 @@ public class SwitchStringRewriter implements Op04Rewriter {
         WildcardMatch wcm = new WildcardMatch();
 
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm, "r1", new MatchSequence(
-                new CollectMatch("ass1", new StructuredAssignment(wcm.getLValueWildCard("stringobject"), wcm.getExpressionWildCard("originalstring"))),
-                new CollectMatch("ass2", new StructuredAssignment(wcm.getLValueWildCard("intermed"), Literal.MINUS_ONE)),
-                new CollectMatch("hash", new StructuredExpressionStatement(
+                new CollectMatch("ass1", new StructuredAssignment(BytecodeLoc.NONE, wcm.getLValueWildCard("stringobject"), wcm.getExpressionWildCard("originalstring"))),
+                new CollectMatch("ass2", new StructuredAssignment(BytecodeLoc.NONE, wcm.getLValueWildCard("intermed"), Literal.MINUS_ONE)),
+                new CollectMatch("hash", new StructuredExpressionStatement(BytecodeLoc.NONE,
                         wcm.getMemberFunction("hash", MiscConstants.HASHCODE, wcm.getExpressionWildCard("stringobjornull")), false
                 )),
                 new CollectMatch("switch1",
-                        new StructuredSwitch(new LValueExpression(wcm.getLValueWildCard("intermed")),
+                        new StructuredSwitch(BytecodeLoc.NONE, new LValueExpression(wcm.getLValueWildCard("intermed")),
                                 null,
                                 wcm.getBlockIdentifier("switchblock"))),
                 new BeginBlock(null),
-                new StructuredCase(Collections.<Expression>emptyList(), null, null, wcm.getBlockIdentifier("case")),
+                new StructuredCase(BytecodeLoc.NONE, Collections.<Expression>emptyList(), null, null, wcm.getBlockIdentifier("case")),
                 new BeginBlock(null),
                 new EndBlock(null),
                 new EndBlock(null)
@@ -126,7 +127,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 matchResultCollector.getStatementByName("hash").getContainer().nopOut();
 
                 Op04StructuredStatement body = swtch.getBody();
-                swtch.getContainer().replaceStatement(new StructuredSwitch(matchResultCollector.string, body, swtch.getBlockIdentifier()));
+                swtch.getContainer().replaceStatement(new StructuredSwitch(BytecodeLoc.TODO, matchResultCollector.string, body, swtch.getBlockIdentifier()));
                 mi.rewind1();
             }
         }
@@ -143,25 +144,25 @@ public class SwitchStringRewriter implements Op04Rewriter {
         WildcardMatch wcm3 = new WildcardMatch();
 
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1, "r1", new MatchSequence(
-                new CollectMatch("ass1", new StructuredAssignment(wcm1.getLValueWildCard("stringobject"), wcm1.getExpressionWildCard("originalstring"))),
-                new CollectMatch("ass2", new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm1.getExpressionWildCard("defaultintermed"))),
+                new CollectMatch("ass1", new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("stringobject"), wcm1.getExpressionWildCard("originalstring"))),
+                new CollectMatch("ass2", new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("intermed"), wcm1.getExpressionWildCard("defaultintermed"))),
                 new CollectMatch("switch1",
-                        new StructuredSwitch(wcm1.getMemberFunction("switch", "hashCode", wcm1.getExpressionWildCard("stringobjornull")),
+                        new StructuredSwitch(BytecodeLoc.NONE, wcm1.getMemberFunction("switch", "hashCode", wcm1.getExpressionWildCard("stringobjornull")),
                                 null,
                                 wcm1.getBlockIdentifier("switchblock"))),
                 new BeginBlock(null),
                 new KleenePlus(
                         new ResetAfterTest(wcm2, "r2",
                                 new MatchSequence(
-                                        new StructuredCase(wcm2.getList("hashvals"), null, null, wcm2.getBlockIdentifier("case")),
+                                        new StructuredCase(BytecodeLoc.NONE, wcm2.getList("hashvals"), null, null, wcm2.getBlockIdentifier("case")),
                                         new BeginBlock(null),
                                         new KleeneStar(
                                                 new ResetAfterTest(wcm3,"r3",
                                                         new MatchSequence(
-                                                                new StructuredIf(new BooleanExpression(wcm3.getMemberFunction("collision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm3.getExpressionWildCard("stringvalue"))), null),
+                                                                new StructuredIf(BytecodeLoc.NONE, new BooleanExpression(wcm3.getMemberFunction("collision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm3.getExpressionWildCard("stringvalue"))), null),
                                                                 new BeginBlock(null),
-                                                                new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm3.getExpressionWildCard("case2id")),
-                                                                new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true),
+                                                                new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("intermed"), wcm3.getExpressionWildCard("case2id")),
+                                                                new StructuredBreak(BytecodeLoc.NONE, wcm1.getBlockIdentifier("switchblock"), true),
                                                                 new EndBlock(null)
                                                         )
                                                 )
@@ -169,20 +170,20 @@ public class SwitchStringRewriter implements Op04Rewriter {
                                         new MatchOneOf(
                                                 // Either an anticollision at the end
                                                 new MatchSequence(
-                                                    new StructuredIf(new NotOperation(new BooleanExpression(wcm2.getMemberFunction("anticollision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm2.getExpressionWildCard("stringvalue")))), null),
-                                                    new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true),
-                                                    new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id"))
+                                                    new StructuredIf(BytecodeLoc.NONE, new NotOperation(BytecodeLoc.NONE, new BooleanExpression(wcm2.getMemberFunction("anticollision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm2.getExpressionWildCard("stringvalue")))), null),
+                                                    new StructuredBreak(BytecodeLoc.NONE, wcm1.getBlockIdentifier("switchblock"), true),
+                                                    new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id"))
                                                 ),
                                                 // or a final collision.
                                                 new MatchSequence(
-                                                        new StructuredIf(new BooleanExpression(wcm2.getMemberFunction("collision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm2.getExpressionWildCard("stringvalue"))), null),
+                                                        new StructuredIf(BytecodeLoc.NONE, new BooleanExpression(wcm2.getMemberFunction("collision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm2.getExpressionWildCard("stringvalue"))), null),
                                                         new BeginBlock(null),
-                                                        new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id")),
+                                                        new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id")),
                                                         new EndBlock(null)
                                                 )
                                         ),
                                         // Strictly speaking wrong, but I want to capture a missing break at the end.
-                                        new KleeneStar(new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true)),
+                                        new KleeneStar(new StructuredBreak(BytecodeLoc.NONE, wcm1.getBlockIdentifier("switchblock"), true)),
                                         new EndBlock(null)
                                 )
                         )
@@ -190,7 +191,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 new EndBlock(null),
                 // We don't actually CARE what the branches of the switch-on-intermediate are...
                 // we just want to make sure that there is one.
-                new CollectMatch("switch2", new StructuredSwitch(new LValueExpression(wcm1.getLValueWildCard("intermed")), null, wcm1.getBlockIdentifier("switchblock2")))
+                new CollectMatch("switch2", new StructuredSwitch(BytecodeLoc.NONE, new LValueExpression(wcm1.getLValueWildCard("intermed")), null, wcm1.getBlockIdentifier("switchblock2")))
         ));
 
         SwitchStringMatchResultCollector matchResultCollector = new SwitchStringMatchResultCollector(wcm1, wcm2, wcm3);
@@ -249,7 +250,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 }
             }
 
-            StructuredCase replacementStructuredCase = new StructuredCase(transformedValues, typeOfSwitch, structuredCase.getBody(), structuredCase.getBlockIdentifier());
+            StructuredCase replacementStructuredCase = new StructuredCase(BytecodeLoc.TODO, transformedValues, typeOfSwitch, structuredCase.getBody(), structuredCase.getBlockIdentifier());
             tgt.add(new Op04StructuredStatement(replacementStructuredCase));
         }
         Block newBlock = new Block(tgt, true);
@@ -259,10 +260,11 @@ public class SwitchStringRewriter implements Op04Rewriter {
         // If the literal is a naughty null, we need to expressly force it to a string.
         // Don't cast to its own type, as this might be a null type.
         if (switchOn.equals(Literal.NULL)) {
-            switchOn = new CastExpression(new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.EXPRESSION), switchOn, true);
+            switchOn = new CastExpression(BytecodeLoc.TODO, new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.EXPRESSION), switchOn, true);
         }
 
         return new StructuredSwitch(
+                BytecodeLoc.TODO,
                 switchOn,
                 new Op04StructuredStatement(newBlock),
                 blockIdentifier, false);

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.api.OutputSinkFactory;
 import org.benf.cfr.reader.api.SinkReturns;
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -166,6 +167,7 @@ public class TokenStreamDumper extends AbstractDumper {
     private void flushPendingCR() {
         if (context.pendingCR) {
             context.pendingCR = false;
+            context.currentLine++;
             sink.write(cr);
         }
     }
@@ -359,5 +361,10 @@ public class TokenStreamDumper extends AbstractDumper {
     @Override
     public int getOutputCount() {
         return context.outputCount;
+    }
+
+    @Override
+    public int getCurrentLine() {
+        return context.currentLine;
     }
 }

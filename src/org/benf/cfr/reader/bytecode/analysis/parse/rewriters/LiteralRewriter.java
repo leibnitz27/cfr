@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
@@ -92,13 +93,13 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
     private Expression rewriteFloat(Literal literal, float value) {
         if (testType.equals(TypeConstants.FLOAT)) {
             if (Float.isNaN(value)) {
-                return new ArithmeticOperation(Literal.FLOAT_ZERO, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
+                return new ArithmeticOperation(BytecodeLoc.NONE, Literal.FLOAT_ZERO, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
             }
             if (Float.compare(Float.NEGATIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(Literal.FLOAT_MINUS_ONE, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
+                return new ArithmeticOperation(BytecodeLoc.NONE, Literal.FLOAT_MINUS_ONE, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
             }
             if (Float.compare(Float.POSITIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(Literal.FLOAT_ONE, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
+                return new ArithmeticOperation(BytecodeLoc.NONE, Literal.FLOAT_ONE, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
             }
         } else {
             if (Float.isNaN(value)) return new LValueExpression(F_NAN);
@@ -109,7 +110,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
             if (Float.compare(Float.MIN_NORMAL, value) == 0) return new LValueExpression(F_MIN_NORMAL);
         }
         // Don't have to guard, not Math.E is double.
-        if (Float.compare((float) Math.E, value) == 0) return new CastExpression(INFERRED_FLOAT, new LValueExpression(MATH_E));
+        if (Float.compare((float) Math.E, value) == 0) return new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT, new LValueExpression(MATH_E));
         Expression piExpr = maybeGetPiExpression(value);
         if (piExpr != null) return piExpr;
         return literal;
@@ -128,13 +129,13 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
     private Expression rewriteDouble(Literal literal, double value) {
         if (testType.equals(TypeConstants.DOUBLE)) {
             if (Double.isNaN(value)) {
-                return new ArithmeticOperation(Literal.DOUBLE_ZERO, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
+                return new ArithmeticOperation(BytecodeLoc.NONE, Literal.DOUBLE_ZERO, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
             }
             if (Double.compare(Double.NEGATIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(Literal.DOUBLE_MINUS_ONE, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
+                return new ArithmeticOperation(BytecodeLoc.NONE, Literal.DOUBLE_MINUS_ONE, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
             }
             if (Double.compare(Double.POSITIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(Literal.DOUBLE_ONE, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
+                return new ArithmeticOperation(BytecodeLoc.NONE, Literal.DOUBLE_ONE, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
             }
         } else {
             if (Double.isNaN(value)) return new LValueExpression(D_NAN);
@@ -150,7 +151,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
             if (Double.compare(nearestFloat, value) == 0) {
                 // "(double)".length() == 8, "f" suffix is one more
                 if (Float.toString(nearestFloat).length() + 9 < Double.toString(value).length()) {
-                    return new CastExpression(INFERRED_DOUBLE, new Literal(TypedLiteral.getFloat(nearestFloat)));
+                    return new CastExpression(BytecodeLoc.NONE, INFERRED_DOUBLE, new Literal(TypedLiteral.getFloat(nearestFloat)));
                 }
             }
             Expression piExpr = maybeGetPiExpression(value);
@@ -166,7 +167,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
 
     static {
         final Expression pi = new LValueExpression(MATH_PI);
-        final Expression npi = new ArithmeticMonOperation(pi, ArithOp.MINUS);
+        final Expression npi = new ArithmeticMonOperation(BytecodeLoc.NONE, pi, ArithOp.MINUS);
         for (int i = -10; i <= 10; i++) {
             if (i == 0) continue;
 
@@ -180,7 +181,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
                         case -1:
                             return npi;
                         default:
-                            return new ArithmeticOperation(pi, new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY);
+                            return new ArithmeticOperation(BytecodeLoc.NONE, pi, new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY);
                     }
                 }
             };
@@ -191,11 +192,11 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
                 public Expression invoke() {
                     switch (ii) {
                         case 1:
-                            return new CastExpression(INFERRED_FLOAT, pi);
+                            return new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT, pi);
                         case -1:
-                            return new CastExpression(INFERRED_FLOAT, npi);
+                            return new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT, npi);
                         default:
-                            return new CastExpression(INFERRED_FLOAT, new ArithmeticOperation(pi, new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY));
+                            return new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT, new ArithmeticOperation(BytecodeLoc.NONE, pi, new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY));
                     }
                 }
             };
@@ -206,7 +207,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
             pifn = new NonaryFunction<Expression>() {
                 @Override
                 public Expression invoke() {
-                    return new ArithmeticOperation(new CastExpression(INFERRED_FLOAT, pi), new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY);
+                    return new ArithmeticOperation(BytecodeLoc.NONE, new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT, pi), new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY);
                 }
             };
             PI_FLOATS.put((float)(Math.PI) * i, pifn);
@@ -218,7 +219,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
             NonaryFunction<Expression> pifn = new NonaryFunction<Expression>() {
                 @Override
                 public Expression invoke() {
-                    return new ArithmeticOperation(p, new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE);
+                    return new ArithmeticOperation(BytecodeLoc.NONE, p, new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE);
                 }
             };
             PI_DOUBLES.put(Math.PI / (90 * i), pifn);
@@ -226,7 +227,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
             pifn = new NonaryFunction<Expression>() {
                 @Override
                 public Expression invoke() {
-                    return new CastExpression(INFERRED_FLOAT, new ArithmeticOperation(p, new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE));
+                    return new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT, new ArithmeticOperation(BytecodeLoc.NONE, p, new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE));
                 }
             };
             PI_FLOATS.put((float)(Math.PI / (90 * i)), pifn);
@@ -234,7 +235,7 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
             pifn = new NonaryFunction<Expression>() {
                 @Override
                 public Expression invoke() {
-                    return new ArithmeticOperation(new CastExpression(INFERRED_FLOAT, p), new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE);
+                    return new ArithmeticOperation(BytecodeLoc.NONE, new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT, p), new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE);
                 }
             };
             PI_FLOATS.put((float)(Math.PI) / (90 * i), pifn);
@@ -242,13 +243,13 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
         PI_DOUBLES.put(Math.PI * Math.PI, new NonaryFunction<Expression>() {
           @Override
           public Expression invoke() {
-              return new ArithmeticOperation(pi, pi, ArithOp.MULTIPLY);
+              return new ArithmeticOperation(BytecodeLoc.NONE, pi, pi, ArithOp.MULTIPLY);
           }
         });
         PI_FLOATS.put((float)(Math.PI * Math.PI), new NonaryFunction<Expression>() {
           @Override
           public Expression invoke() {
-              return new CastExpression(INFERRED_FLOAT,new ArithmeticOperation(pi, pi, ArithOp.MULTIPLY));
+              return new CastExpression(BytecodeLoc.NONE, INFERRED_FLOAT,new ArithmeticOperation(BytecodeLoc.NONE, pi, pi, ArithOp.MULTIPLY));
           }
         });
     }

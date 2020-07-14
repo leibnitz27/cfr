@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -113,6 +114,11 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
+    public int getIndentLevel() {
+        return delegate.getIndentLevel();
+    }
+
+    @Override
     public Dumper dump(Dumpable d) {
         if (d == null) {
             return keyword("null");
@@ -179,5 +185,15 @@ public abstract class DelegatingDumper implements Dumper {
     @Override
     public int getOutputCount() {
         return delegate.getOutputCount();
+    }
+
+    @Override
+    public void informBytecodeLoc(HasByteCodeLoc loc) {
+        delegate.informBytecodeLoc(loc);
+    }
+
+    @Override
+    public int getCurrentLine() {
+        return delegate.getCurrentLine();
     }
 }

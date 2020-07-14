@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -112,10 +113,10 @@ public class JumpsIntoDoRewriter {
                 IfStatement prevIf = (IfStatement)prevStm;
                 SSAIdentifiers doId = doS.getSSAIdentifiers();
                 LValue loopControl = vf.tempVariable(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TRANSFORM, true));
-                prev.replaceStatement(new AssignmentSimple(loopControl, Literal.TRUE));
+                prev.replaceStatement(new AssignmentSimple(BytecodeLoc.TODO, loopControl, Literal.TRUE));
                 // No, it's not pretty.  But it structures!
-                IfStatement newIf = new IfStatement(new BooleanOperation(
-                    new BooleanOperation(new ComparisonOperation(new LValueExpression(loopControl), Literal.TRUE, CompOp.EQ), new NotOperation(new BooleanExpression(new AssignmentExpression(loopControl, Literal.FALSE))), BoolOp.AND),
+                IfStatement newIf = new IfStatement(BytecodeLoc.TODO, new BooleanOperation(BytecodeLoc.TODO,
+                        new BooleanOperation(BytecodeLoc.TODO, new ComparisonOperation(BytecodeLoc.TODO, new LValueExpression(loopControl), Literal.TRUE, CompOp.EQ), new NotOperation(BytecodeLoc.TODO, new BooleanExpression(new AssignmentExpression(BytecodeLoc.TODO, loopControl, Literal.FALSE))), BoolOp.AND),
                     prevIf.getCondition(),
                     BoolOp.AND));
                 prevTgt.removeSource(prev);
@@ -178,7 +179,7 @@ public class JumpsIntoDoRewriter {
                         if (candidates.contains(doSource)) continue;
                         continue outer;
                     }
-                    Op03SimpleStatement newDo = new Op03SimpleStatement(first.getBlockIdentifiers(), new DoStatement(doBlock), first.getSSAIdentifiers(), first.getIndex().justBefore());
+                    Op03SimpleStatement newDo = new Op03SimpleStatement(first.getBlockIdentifiers(), new DoStatement(BytecodeLoc.TODO, doBlock), first.getSSAIdentifiers(), first.getIndex().justBefore());
                     Op03SimpleStatement afterDo = stm.getTargets().get(0);
 
                     stm.replaceStatement(new Nop());
@@ -186,7 +187,7 @@ public class JumpsIntoDoRewriter {
                         candidate.getBlockIdentifiers().add(doBlock);
                     }
                     LValue loopControl = vf.tempVariable(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TRANSFORM, true));
-                    Op03SimpleStatement preDo = new Op03SimpleStatement(originalDoIdentifiers, new AssignmentSimple(loopControl, Literal.TRUE), first.getSSAIdentifiers(), newDo.getIndex().justBefore());
+                    Op03SimpleStatement preDo = new Op03SimpleStatement(originalDoIdentifiers, new AssignmentSimple(BytecodeLoc.TODO, loopControl, Literal.TRUE), first.getSSAIdentifiers(), newDo.getIndex().justBefore());
                     for (Op03SimpleStatement doSource : ListFactory.newList(stm.getSources())) {
                         if (!candidates.contains(doSource)) {
                             doSource.replaceTarget(stm, newDo);
@@ -204,7 +205,7 @@ public class JumpsIntoDoRewriter {
 
 
                     // No, it's not pretty.  But it structures!
-                    IfStatement newIf = new IfStatement(new NotOperation(new BooleanOperation(new ComparisonOperation(new LValueExpression(loopControl), Literal.TRUE, CompOp.EQ), new NotOperation(new BooleanExpression(new AssignmentExpression(loopControl, Literal.FALSE))), BoolOp.AND)));
+                    IfStatement newIf = new IfStatement(BytecodeLoc.TODO, new NotOperation(BytecodeLoc.TODO, new BooleanOperation(BytecodeLoc.TODO, new ComparisonOperation(BytecodeLoc.TODO, new LValueExpression(loopControl), Literal.TRUE, CompOp.EQ), new NotOperation(BytecodeLoc.TODO, new BooleanExpression(new AssignmentExpression(BytecodeLoc.TODO, loopControl, Literal.FALSE))), BoolOp.AND)));
                     Op03SimpleStatement newIfStm = new Op03SimpleStatement(first.getBlockIdentifiers(), newIf, first.getSSAIdentifiers(), newDo.getIndex().justAfter());
 
                     newIfStm.addSource(newDo);

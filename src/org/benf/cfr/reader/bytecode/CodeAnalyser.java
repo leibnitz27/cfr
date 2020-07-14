@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.bytecode;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactory;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactoryImpl;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactoryStub;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03Blocks;
@@ -299,10 +302,11 @@ public class CodeAnalyser {
         List<Op01WithProcessedDataAndByteJumps> op1list = ListFactory.newList();
         List<Op02WithProcessedDataAndRefs> op2list = ListFactory.newList();
         // Now walk the indexed ops
+        BytecodeLocFactory locFactory = options.getOption(OptionsImpl.TRACK_BYTECODE_LOC) ? BytecodeLocFactoryImpl.INSTANCE : BytecodeLocFactoryStub.INSTANCE;
         for (int x = 0; x < instrs.size(); ++x) {
             Op01WithProcessedDataAndByteJumps op1 = instrs.get(x);
             op1list.add(op1);
-            Op02WithProcessedDataAndRefs op2 = op1.createOp2(cp, x);
+            Op02WithProcessedDataAndRefs op2 = op1.createOp2(cp, x, locFactory, method);
             op2list.add(op2);
         }
 
@@ -318,7 +322,7 @@ public class CodeAnalyser {
             } catch (UnverifiableJumpException e) {
                 comments.addComment(DecompilerComment.UNVERIFIABLE_BYTECODE_BAD_JUMP);
                 // we can handle this if we fall back and reprocess the bytecode.
-                generateUnverifiable(x, op1list, op2list, lutByIdx, lutByOffset);
+                generateUnverifiable(x, op1list, op2list, lutByIdx, lutByOffset, locFactory);
                 try {
                     targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
                 } catch (UnverifiableJumpException e2) {
@@ -920,18 +924,18 @@ public class CodeAnalyser {
         return new AnalysisResultSuccessful(comments, block, anonymousClassUsage);
     }
 
-    private void generateUnverifiable(int x, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset) {
+    private void generateUnverifiable(int x, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset, BytecodeLocFactory locFactory) {
         Op01WithProcessedDataAndByteJumps instr = op1list.get(x);
         int thisRaw = instr.getOriginalRawOffset();
         int[] thisTargets = instr.getRawTargetOffsets();
         for (int target : thisTargets) {
             if (null == lutByOffset.get(target + thisRaw)) {
-                generateUnverifiableInstr(target + thisRaw, op1list, op2list, lutByIdx, lutByOffset);
+                generateUnverifiableInstr(target + thisRaw, op1list, op2list, lutByIdx, lutByOffset, locFactory);
             }
         }
     }
 
-    private void generateUnverifiableInstr(int offset, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset) {
+    private void generateUnverifiableInstr(int offset, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset, BytecodeLocFactory locFactory) {
         ByteData rawData = originalCodeAttribute.getRawData();
         int codeLength = originalCodeAttribute.getCodeLength();
         do {
@@ -950,7 +954,7 @@ public class CodeAnalyser {
             op1list.add(op01);
             lutByIdx.put(targetIdx, offset);
             lutByOffset.put(offset, targetIdx);
-            Op02WithProcessedDataAndRefs op02 = op01.createOp2(cp, targetIdx);
+            Op02WithProcessedDataAndRefs op02 = op01.createOp2(cp, targetIdx, locFactory, method);
             op2list.add(op02);
             if (noTargets) return;
             int nextOffset = offset + op01.getInstructionLength();
@@ -964,7 +968,7 @@ public class CodeAnalyser {
                 rawTargets[0] = nextOffset - fakeOffset;
                 Op01WithProcessedDataAndByteJumps fakeGoto = new Op01WithProcessedDataAndByteJumps(JVMInstr.GOTO, null, rawTargets, fakeOffset);
                 op1list.add(fakeGoto);
-                op2list.add(fakeGoto.createOp2(cp, targetIdx));
+                op2list.add(fakeGoto.createOp2(cp, targetIdx, locFactory, method));
                 return;
             }
             offset = nextOffset;

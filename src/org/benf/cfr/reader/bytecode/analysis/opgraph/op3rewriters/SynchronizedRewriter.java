@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
@@ -105,21 +106,21 @@ class SynchronizedRewriter {
 
         if (!isFinally) {
             if (!wildcardMatch.match(
-                    new AssignmentSimple(wildcardMatch.getLValueWildCard("var"), wildcardMatch.getExpressionWildCard("e")),
+                    new AssignmentSimple(BytecodeLoc.NONE, wildcardMatch.getLValueWildCard("var"), wildcardMatch.getExpressionWildCard("e")),
                     variableAss.getStatement())) {
                 return false;
             }
         }
 
         if (!wildcardMatch.match(
-                new MonitorExitStatement(wildcardMatch.getExpressionWildCard("lock")),
+                new MonitorExitStatement(BytecodeLoc.NONE, wildcardMatch.getExpressionWildCard("lock")),
                 monitorExit.getStatement())) {
             return false;
         }
 
         if (!isFinally) {
             if (!wildcardMatch.match(
-                    new ThrowStatement(new LValueExpression(wildcardMatch.getLValueWildCard("var"))),
+                    new ThrowStatement(BytecodeLoc.NONE, new LValueExpression(wildcardMatch.getLValueWildCard("var"))),
                     rethrow.getStatement())) return false;
         }
 

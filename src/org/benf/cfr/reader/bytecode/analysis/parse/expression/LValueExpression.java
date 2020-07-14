@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -24,13 +25,23 @@ public class LValueExpression extends AbstractExpression {
     private LValue lValue;
 
     public LValueExpression(LValue lValue) {
-        super(lValue.getInferredJavaType());
+        super(BytecodeLoc.NONE, lValue.getInferredJavaType());
+        this.lValue = lValue;
+    }
+
+    public LValueExpression(BytecodeLoc loc, LValue lValue) {
+        super(loc, lValue.getInferredJavaType());
         this.lValue = lValue;
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new LValueExpression(cloneHelper.replaceOrClone(lValue));
+        return new LValueExpression(getLoc(), cloneHelper.replaceOrClone(lValue));
     }
 
     @Override

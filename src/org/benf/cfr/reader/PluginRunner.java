@@ -78,6 +78,11 @@ public class PluginRunner {
             return new StringStreamDumper(new SummaryDumperMethodErrorCollector(classType, summaryDumper), outBuffer, typeUsageInformation, options, this.illegalIdentifierDump);
         }
 
+        @Override
+        public Dumper wrapLineNoDumper(Dumper dumper) {
+            return dumper;
+        }
+
         /*
          * A summary dumper will receive errors.  Generally, it's only of value when dumping jars to file.
          */

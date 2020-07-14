@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.Op04Checker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.*;
@@ -44,7 +45,6 @@ import java.util.logging.Logger;
 
 public class Op04StructuredStatement implements MutableGraph<Op04StructuredStatement>, Dumpable, StatementContainer<StructuredStatement>, TypeUsageCollectable {
     private static final Logger logger = LoggerFactory.create(Op04StructuredStatement.class);
-
     private InstrIndex instrIndex;
     // Should we be bothering with sources and targets?  Not once we're "Properly" structured...
     private List<Op04StructuredStatement> sources = ListFactory.newList();
@@ -208,10 +208,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     @Override
     public Dumper dump(Dumper dumper) {
+        dumper.informBytecodeLoc(structuredStatement);
         if (hasUnstructuredSource()) {
             dumper.label(instrIndex.toString(), false).comment(sources.size() + " sources").newln();
         }
-        structuredStatement.dump(dumper);
+        dumper.dump(structuredStatement);
         return dumper;
     }
 
@@ -593,7 +594,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             // Ok - it doesn't.  But can we get there by breaking out of one of the enclosing blocks?
             Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>> breakTarget = breaktargets.peek();
             if (breakTarget.getThird().contains(target)) {
-                return new StructuredBreak(breakTarget.getSecond(), true);
+                return new StructuredBreak(BytecodeLoc.TODO, breakTarget.getSecond(), true);
             }
         }
         return stm;

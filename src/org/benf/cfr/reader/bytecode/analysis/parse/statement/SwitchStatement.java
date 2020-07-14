@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -20,15 +21,20 @@ public class SwitchStatement extends AbstractStatement {
     private final BlockIdentifier switchBlock;
     private boolean safeExpression = false;
 
-    SwitchStatement(Expression switchOn, BlockIdentifier switchBlock) {
+    SwitchStatement(BytecodeLoc loc, Expression switchOn, BlockIdentifier switchBlock) {
+        super(loc);
         this.switchOn = switchOn;
         this.switchBlock = switchBlock;
     }
 
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, switchOn);
+    }
 
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        SwitchStatement res = new SwitchStatement(cloneHelper.replaceOrClone(switchOn), switchBlock);
+        SwitchStatement res = new SwitchStatement(getLoc(), cloneHelper.replaceOrClone(switchOn), switchBlock);
         res.safeExpression = safeExpression;
         return res;
     }
@@ -55,7 +61,7 @@ public class SwitchStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredSwitch(switchOn, switchBlock, safeExpression);
+        return new UnstructuredSwitch(getLoc(), switchOn, switchBlock, safeExpression);
     }
 
     public BlockIdentifier getSwitchBlock() {

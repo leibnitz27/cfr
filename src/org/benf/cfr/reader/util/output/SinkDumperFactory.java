@@ -41,6 +41,27 @@ public class SinkDumperFactory implements DumperFactory {
         List<OutputSinkFactory.SinkClass> supported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.JAVA, Arrays.asList(OutputSinkFactory.SinkClass.DECOMPILED_MULTIVER, OutputSinkFactory.SinkClass.DECOMPILED, OutputSinkFactory.SinkClass.TOKEN_STREAM, OutputSinkFactory.SinkClass.STRING));
         if (supported == null) supported = justString;
         MethodErrorCollector methodErrorCollector = new SummaryDumperMethodErrorCollector(classType, summaryDumper);
+        Dumper dumper = getTopLevelDumper2(classType, typeUsageInformation, illegalIdentifierDump, supported, methodErrorCollector);
+        return dumper;
+    }
+
+    @Override
+    public Dumper wrapLineNoDumper(Dumper dumper) {
+        List<OutputSinkFactory.SinkClass> linesSupported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.LINENUMBER, Collections.singletonList(OutputSinkFactory.SinkClass.LINE_NUMBER_MAPPING));
+        if (linesSupported == null || linesSupported.isEmpty()) {
+            return dumper;
+        }
+
+        for (OutputSinkFactory.SinkClass sinkClass : linesSupported) {
+            switch (sinkClass) {
+                case LINE_NUMBER_MAPPING:
+                    return new BytecodeTrackingDumper(dumper);
+            }
+        }
+        return dumper;
+    }
+
+    private Dumper getTopLevelDumper2(JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump, List<OutputSinkFactory.SinkClass> supported, MethodErrorCollector methodErrorCollector) {
         for (OutputSinkFactory.SinkClass sinkClass : supported) {
             switch (sinkClass) {
                 case DECOMPILED_MULTIVER:

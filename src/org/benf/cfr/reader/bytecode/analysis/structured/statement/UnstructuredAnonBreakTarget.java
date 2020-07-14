@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -11,7 +12,13 @@ public class UnstructuredAnonBreakTarget extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
 
     public UnstructuredAnonBreakTarget(BlockIdentifier blockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

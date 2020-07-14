@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchSequence;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
@@ -106,9 +107,9 @@ public class J14ClassObjectRewriter {
         final WildcardMatch wcm = new WildcardMatch();
         final WildcardMatch.StaticVariableWildcard staticVariable = wcm.getStaticVariable("classVar", classType, new InferredJavaType(TypeConstants.CLASS, InferredJavaType.Source.TEST));
         LValueExpression staticExpression = new LValueExpression(staticVariable);
-        Expression test = new TernaryExpression(
-                new ComparisonOperation(staticExpression, Literal.NULL, CompOp.EQ),
-                new AssignmentExpression(staticVariable,
+        Expression test = new TernaryExpression(BytecodeLoc.NONE,
+                new ComparisonOperation(BytecodeLoc.NONE, staticExpression, Literal.NULL, CompOp.EQ),
+                new AssignmentExpression(BytecodeLoc.NONE, staticVariable,
                         wcm.getStaticFunction("test",
                                 classType,
                                 TypeConstants.CLASS,
@@ -180,11 +181,12 @@ public class J14ClassObjectRewriter {
                         new BeginBlock(null),
                         new StructuredTry(null, null),
                         new BeginBlock(null),
-                        new StructuredReturn(wcm1.getStaticFunction("forName",TypeConstants.CLASS, null, "forName", new LValueExpression(arg)), TypeConstants.CLASS),
+                        new StructuredReturn(BytecodeLoc.NONE, wcm1.getStaticFunction("forName",TypeConstants.CLASS, null, "forName", new LValueExpression(arg)), TypeConstants.CLASS),
                         new EndBlock(null),
                         new StructuredCatch(null, null, null, null),
                         new BeginBlock(null),
                         new StructuredThrow(
+                                BytecodeLoc.NONE,
                                 wcm1.getMemberFunction("initCause", "initCause",
                                         wcm1.getConstructorSimpleWildcard("nocd", TypeConstants.NOCLASSDEFFOUND_ERROR),
                                         wcm1.getExpressionWildCard("throwable"))

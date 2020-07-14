@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -21,8 +22,8 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     private LValue iterator;
     private Expression list;
 
-    StructuredIter(BlockIdentifier block, LValue iterator, Expression list, Op04StructuredStatement body) {
-        super(body);
+    StructuredIter(BytecodeLoc loc, BlockIdentifier block, LValue iterator, Expression list, Op04StructuredStatement body) {
+        super(loc, body);
         this.block = block;
         this.iterator = iterator;
         this.list = list;
@@ -33,6 +34,11 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
         iterator.collectTypeUsages(collector);
         list.collectTypeUsages(collector);
         super.collectTypeUsages(collector);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, list);
     }
 
     @Override

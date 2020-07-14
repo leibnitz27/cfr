@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -18,22 +19,27 @@ public class NewPrimitiveArray extends AbstractNewArray {
     private Expression size;
     private final JavaTypeInstance type;
 
-    public NewPrimitiveArray(Expression size, byte type) {
-        this(size, ArrayType.getArrayType(type).getJavaTypeInstance());
+    public NewPrimitiveArray(BytecodeLoc loc, Expression size, byte type) {
+        this(loc, size, ArrayType.getArrayType(type).getJavaTypeInstance());
     }
 
-    public NewPrimitiveArray(Expression size, JavaTypeInstance type) {
+    public NewPrimitiveArray(BytecodeLoc loc, Expression size, JavaTypeInstance type) {
         // We don't really know anything about the array dimensionality, just the underlying type. :P
-        super(new InferredJavaType(new JavaArrayTypeInstance(1, type), InferredJavaType.Source.EXPRESSION));
+        super(loc, new InferredJavaType(new JavaArrayTypeInstance(1, type), InferredJavaType.Source.EXPRESSION));
         this.size = size;
         this.type = type;
         size.getInferredJavaType().useAsWithoutCasting(RawJavaType.INT);
     }
 
-    private NewPrimitiveArray(InferredJavaType inferredJavaType, JavaTypeInstance type, Expression size) {
-        super(inferredJavaType);
+    private NewPrimitiveArray(BytecodeLoc loc, InferredJavaType inferredJavaType, JavaTypeInstance type, Expression size) {
+        super(loc, inferredJavaType);
         this.type = type;
         this.size = size;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, size);
     }
 
     @Override
@@ -44,7 +50,7 @@ public class NewPrimitiveArray extends AbstractNewArray {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new NewPrimitiveArray(getInferredJavaType(), type, cloneHelper.replaceOrClone(size));
+        return new NewPrimitiveArray(getLoc(), getInferredJavaType(), type, cloneHelper.replaceOrClone(size));
     }
 
     @Override

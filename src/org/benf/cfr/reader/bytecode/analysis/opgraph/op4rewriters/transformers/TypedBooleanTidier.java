@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -61,7 +62,7 @@ public class TypedBooleanTidier implements StructuredStatementTransformer, Expre
         } else {
             res = new BooleanExpression(lhs);
         }
-        if (!b) res = new NotOperation(res);
+        if (!b) res = new NotOperation(BytecodeLoc.TODO, res);
         return res;
     }
 

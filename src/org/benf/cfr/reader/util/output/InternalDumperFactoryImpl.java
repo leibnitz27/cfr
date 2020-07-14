@@ -72,6 +72,15 @@ public class InternalDumperFactoryImpl implements DumperFactory {
     }
 
     @Override
+    public Dumper wrapLineNoDumper(Dumper dumper) {
+        // There's really not a reason to do this, but it's useful for testing.
+        if (options.getOption(OptionsImpl.TRACK_BYTECODE_LOC)) {
+            return new BytecodeTrackingDumper(dumper);
+        }
+        return dumper;
+    }
+
+    @Override
     public ExceptionDumper getExceptionDumper() {
         return new StdErrExceptionDumper();
     }

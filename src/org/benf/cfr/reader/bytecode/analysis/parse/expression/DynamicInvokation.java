@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -18,15 +19,20 @@ public class DynamicInvokation extends AbstractExpression {
     private Expression innerInvokation;
     private List<Expression> dynamicArgs;
 
-    public DynamicInvokation(InferredJavaType castJavaType, Expression innerInvokation, List<Expression> dynamicArgs) {
-        super(castJavaType);
+    public DynamicInvokation(BytecodeLoc loc, InferredJavaType castJavaType, Expression innerInvokation, List<Expression> dynamicArgs) {
+        super(loc, castJavaType);
         this.innerInvokation = innerInvokation;
         this.dynamicArgs = dynamicArgs;
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, dynamicArgs, innerInvokation);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new DynamicInvokation(getInferredJavaType(), cloneHelper.replaceOrClone(innerInvokation), cloneHelper.replaceOrClone(dynamicArgs));
+        return new DynamicInvokation(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(innerInvokation), cloneHelper.replaceOrClone(dynamicArgs));
     }
 
     @Override

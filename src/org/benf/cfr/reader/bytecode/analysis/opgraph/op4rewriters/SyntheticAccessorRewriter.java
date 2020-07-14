@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.AbstractMatchResultIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
@@ -195,62 +196,62 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
                 new BeginBlock(null),
                 new MatchOneOf(
                         new ResetAfterTest(wcm, RETURN_LVALUE,
-                                new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
+                                new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                         ),
                         new ResetAfterTest(wcm, MUTATION1, new MatchSequence(
-                                new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
-                                new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
+                                new StructuredAssignment(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
+                                new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                         )),
                         new ResetAfterTest(wcm, ASSIGNMENT1, new MatchSequence(
-                                new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue"))
+                                new StructuredAssignment(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue"))
                         )),
                         new ResetAfterTest(wcm, MUTATION2, new MatchSequence(
-                                new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
-                                new StructuredReturn(wcm.getExpressionWildCard("rvalue"), null)
+                                new StructuredAssignment(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
+                                new StructuredReturn(BytecodeLoc.NONE, wcm.getExpressionWildCard("rvalue"), null)
                         )),
                         // Java9 compiler inlines += etc....
                         new ResetAfterTest(wcm, MUTATION3,
-                                new StructuredReturn(wcm.getArithmeticMutationWildcard("mutation", wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")), null)
+                                new StructuredReturn(BytecodeLoc.NONE, wcm.getArithmeticMutationWildcard("mutation", wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")), null)
                         ),
                         new ResetAfterTest(wcm, PRE_INC,
-                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
+                                new StructuredReturn(BytecodeLoc.NONE, new ArithmeticPreMutationOperation(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
                         ),
                         new ResetAfterTest(wcm, PRE_DEC,
-                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
+                                new StructuredReturn(BytecodeLoc.NONE, new ArithmeticPreMutationOperation(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
                         ),
                         new ResetAfterTest(wcm, POST_INC,
-                                new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
+                                new StructuredReturn(BytecodeLoc.NONE, new ArithmeticPostMutationOperation(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
                         ),
                         new ResetAfterTest(wcm, POST_DEC,
-                                new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
+                                new StructuredReturn(BytecodeLoc.NONE, new ArithmeticPostMutationOperation(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
                         ),
                         new ResetAfterTest(wcm, POST_INC,
                                 new MatchSequence(
-                                        new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
-                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
+                                        new StructuredExpressionStatement(BytecodeLoc.NONE, new ArithmeticPostMutationOperation(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
+                                        new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                                 )
                         ),
                         new ResetAfterTest(wcm, POST_INC,
                                 new MatchSequence(
-                                        new StructuredAssignment(wcm.getStackLabelWildcard("tmp"), new LValueExpression(wcm.getLValueWildCard("lvalue"))),
-                                        new StructuredAssignment(
+                                        new StructuredAssignment(BytecodeLoc.NONE, wcm.getStackLabelWildcard("tmp"), new LValueExpression(wcm.getLValueWildCard("lvalue"))),
+                                        new StructuredAssignment(BytecodeLoc.NONE,
                                                 wcm.getLValueWildCard("lvalue"),
-                                                new ArithmeticOperation(new StackValue(wcm.getStackLabelWildcard("tmp")), new Literal(TypedLiteral.getInt(1)), ArithOp.PLUS)
+                                                new ArithmeticOperation(BytecodeLoc.NONE, new StackValue(BytecodeLoc.NONE, wcm.getStackLabelWildcard("tmp")), new Literal(TypedLiteral.getInt(1)), ArithOp.PLUS)
                                         ),
-                                        new StructuredReturn(new StackValue(wcm.getStackLabelWildcard("tmp")), null)
+                                        new StructuredReturn(BytecodeLoc.NONE, new StackValue(BytecodeLoc.NONE, wcm.getStackLabelWildcard("tmp")), null)
                                 )
                         ),
                         new ResetAfterTest(wcm, POST_DEC,
                                 new MatchSequence(
-                                        new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
-                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
+                                        new StructuredExpressionStatement(BytecodeLoc.NONE, new ArithmeticPostMutationOperation(BytecodeLoc.NONE, wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
+                                        new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                                 )
                         ),
                         new ResetAfterTest(wcm, SUPER_INVOKE,
-                                new StructuredExpressionStatement(wcm.getSuperFunction("super", methodExprs), false)
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getSuperFunction("super", methodExprs), false)
                         ),
                         new ResetAfterTest(wcm, SUPER_RETINVOKE,
-                                new StructuredReturn(wcm.getSuperFunction("super", methodExprs), null)
+                                new StructuredReturn(BytecodeLoc.NONE, wcm.getSuperFunction("super", methodExprs), null)
                         )
                 ),
                 new EndBlock(null)
@@ -292,24 +293,24 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
         CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
 
         if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2) || matchType.equals(ASSIGNMENT1)) {
-            AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue);
+            AssignmentExpression assignmentExpression = new AssignmentExpression(BytecodeLoc.TODO, accessorMatchCollector.lValue, accessorMatchCollector.rValue);
             return cloneHelper.replaceOrClone(assignmentExpression);
         } else if (matchType.equals(MUTATION3)) {
-            Expression mutation = new ArithmeticMutationOperation(accessorMatchCollector.lValue, accessorMatchCollector.rValue, accessorMatchCollector.op);
+            Expression mutation = new ArithmeticMutationOperation(BytecodeLoc.TODO, accessorMatchCollector.lValue, accessorMatchCollector.rValue, accessorMatchCollector.op);
             return cloneHelper.replaceOrClone(mutation);
         } else if (matchType.equals(RETURN_LVALUE)) {
             return cloneHelper.replaceOrClone(new LValueExpression(accessorMatchCollector.lValue));
         } else if (matchType.equals(PRE_DEC)) {
-            Expression res = new ArithmeticPreMutationOperation(accessorMatchCollector.lValue, ArithOp.MINUS);
+            Expression res = new ArithmeticPreMutationOperation(BytecodeLoc.TODO, accessorMatchCollector.lValue, ArithOp.MINUS);
             return cloneHelper.replaceOrClone(res);
         } else if (matchType.equals(PRE_INC)) {
-            Expression res = new ArithmeticPreMutationOperation(accessorMatchCollector.lValue, ArithOp.PLUS);
+            Expression res = new ArithmeticPreMutationOperation(BytecodeLoc.TODO, accessorMatchCollector.lValue, ArithOp.PLUS);
             return cloneHelper.replaceOrClone(res);
         } else if (matchType.equals(POST_DEC)) {
-            Expression res = new ArithmeticPostMutationOperation(accessorMatchCollector.lValue, ArithOp.MINUS);
+            Expression res = new ArithmeticPostMutationOperation(BytecodeLoc.TODO, accessorMatchCollector.lValue, ArithOp.MINUS);
             return cloneHelper.replaceOrClone(res);
         } else if (matchType.equals(POST_INC)) {
-            Expression res = new ArithmeticPostMutationOperation(accessorMatchCollector.lValue, ArithOp.PLUS);
+            Expression res = new ArithmeticPostMutationOperation(BytecodeLoc.TODO, accessorMatchCollector.lValue, ArithOp.PLUS);
             return cloneHelper.replaceOrClone(res);
         } else if (matchType.equals(SUPER_INVOKE) || matchType.equals(SUPER_RETINVOKE)) {
             SuperFunctionInvokation invoke = (SuperFunctionInvokation) accessorMatchCollector.rValue;
@@ -358,16 +359,16 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
                 new BeginBlock(null),
                 new MatchOneOf(
                         new ResetAfterTest(wcm, MEM_SUB1,
-                                new StructuredExpressionStatement(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), false)
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), false)
                         ),
                         new ResetAfterTest(wcm, STA_SUB1,
-                                new StructuredExpressionStatement(wcm.getStaticFunction("func", otherType, null, null, (List<Expression>) null), false)
+                                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getStaticFunction("func", otherType, null, null, (List<Expression>) null), false)
                         ),
                         new ResetAfterTest(wcm, MEM_FUN1,
-                                new StructuredReturn(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), null)
+                                new StructuredReturn(BytecodeLoc.NONE, wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), null)
                         ),
                         new ResetAfterTest(wcm, STA_FUN1,
-                                new StructuredReturn(wcm.getStaticFunction("func", otherType, null, null, (List<Expression>) null), null)
+                                new StructuredReturn(BytecodeLoc.NONE, wcm.getStaticFunction("func", otherType, null, null, (List<Expression>) null), null)
                         )
                 ),
                 new EndBlock(null)
@@ -400,7 +401,7 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
     private Expression getCastFriendArg(JavaTypeInstance otherType, LocalVariable methodArg, Expression appliedArg) {
         if (methodArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
             if (!appliedArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
-                appliedArg = new CastExpression(methodArg.getInferredJavaType(), appliedArg);
+                appliedArg = new CastExpression(BytecodeLoc.NONE, methodArg.getInferredJavaType(), appliedArg);
             }
         }
         return appliedArg;

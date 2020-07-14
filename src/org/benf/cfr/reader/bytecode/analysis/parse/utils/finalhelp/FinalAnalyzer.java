@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.CompareByIndex;
@@ -302,7 +303,7 @@ public class FinalAnalyzer {
 
         // TODO : BlockType.finally?
         BlockIdentifier finallyBlock = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CATCHBLOCK);
-        FinallyStatement finallyStatement = new FinallyStatement(finallyBlock);
+        FinallyStatement finallyStatement = new FinallyStatement(BytecodeLoc.TODO, finallyBlock);
         Op03SimpleStatement finallyOp = new Op03SimpleStatement(extraBlocks, finallyStatement, newIdx);
         newIdx = newIdx.justAfter();
         newFinallyBody.add(finallyOp);
@@ -336,7 +337,7 @@ public class FinalAnalyzer {
         for (Result r : results) {
             Op03SimpleStatement rAfterEnd = r.getAfterEnd();
             if (rAfterEnd != null && rAfterEnd.getIndex().isBackJumpFrom(r.getStart())) {
-                endRewrite = new Op03SimpleStatement(extraBlocks, new GotoStatement(), newIdx);
+                endRewrite = new Op03SimpleStatement(extraBlocks, new GotoStatement(BytecodeLoc.TODO), newIdx);
                 endRewrite.addTarget(rAfterEnd);
                 rAfterEnd.addSource(endRewrite);
                 break;
@@ -423,7 +424,7 @@ public class FinalAnalyzer {
                             source.replaceTarget(start, afterEnd);
                             afterEnd.addSource(source);
                         } else {
-                            Op03SimpleStatement afterSource = new Op03SimpleStatement(source.getBlockIdentifiers(), new GotoStatement(), source.getIndex().justAfter());
+                            Op03SimpleStatement afterSource = new Op03SimpleStatement(source.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), source.getIndex().justAfter());
                             afterEnd.addSource(afterSource);
                             afterSource.addTarget(afterEnd);
                             afterSource.addSource(source);
@@ -468,7 +469,7 @@ public class FinalAnalyzer {
                                 LValue lValue = sourceAssignment.getCreatedLValue();
                                 JavaTypeInstance lValueType = lValue.getInferredJavaType().getJavaTypeInstance();
                                 if (lValueType.implicitlyCastsTo(lValueType, null)) {
-                                    Op03SimpleStatement afterSource = new Op03SimpleStatement(source.getBlockIdentifiers(), new ReturnValueStatement(new LValueExpression(lValue), returnType), source.getIndex().justAfter());
+                                    Op03SimpleStatement afterSource = new Op03SimpleStatement(source.getBlockIdentifiers(), new ReturnValueStatement(BytecodeLoc.TODO, new LValueExpression(lValue), returnType), source.getIndex().justAfter());
                                     source.replaceTarget(start, afterSource);
                                     afterSource.addSource(source);
                                     allStatements.add(afterSource);
@@ -514,7 +515,7 @@ public class FinalAnalyzer {
                     blockIdentifiers = SetFactory.newSet(blockIdentifiers);
                     blockIdentifiers.add(((CatchStatement)source.getStatement()).getCatchBlockIdent());
                 }
-                Op03SimpleStatement tmpJump = new Op03SimpleStatement(blockIdentifiers, new GotoStatement(), source.getIndex().justAfter());
+                Op03SimpleStatement tmpJump = new Op03SimpleStatement(blockIdentifiers, new GotoStatement(BytecodeLoc.TODO), source.getIndex().justAfter());
                 source.replaceTarget(origTarget, tmpJump);
                 tmpJump.addSource(source);
                 tmpJump.addTarget(origTarget);

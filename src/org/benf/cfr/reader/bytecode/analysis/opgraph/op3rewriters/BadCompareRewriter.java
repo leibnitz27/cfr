@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -52,14 +53,14 @@ public class BadCompareRewriter extends AbstractExpressionRewriter {
         boolean safe = isSideEffectFree(lhs) && isSideEffectFree(rhs);
         ComparisonOperation compareEq;
         if (safe) {
-            compareEq = new ComparisonOperation(lhs, rhs, CompOp.EQ);
+            compareEq = new ComparisonOperation(arith.getLoc(), lhs, rhs, CompOp.EQ);
         } else {
             LValue tmp = vf.tempVariable(lhs.getInferredJavaType());
             Expression zero = Literal.getLiteralOrNull(lhs.getInferredJavaType().getRawType(), lhs.getInferredJavaType(), 0);
             if (zero == null) {
                 zero = Literal.INT_ZERO;
             }
-            compareEq = new ComparisonOperation(new AssignmentExpression(tmp, new ArithmeticOperation(lhs, rhs, ArithOp.MINUS)), zero, CompOp.EQ);
+            compareEq = new ComparisonOperation(arith.getLoc(), new AssignmentExpression(BytecodeLoc.NONE, tmp, new ArithmeticOperation(arith.getLoc(), lhs, rhs, ArithOp.MINUS)), zero, CompOp.EQ);
             lhs = new LValueExpression(tmp);
             rhs = zero;
         }
@@ -68,13 +69,13 @@ public class BadCompareRewriter extends AbstractExpressionRewriter {
                 // CmpG will return 1 if either value is nan.
             case DCMPG:
             case FCMPG:
-                return new TernaryExpression(compareEq, Literal.INT_ZERO,
-                        new TernaryExpression(new ComparisonOperation(lhs, rhs, CompOp.LT), Literal.MINUS_ONE, Literal.INT_ONE));
+                return new TernaryExpression(BytecodeLoc.NONE, compareEq, Literal.INT_ZERO,
+                        new TernaryExpression(arith.getLoc(), new ComparisonOperation(arith.getLoc(), lhs, rhs, CompOp.LT), Literal.MINUS_ONE, Literal.INT_ONE));
             // CmpL will return -1 if either value is nan.
             case DCMPL:
             case FCMPL:
-                return new TernaryExpression(compareEq, Literal.INT_ZERO,
-                        new TernaryExpression(new ComparisonOperation(lhs, rhs, CompOp.GT), Literal.INT_ONE, Literal.MINUS_ONE));
+                return new TernaryExpression(BytecodeLoc.NONE, compareEq, Literal.INT_ZERO,
+                        new TernaryExpression(arith.getLoc(), new ComparisonOperation(arith.getLoc(), lhs, rhs, CompOp.GT), Literal.INT_ONE, Literal.MINUS_ONE));
         }
         return arith;
     }

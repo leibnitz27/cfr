@@ -6,4 +6,5 @@ class MovableDumperContext {
     boolean pendingCR = false;
     int indent;
     int outputCount = 0;
+    int currentLine = 0;
 }

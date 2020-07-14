@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -21,17 +22,22 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
     private Expression array;
     private Expression index;
 
-    public ArrayIndex(Expression array, Expression index) {
-        super(new InferredJavaType(array.getInferredJavaType().getJavaTypeInstance().removeAnArrayIndirection(), InferredJavaType.Source.OPERATION));
+    public ArrayIndex(BytecodeLoc loc, Expression array, Expression index) {
+        super(loc, new InferredJavaType(array.getInferredJavaType().getJavaTypeInstance().removeAnArrayIndirection(), InferredJavaType.Source.OPERATION));
         this.array = array;
         this.index = index;
         index.getInferredJavaType().useAsWithoutCasting(RawJavaType.INT);
     }
 
-    private ArrayIndex(InferredJavaType inferredJavaType, Expression array, Expression index) {
-        super(inferredJavaType);
+    private ArrayIndex(BytecodeLoc loc, InferredJavaType inferredJavaType, Expression array, Expression index) {
+        super(loc, inferredJavaType);
         this.array = array;
         this.index = index;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, array, index);
     }
 
     @Override
@@ -42,7 +48,7 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArrayIndex(getInferredJavaType(), cloneHelper.replaceOrClone(array), cloneHelper.replaceOrClone(index));
+        return new ArrayIndex(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(array), cloneHelper.replaceOrClone(index));
     }
 
     @Override

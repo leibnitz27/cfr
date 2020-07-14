@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -30,12 +31,12 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
     // on that enum!) we have to know about the context of usage.
     private final boolean enumSwitch;
 
-    public StructuredCase(List<Expression> values, InferredJavaType inferredJavaTypeOfSwitch, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
-        this(values, inferredJavaTypeOfSwitch, body, blockIdentifier, false);
+    public StructuredCase(BytecodeLoc loc, List<Expression> values, InferredJavaType inferredJavaTypeOfSwitch, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+        this(loc, values, inferredJavaTypeOfSwitch, body, blockIdentifier, false);
     }
 
-    public StructuredCase(List<Expression> values, InferredJavaType inferredJavaTypeOfSwitch, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean enumSwitch) {
-        super(body);
+    public StructuredCase(BytecodeLoc loc, List<Expression> values, InferredJavaType inferredJavaTypeOfSwitch, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean enumSwitch) {
+        super(loc, body);
         this.blockIdentifier = blockIdentifier;
         this.enumSwitch = enumSwitch;
         this.inferredJavaTypeOfSwitch = inferredJavaTypeOfSwitch;
@@ -48,6 +49,11 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
             }
         }
         this.values = values;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

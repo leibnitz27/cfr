@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -14,14 +15,20 @@ public class MonitorEnterStatement extends MonitorStatement {
     private Expression monitor;
     private final BlockIdentifier blockIdentifier;
 
-    public MonitorEnterStatement(Expression monitor, BlockIdentifier blockIdentifier) {
+    public MonitorEnterStatement(BytecodeLoc loc, Expression monitor, BlockIdentifier blockIdentifier) {
+        super(loc);
         this.monitor = monitor;
         this.blockIdentifier = blockIdentifier;
     }
 
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        return new MonitorEnterStatement(cloneHelper.replaceOrClone(monitor), blockIdentifier);
+        return new MonitorEnterStatement(getLoc(), cloneHelper.replaceOrClone(monitor), blockIdentifier);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, monitor);
     }
 
     @Override
@@ -54,7 +61,7 @@ public class MonitorEnterStatement extends MonitorStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredSynchronized(monitor, blockIdentifier);
+        return new UnstructuredSynchronized(getLoc(), monitor, blockIdentifier);
     }
 
     @Override

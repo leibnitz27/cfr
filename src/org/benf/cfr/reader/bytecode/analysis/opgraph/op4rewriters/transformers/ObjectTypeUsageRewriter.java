@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
 import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -149,7 +150,7 @@ public class ObjectTypeUsageRewriter extends AbstractExpressionRewriter implemen
         JavaTypeInstance owningClassType = funcInv.getMethodPrototype().getClassType();
         if (owningClassType == null) return funcInv;
         if (!needsReWrite(lhsObject, owningClassType, new MemberCheck())) return funcInv;
-        return funcInv.withReplacedObject(new CastExpression(new InferredJavaType(owningClassType, InferredJavaType.Source.FORCE_TARGET_TYPE), lhsObject));
+        return funcInv.withReplacedObject(new CastExpression(BytecodeLoc.NONE, new InferredJavaType(owningClassType, InferredJavaType.Source.FORCE_TARGET_TYPE), lhsObject));
     }
 
     private LValue handleFieldVariable(final FieldVariable fieldVariable) {
@@ -165,7 +166,7 @@ public class ObjectTypeUsageRewriter extends AbstractExpressionRewriter implemen
         JavaTypeInstance owningClassType = fieldVariable.getOwningClassType();
         if (!needsReWrite(lhsObject, owningClassType, new FieldCheck())) return fieldVariable;
 
-        return fieldVariable.withReplacedObject(new CastExpression(new InferredJavaType(owningClassType, InferredJavaType.Source.FORCE_TARGET_TYPE), lhsObject));
+        return fieldVariable.withReplacedObject(new CastExpression(BytecodeLoc.NONE, new InferredJavaType(owningClassType, InferredJavaType.Source.FORCE_TARGET_TYPE), lhsObject));
     }
 
     private void markLocalVar(Expression object) {

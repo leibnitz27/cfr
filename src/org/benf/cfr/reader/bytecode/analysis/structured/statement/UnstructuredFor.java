@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
@@ -19,11 +20,17 @@ public class UnstructuredFor extends AbstractUnStructuredStatement {
     private AssignmentSimple initial;
     private List<AbstractAssignmentExpression> assignments;
 
-    public UnstructuredFor(ConditionalExpression condition, BlockIdentifier blockIdentifier, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments) {
+    public UnstructuredFor(BytecodeLoc loc, ConditionalExpression condition, BlockIdentifier blockIdentifier, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments) {
+        super(loc);
         this.condition = condition;
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;
         this.assignments = assignments;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, assignments, condition, initial);
     }
 
     @Override
@@ -50,7 +57,7 @@ public class UnstructuredFor extends AbstractUnStructuredStatement {
             throw new RuntimeException("For statement claiming wrong block");
         }
         innerBlock.removeLastContinue(blockIdentifier);
-        return new StructuredFor(condition, initial, assignments, innerBlock, blockIdentifier);
+        return new StructuredFor(getLoc(), condition, initial, assignments, innerBlock, blockIdentifier);
     }
 
 }

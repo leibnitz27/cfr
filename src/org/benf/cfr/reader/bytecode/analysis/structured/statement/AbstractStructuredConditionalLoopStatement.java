@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -15,8 +16,8 @@ public abstract class AbstractStructuredConditionalLoopStatement extends Abstrac
     protected ConditionalExpression condition;
     protected final BlockIdentifier block;
 
-    AbstractStructuredConditionalLoopStatement(ConditionalExpression condition, BlockIdentifier block, Op04StructuredStatement body) {
-        super(body);
+    AbstractStructuredConditionalLoopStatement(BytecodeLoc loc, ConditionalExpression condition, BlockIdentifier block, Op04StructuredStatement body) {
+        super(loc, body);
         this.condition = condition;
         this.block = block;
     }

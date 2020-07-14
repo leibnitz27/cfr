@@ -40,8 +40,8 @@ public class InstanceOfTreeTransformer implements StructuredStatementTransformer
                     BooleanExpression bol = (BooleanExpression)bo.getLhs();
                     BooleanOperation bor = (BooleanOperation)bo.getRhs();
                     if (bor.getOp() == BoolOp.AND && bol.getInner() instanceof InstanceOfExpression) {
-                        expression = new BooleanOperation(
-                                new BooleanOperation(bo.getLhs(), bor.getLhs(), BoolOp.AND),
+                        expression = new BooleanOperation(expression.getLoc(),
+                                new BooleanOperation(expression.getLoc(), bo.getLhs(), bor.getLhs(), BoolOp.AND),
                                 bor.getRhs(), BoolOp.AND);
                     }
                 }

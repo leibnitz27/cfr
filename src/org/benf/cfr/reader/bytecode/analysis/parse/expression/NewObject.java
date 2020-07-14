@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -18,10 +19,15 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class NewObject extends AbstractExpression {
     private final ConstantPoolEntryClass type;
 
-    public NewObject(ConstantPoolEntry type) {
+    public NewObject(BytecodeLoc loc, ConstantPoolEntry type) {
         // TODO : we have more information than this...
-        super(new InferredJavaType(((ConstantPoolEntryClass) type).getTypeInstance(), InferredJavaType.Source.EXPRESSION));
+        super(loc, new InferredJavaType(((ConstantPoolEntryClass) type).getTypeInstance(), InferredJavaType.Source.EXPRESSION));
         this.type = (ConstantPoolEntryClass) type;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -547,7 +548,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             if (expectedRawJavaType.compareAllPriorityTo(providedRawJavaType) == 0) {
                 return expression;
             }
-            return new CastExpression(new InferredJavaType(expectedRawJavaType, InferredJavaType.Source.EXPRESSION, true), expression);
+            return new CastExpression(BytecodeLoc.NONE, new InferredJavaType(expectedRawJavaType, InferredJavaType.Source.EXPRESSION, true), expression);
         }
 
     }
@@ -627,7 +628,7 @@ public class MethodPrototype implements TypeUsageCollectable {
                     continue;
                 }
             }
-            expressions.set(x, new CastExpression(new InferredJavaType(type, InferredJavaType.Source.PROTOTYPE, true), expression));
+            expressions.set(x, new CastExpression(BytecodeLoc.NONE, new InferredJavaType(type, InferredJavaType.Source.PROTOTYPE, true), expression));
         }
     }
 

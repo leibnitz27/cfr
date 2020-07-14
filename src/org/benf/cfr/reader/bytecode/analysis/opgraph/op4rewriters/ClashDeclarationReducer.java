@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -84,11 +85,11 @@ public class ClashDeclarationReducer extends AbstractExpressionRewriter implemen
             ExpressionReplacingRewriter err = new ExpressionReplacingRewriter(new LValueExpression(replaceThis), new LValueExpression(lv));
             StructuredAssignment statement = (StructuredAssignment)inThis.getStatement();
             statement.rewriteExpressions(err);
-            inThis.replaceStatement(new StructuredAssignment(lv, statement.getRvalue()));
+            inThis.replaceStatement(new StructuredAssignment(BytecodeLoc.TODO, lv, statement.getRvalue()));
         }
         Op04StructuredStatement last = inThese.get(inThese.size()-1);
         StructuredAssignment structuredAssignment = (StructuredAssignment)last.getStatement();
-        last.replaceStatement(new StructuredAssignment(lv, structuredAssignment.getRvalue(), true));
+        last.replaceStatement(new StructuredAssignment(BytecodeLoc.TODO, lv, structuredAssignment.getRvalue(), true));
     }
 
     private int goBack(int idx, List<Op04StructuredStatement> statements,

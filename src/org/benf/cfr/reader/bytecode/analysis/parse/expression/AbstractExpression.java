@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -15,17 +16,24 @@ import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.Map;
 
-public abstract class AbstractExpression implements Expression {
+public abstract class AbstractExpression implements Expression  {
 
+    private final BytecodeLoc loc;
     private final InferredJavaType inferredJavaType;
 
-    public AbstractExpression(InferredJavaType inferredJavaType) {
+    public AbstractExpression(BytecodeLoc loc, InferredJavaType inferredJavaType) {
+        this.loc = loc;
         this.inferredJavaType = inferredJavaType;
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(inferredJavaType.getJavaTypeInstance());
+    }
+
+    @Override
+    public BytecodeLoc getLoc() {
+        return loc;
     }
 
     @Override

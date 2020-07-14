@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -23,8 +24,14 @@ public class IfStatement extends GotoStatement {
     private BlockIdentifier knownElseBlock = null;
 
 
-    public IfStatement(ConditionalExpression conditionalExpression) {
+    public IfStatement(BytecodeLoc loc, ConditionalExpression conditionalExpression) {
+        super(loc);
         this.condition = conditionalExpression;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, condition);
     }
 
     @Override
@@ -68,12 +75,12 @@ public class IfStatement extends GotoStatement {
     }
 
     public void replaceWithWhileLoopStart(BlockIdentifier blockIdentifier) {
-        WhileStatement replacement = new WhileStatement(ConditionalUtils.simplify(condition.getNegated()), blockIdentifier);
+        WhileStatement replacement = new WhileStatement(getLoc(), ConditionalUtils.simplify(condition.getNegated()), blockIdentifier);
         getContainer().replaceStatement(replacement);
     }
 
     public void replaceWithWhileLoopEnd(BlockIdentifier blockIdentifier) {
-        WhileStatement replacement = new WhileStatement(ConditionalUtils.simplify(condition), blockIdentifier);
+        WhileStatement replacement = new WhileStatement(getLoc(), ConditionalUtils.simplify(condition), blockIdentifier);
         getContainer().replaceStatement(replacement);
     }
 
@@ -98,11 +105,11 @@ public class IfStatement extends GotoStatement {
             case GOTO:
             case GOTO_OUT_OF_IF:
             case GOTO_OUT_OF_TRY:
-                return new UnstructuredIf(condition, knownIfBlock, knownElseBlock);
+                return new UnstructuredIf(getLoc(), condition, knownIfBlock, knownElseBlock);
             case CONTINUE:
-                return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredContinue(getTargetStartBlock())));
+                return new StructuredIf(getLoc(), condition, new Op04StructuredStatement(new UnstructuredContinue(getLoc(), getTargetStartBlock())));
             case BREAK:
-                return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredBreak(getJumpTarget().getContainer().getBlocksEnded())));
+                return new StructuredIf(getLoc(), condition, new Op04StructuredStatement(new UnstructuredBreak(getLoc(), getJumpTarget().getContainer().getBlocksEnded())));
             case BREAK_ANONYMOUS: {
                 Statement target = getJumpTarget();
                 if (!(target instanceof AnonBreakTarget)) {
@@ -110,8 +117,8 @@ public class IfStatement extends GotoStatement {
                 }
                 AnonBreakTarget anonBreakTarget = (AnonBreakTarget) target;
                 BlockIdentifier breakFrom = anonBreakTarget.getBlockIdentifier();
-                Op04StructuredStatement unstructuredBreak = new Op04StructuredStatement(new UnstructuredAnonymousBreak(breakFrom));
-                return new StructuredIf(condition, unstructuredBreak);
+                Op04StructuredStatement unstructuredBreak = new Op04StructuredStatement(new UnstructuredAnonymousBreak(getLoc(), breakFrom));
+                return new StructuredIf(getLoc(), condition, unstructuredBreak);
             }
         }
         throw new UnsupportedOperationException("Unexpected jump type in if block - " + getJumpType());

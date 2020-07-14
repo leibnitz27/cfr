@@ -86,6 +86,9 @@ class Driver {
 
             d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, typeUsageInformation, illegalIdentifierDump);
             d = dcCommonState.getObfuscationMapping().wrap(d);
+            if (options.getOption(OptionsImpl.TRACK_BYTECODE_LOC)) {
+                d = dumperFactory.wrapLineNoDumper(d);
+            }
 
             String methname = options.getOption(OptionsImpl.METHODNAME);
             if (methname == null) {

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.InfiniteAssertRewriter;
@@ -70,9 +71,9 @@ public class AssertRewriter {
         }
 
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1,
-                new CollectMatch("ass1", new StructuredAssignment(
+                new CollectMatch("ass1", new StructuredAssignment(BytecodeLoc.NONE,
                         wcm1.getStaticVariable("assertbool", topClassType, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TEST)),
-                        new NotOperation(new BooleanExpression(
+                        new NotOperation(BytecodeLoc.NONE, new BooleanExpression(
                                 wcm1.getMemberFunction("assertmeth", "desiredAssertionStatus",
                                         new Literal(TypedLiteral.getClass(classType))
                                 )
@@ -199,11 +200,11 @@ public class AssertRewriter {
         return new ResetAfterTest(wcm1,
             new CollectMatch("ass1", new MatchSequence(
                     new BeginBlock(null),
-                    new StructuredIf(
-                                    new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))), null
+                    new StructuredIf(BytecodeLoc.NONE,
+                            new NotOperation(BytecodeLoc.NONE, new BooleanExpression(new LValueExpression(assertionStatic))), null
                     ),
                     new BeginBlock(null),
-                    new StructuredSwitch(wcm1.getExpressionWildCard("switchExpression"), null, wcm1.getBlockIdentifier("switchblock"))
+                    new StructuredSwitch(BytecodeLoc.NONE, wcm1.getExpressionWildCard("switchExpression"), null, wcm1.getBlockIdentifier("switchblock"))
             ))
         );
     }
@@ -212,62 +213,62 @@ public class AssertRewriter {
         return new ResetAfterTest(wcm1,
                     new MatchOneOf(
                             new CollectMatch("ass1", new MatchSequence(
-                                    new StructuredIf(
-                                            new BooleanOperation(
-                                                    new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))),
+                                    new StructuredIf(BytecodeLoc.NONE,
+                                            new BooleanOperation(BytecodeLoc.NONE,
+                                                    new NotOperation(BytecodeLoc.NONE, new BooleanExpression(new LValueExpression(assertionStatic))),
                                                     wcm1.getConditionalExpressionWildcard("condition"),
                                                     BoolOp.AND), null
                                     ),
                                     new BeginBlock(null),
-                                    new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                    new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
                                     new EndBlock(null)
                             )),
                             // obviated by demorgan pass?
                             new CollectMatch("ass1b", new MatchSequence(
-                                    new StructuredIf(
-                                            new NotOperation(
-                                                    new BooleanOperation(new BooleanExpression(new LValueExpression(assertionStatic)),
+                                    new StructuredIf(BytecodeLoc.NONE,
+                                            new NotOperation(BytecodeLoc.NONE,
+                                                    new BooleanOperation(BytecodeLoc.NONE, new BooleanExpression(new LValueExpression(assertionStatic)),
                                                             wcm1.getConditionalExpressionWildcard("condition"),
                                                             BoolOp.OR)), null
                                     ),
                                     new BeginBlock(null),
-                                    new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                    new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
                                     new EndBlock(null)
                             )),
                             new CollectMatch("ass1c", new MatchSequence(
-                                    new StructuredIf(new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))), null ),
+                                    new StructuredIf(BytecodeLoc.NONE, new NotOperation(BytecodeLoc.NONE, new BooleanExpression(new LValueExpression(assertionStatic))), null ),
                                     new BeginBlock(null),
-                                    new StructuredIf(wcm1.getConditionalExpressionWildcard("condition"), null ),
+                                    new StructuredIf(BytecodeLoc.NONE, wcm1.getConditionalExpressionWildcard("condition"), null ),
                                     new BeginBlock(null),
-                                    new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                    new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
                                     new EndBlock(null) ,
                                     new EndBlock(null)
                             )),
                             new CollectMatch("ass2", new MatchSequence(
                                     new MatchOneOf(
-                                            new StructuredIf(
-                                                    new BooleanOperation(
+                                            new StructuredIf(BytecodeLoc.NONE,
+                                                    new BooleanOperation(BytecodeLoc.NONE,
                                                             new BooleanExpression(new LValueExpression(assertionStatic)),
                                                             wcm1.getConditionalExpressionWildcard("condition2"),
                                                             BoolOp.OR), null),
-                                            new StructuredIf(
+                                            new StructuredIf(BytecodeLoc.NONE,
                                                     new BooleanExpression(new LValueExpression(assertionStatic)), null)
                                     ),
                                     new BeginBlock(wcm1.getBlockWildcard("condBlock")),
                                     new MatchOneOf(
-                                            new StructuredReturn(null, null),
-                                            new StructuredReturn(wcm1.getExpressionWildCard("retval"), null),
-                                            new StructuredBreak(wcm1.getBlockIdentifier("breakblock"), false)
+                                            new StructuredReturn(BytecodeLoc.NONE, null, null),
+                                            new StructuredReturn(BytecodeLoc.NONE, wcm1.getExpressionWildCard("retval"), null),
+                                            new StructuredBreak(BytecodeLoc.NONE, wcm1.getBlockIdentifier("breakblock"), false)
                                     ),
                                     new EndBlock(wcm1.getBlockWildcard("condBlock")),
-                                    new CollectMatch("ass2throw", new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception2", TypeConstants.ASSERTION_ERROR)))
+                                    new CollectMatch("ass2throw", new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("exception2", TypeConstants.ASSERTION_ERROR)))
                             )),
                             new CollectMatch("assonly", new MatchSequence(
-                                    new StructuredIf(
-                                            new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))), null
+                                    new StructuredIf(BytecodeLoc.NONE,
+                                            new NotOperation(BytecodeLoc.NONE, new BooleanExpression(new LValueExpression(assertionStatic))), null
                                     ),
                                     new BeginBlock(null),
-                                    new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                    new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
                                     new EndBlock(null)
                             ))
                     )
@@ -408,7 +409,7 @@ public class AssertRewriter {
         private Pair<Boolean, Expression> getThrowExpression(StructuredStatement throwS) {
             WildcardMatch wcm2 = new WildcardMatch();
             WildcardMatch.ConstructorInvokationSimpleWildcard constructor = wcm2.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR);
-            StructuredStatement test = new StructuredThrow(constructor);
+            StructuredStatement test = new StructuredThrow(BytecodeLoc.TODO, constructor);
             if (!test.equals(throwS)) return Pair.make(false, null);;
             Expression exceptArg = null;
             List<Expression> consArg = constructor.getMatch().getArgs();
@@ -434,8 +435,8 @@ public class AssertRewriter {
             Map<Op04StructuredStatement, StructuredExpressionYield> replacements = MapFactory.newOrderedMap();
             if (!getBranches(outer, swiBlockIdentifier, swBodyBlock, branches, replacements, false)) return null;
 
-            SwitchExpression sw = new SwitchExpression(boolIjt, struSwi.getSwitchOn(), branches);
-            return ((StructuredIf)ifStm).convertToAssertion(StructuredAssert.mkStructuredAssert(new BooleanExpression(sw), exceptArg));
+            SwitchExpression sw = new SwitchExpression(BytecodeLoc.TODO, boolIjt, struSwi.getSwitchOn(), branches);
+            return ((StructuredIf)ifStm).convertToAssertion(StructuredAssert.mkStructuredAssert(BytecodeLoc.TODO, new BooleanExpression(sw), exceptArg));
         }
 
         @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -477,7 +478,7 @@ public class AssertRewriter {
 
                     if (!(lastStm instanceof StructuredExpressionYield)) {
                         cfset.totalStatements++;
-                        block.getBlockStatements().add(new Op04StructuredStatement(new StructuredExpressionYield(Literal.TRUE)));
+                        block.getBlockStatements().add(new Op04StructuredStatement(new StructuredExpressionYield(BytecodeLoc.TODO, Literal.TRUE)));
                     }
                 }
             }
@@ -510,15 +511,15 @@ public class AssertRewriter {
                 Pair<Boolean, Expression> excepTest = getThrowExpression(throwStm);
                 if (!excepTest.getFirst()) return null;
                 exceptArg = excepTest.getSecond();
-                replacements.put(throwStm.getContainer(), new StructuredExpressionYield(Literal.FALSE));
+                replacements.put(throwStm.getContainer(), new StructuredExpressionYield(BytecodeLoc.TODO, Literal.FALSE));
             }
 
             List<SwitchExpression.Branch> branches = ListFactory.newList();
             if (!getBranches(swiBlockIdentifier, swiBlockIdentifier, swBodyBlock, branches, replacements, true)) return null;
             // And add yield true to the end of every branch that could roll off.
 
-            SwitchExpression sw = new SwitchExpression(boolIjt, struSwi.getSwitchOn(), branches);
-            return ((StructuredIf)ifStm).convertToAssertion(StructuredAssert.mkStructuredAssert(new BooleanExpression(sw), exceptArg));
+            SwitchExpression sw = new SwitchExpression(BytecodeLoc.TODO, boolIjt, struSwi.getSwitchOn(), branches);
+            return ((StructuredIf)ifStm).convertToAssertion(StructuredAssert.mkStructuredAssert(BytecodeLoc.TODO, new BooleanExpression(sw), exceptArg));
 
         }
     }
@@ -581,13 +582,13 @@ public class AssertRewriter {
                         totalStatements--;
                         trueFound++;
                         single = Literal.TRUE;
-                        replacements.put(in.getContainer(), new StructuredExpressionYield(single));
+                        replacements.put(in.getContainer(), new StructuredExpressionYield(BytecodeLoc.NONE, single));
                         return in;
                     case FALSE_BLOCK:
                         totalStatements--;
                         falseFound++;
                         single = Literal.FALSE;
-                        replacements.put(in.getContainer(), new StructuredExpressionYield(single));
+                        replacements.put(in.getContainer(), new StructuredExpressionYield(BytecodeLoc.NONE, single));
                         return in;
                     case INNER:
                         break;
@@ -657,9 +658,9 @@ public class AssertRewriter {
             if (name.equals("ass1") || name.equals("ass1b") || name.equals("ass1c")) {
                 StructuredIf ifStatement = (StructuredIf) statement;
                 ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
-                if (name.equals("ass1") || name.equals("ass1c")) condition = new NotOperation(condition);
+                if (name.equals("ass1") || name.equals("ass1c")) condition = new NotOperation(BytecodeLoc.TODO, condition);
                 condition = condition.simplify();
-                StructuredStatement structuredAssert = ifStatement.convertToAssertion(StructuredAssert.mkStructuredAssert(condition,arg));
+                StructuredStatement structuredAssert = ifStatement.convertToAssertion(StructuredAssert.mkStructuredAssert(BytecodeLoc.TODO, condition,arg));
                 ifStatement.getContainer().replaceStatement(structuredAssert);
             } else if (name.equals("ass2")) {
                 if (ass2throw == null) throw new IllegalStateException();
@@ -670,14 +671,14 @@ public class AssertRewriter {
                 if (conditionalExpression == null)
                     conditionalExpression = new BooleanExpression(new Literal(TypedLiteral.getBoolean(0)));
                 // The if statement becomes an assert conditjon, the throw statement becomes the content of the if block.
-                StructuredStatement structuredAssert = StructuredAssert.mkStructuredAssert(conditionalExpression,arg);
+                StructuredStatement structuredAssert = StructuredAssert.mkStructuredAssert(BytecodeLoc.TODO, conditionalExpression,arg);
                 ifStatement.getContainer().replaceStatement(structuredAssert);
                 ass2throw.getContainer().replaceStatement(ifStatement.getIfTaken().getStatement());
             } else if (name.equals("ass2throw")) {
                 ass2throw = statement;
             } else if (name.equals("assonly")) {
                 StructuredIf ifStatement = (StructuredIf) statement;
-                StructuredStatement structuredAssert = ifStatement.convertToAssertion(StructuredAssert.mkStructuredAssert(new BooleanExpression(Literal.FALSE),arg));
+                StructuredStatement structuredAssert = ifStatement.convertToAssertion(StructuredAssert.mkStructuredAssert(BytecodeLoc.TODO, new BooleanExpression(Literal.FALSE),arg));
                 ifStatement.getContainer().replaceStatement(structuredAssert);
             }
         }

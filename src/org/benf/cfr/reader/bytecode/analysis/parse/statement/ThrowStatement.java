@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -16,13 +17,19 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class ThrowStatement extends ReturnStatement {
     private Expression rvalue;
 
-    public ThrowStatement(Expression rvalue) {
+    public ThrowStatement(BytecodeLoc loc, Expression rvalue) {
+        super(loc);
         this.rvalue = rvalue;
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, rvalue);
+    }
+
+    @Override
     public ReturnStatement deepClone(CloneHelper cloneHelper) {
-        return new ThrowStatement(cloneHelper.replaceOrClone(rvalue));
+        return new ThrowStatement(getLoc(), cloneHelper.replaceOrClone(rvalue));
     }
 
     @Override
@@ -47,7 +54,7 @@ public class ThrowStatement extends ReturnStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredThrow(rvalue);
+        return new StructuredThrow(getLoc(), rvalue);
     }
 
     @Override

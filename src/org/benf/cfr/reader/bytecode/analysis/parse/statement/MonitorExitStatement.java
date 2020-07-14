@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -16,8 +17,14 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class MonitorExitStatement extends MonitorStatement {
     private Expression monitor;
 
-    public MonitorExitStatement(Expression monitor) {
+    public MonitorExitStatement(BytecodeLoc loc, Expression monitor) {
+        super(loc);
         this.monitor = monitor;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, monitor);
     }
 
     @Override
@@ -27,7 +34,7 @@ public class MonitorExitStatement extends MonitorStatement {
 
     @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        return new MonitorExitStatement(cloneHelper.replaceOrClone(monitor));
+        return new MonitorExitStatement(getLoc(), cloneHelper.replaceOrClone(monitor));
     }
 
     @Override

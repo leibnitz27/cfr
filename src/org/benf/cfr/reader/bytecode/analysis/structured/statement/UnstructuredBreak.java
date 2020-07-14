@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -12,7 +13,8 @@ public class UnstructuredBreak extends AbstractUnStructuredStatement {
 
     private final Set<BlockIdentifier> blocksEnding;
 
-    public UnstructuredBreak(Set<BlockIdentifier> blocksEnding) {
+    public UnstructuredBreak(BytecodeLoc loc, Set<BlockIdentifier> blocksEnding) {
+        super(loc);
         this.blocksEnding = blocksEnding;
     }
 
@@ -23,6 +25,11 @@ public class UnstructuredBreak extends AbstractUnStructuredStatement {
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -50,6 +57,6 @@ public class UnstructuredBreak extends AbstractUnStructuredStatement {
         } else {
             bestBlock.addForeignRef();
         }
-        return new StructuredBreak(bestBlock, localBreak);
+        return new StructuredBreak(getLoc(), bestBlock, localBreak);
     }
 }

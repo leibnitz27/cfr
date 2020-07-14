@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -15,12 +16,18 @@ public class ExpressionStatement extends AbstractStatement {
     private Expression expression;
 
     public ExpressionStatement(Expression expression) {
+        super(expression.getLoc());
         this.expression = expression;
     }
 
     @Override
     public Dumper dump(Dumper d) {
         return expression.dump(d).endCodeln();
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, expression);
     }
 
     @Override
@@ -49,7 +56,7 @@ public class ExpressionStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredExpressionStatement(expression, false);
+        return new StructuredExpressionStatement(getLoc(), expression, false);
     }
 
     @Override

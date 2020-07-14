@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -20,16 +21,21 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
     private final ArithOp op;
     private Expression mutation;
 
-    public ArithmeticMutationOperation(LValue mutated, Expression mutation, ArithOp op) {
-        super(mutated.getInferredJavaType());
+    public ArithmeticMutationOperation(BytecodeLoc loc, LValue mutated, Expression mutation, ArithOp op) {
+        super(loc, mutated.getInferredJavaType());
         this.mutated = mutated;
         this.op = op;
         this.mutation = mutation;
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, mutation);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArithmeticMutationOperation(cloneHelper.replaceOrClone(mutated), cloneHelper.replaceOrClone(mutation), op);
+        return new ArithmeticMutationOperation(getLoc(), cloneHelper.replaceOrClone(mutated), cloneHelper.replaceOrClone(mutation), op);
     }
 
     @Override
@@ -95,12 +101,12 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
 
     @Override
     public ArithmeticPostMutationOperation getPostMutation() {
-        return new ArithmeticPostMutationOperation(mutated, op);
+        return new ArithmeticPostMutationOperation(getLoc(), mutated, op);
     }
 
     @Override
     public ArithmeticPreMutationOperation getPreMutation() {
-        return new ArithmeticPreMutationOperation(mutated, op);
+        return new ArithmeticPreMutationOperation(getLoc(), mutated, op);
     }
 
     @Override

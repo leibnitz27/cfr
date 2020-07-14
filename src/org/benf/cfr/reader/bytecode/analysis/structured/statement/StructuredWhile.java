@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -15,7 +16,12 @@ import java.util.List;
 
 public class StructuredWhile extends AbstractStructuredConditionalLoopStatement {
     public StructuredWhile(ConditionalExpression condition, Op04StructuredStatement body, BlockIdentifier block) {
-        super(condition, block, body);
+        super(BytecodeLoc.NONE, condition, block, body);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, getCondition());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -23,9 +24,14 @@ import java.util.List;
 public class MemberFunctionInvokationExplicit extends AbstractFunctionInvokationExplicit {
     private Expression object;
 
-    MemberFunctionInvokationExplicit(InferredJavaType res, JavaTypeInstance clazz, Expression object, String method, List<Expression> args) {
-        super(res, clazz, method, args);
+    MemberFunctionInvokationExplicit(BytecodeLoc loc, InferredJavaType res, JavaTypeInstance clazz, Expression object, String method, List<Expression> args) {
+        super(loc, res, clazz, method, args);
         this.object = object;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, object);
     }
 
     @Override
@@ -95,6 +101,6 @@ public class MemberFunctionInvokationExplicit extends AbstractFunctionInvokation
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new MemberFunctionInvokationExplicit(getInferredJavaType(), getClazz(), object, getMethod(), cloneHelper.replaceOrClone(getArgs()));
+        return new MemberFunctionInvokationExplicit(getLoc(), getInferredJavaType(), getClazz(), object, getMethod(), cloneHelper.replaceOrClone(getArgs()));
     }
 }

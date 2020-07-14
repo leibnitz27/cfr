@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -24,6 +25,7 @@ public class StructuredDefinition extends AbstractStructuredStatement {
     private LValue scopedEntity;
 
     public StructuredDefinition(LValue scopedEntity) {
+        super(BytecodeLoc.NONE);
         this.scopedEntity = scopedEntity;
     }
 
@@ -47,6 +49,11 @@ public class StructuredDefinition extends AbstractStructuredStatement {
             }
         }
         return dumper;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

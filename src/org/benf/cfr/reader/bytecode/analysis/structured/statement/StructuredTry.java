@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -23,10 +24,16 @@ public class StructuredTry extends AbstractStructuredStatement {
     private List<Op04StructuredStatement> resourceBlock;
 
     public StructuredTry(Op04StructuredStatement tryBlock, BlockIdentifier tryBlockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.tryBlock = tryBlock;
         this.finallyBlock = null;
         this.tryBlockIdentifier = tryBlockIdentifier;
         this.resourceBlock = null;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     public void addResources(List<Op04StructuredStatement> resources) {

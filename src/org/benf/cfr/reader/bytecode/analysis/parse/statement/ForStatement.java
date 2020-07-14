@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
@@ -21,7 +22,8 @@ public class ForStatement extends AbstractStatement {
     private AssignmentSimple initial;
     private List<AbstractAssignmentExpression> assignments;
 
-    ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments) {
+    ForStatement(BytecodeLoc loc, ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments) {
+        super(loc);
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;
@@ -34,7 +36,12 @@ public class ForStatement extends AbstractStatement {
         for (AbstractAssignmentExpression ae : assignments) {
             assigns.add((AbstractAssignmentExpression)cloneHelper.replaceOrClone(ae));
         }
-        return new ForStatement((ConditionalExpression)cloneHelper.replaceOrClone(condition), blockIdentifier, (AssignmentSimple)initial.deepClone(cloneHelper), assigns);
+        return new ForStatement(getLoc(), (ConditionalExpression)cloneHelper.replaceOrClone(condition), blockIdentifier, (AssignmentSimple)initial.deepClone(cloneHelper), assigns);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, assignments, condition, initial);
     }
 
     @Override
@@ -78,7 +85,7 @@ public class ForStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredFor(condition, blockIdentifier, initial, assignments);
+        return new UnstructuredFor(getLoc(), condition, blockIdentifier, initial, assignments);
     }
 
     public BlockIdentifier getBlockIdentifier() {

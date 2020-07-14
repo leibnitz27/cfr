@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -33,7 +34,8 @@ public class AssignmentSimple extends AbstractAssignment {
     private LValue lvalue;
     private Expression rvalue;
 
-    public AssignmentSimple(LValue lvalue, Expression rvalue) {
+    public AssignmentSimple(BytecodeLoc loc, LValue lvalue, Expression rvalue) {
+        super(loc);
         this.lvalue = lvalue;
         this.rvalue = lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType()).performCastAction(rvalue, lvalue.getInferredJavaType());
     }
@@ -44,8 +46,13 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, rvalue);
+    }
+
+    @Override
     public Statement deepClone(CloneHelper cloneHelper) {
-        return new AssignmentSimple(cloneHelper.replaceOrClone(lvalue), cloneHelper.replaceOrClone(rvalue));
+        return new AssignmentSimple(getLoc(), cloneHelper.replaceOrClone(lvalue), cloneHelper.replaceOrClone(rvalue));
     }
 
     @Override
@@ -137,7 +144,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public AbstractAssignmentExpression getInliningExpression() {
-        return new AssignmentExpression(getCreatedLValue(), getRValue());
+        return new AssignmentExpression(getLoc(), getCreatedLValue(), getRValue());
     }
 
     @Override
@@ -162,7 +169,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredAssignment(lvalue, rvalue);
+        return new StructuredAssignment(getLoc(), lvalue, rvalue);
     }
 
     @Override
