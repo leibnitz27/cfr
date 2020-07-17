@@ -229,7 +229,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public String suggestVarName() {
-        return "arr" + underlyingType.suggestVarName();
+        return underlyingType.suggestVarName() + "Array";
     }
 
     @Override
