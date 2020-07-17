@@ -318,7 +318,13 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 }
             }
             if (Keywords.isAKeyword(namedVariable.getStringName())) {
-                namedVariable.forceName(namedVariable.getStringName() + "_");
+                // it is common amongst java users to replace s with z to avoid reserved keywords
+                // very common example: clazz instead of class
+                String transposed = namedVariable.getStringName().replace("s", "z");
+                if (Keywords.isAKeyword(transposed)
+                    namedVariable.forceName("_" + transposed);
+                else
+                    namedVariable.forceName(transposed);
             }
 
             defineHere(localVariable);
