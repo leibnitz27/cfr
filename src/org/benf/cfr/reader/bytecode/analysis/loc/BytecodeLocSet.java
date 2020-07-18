@@ -43,4 +43,9 @@ public class BytecodeLocSet extends BytecodeLoc {
     public Collection<Integer> getOffsetsForMethod(Method method) {
         return locs.get(method);
     }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
 }

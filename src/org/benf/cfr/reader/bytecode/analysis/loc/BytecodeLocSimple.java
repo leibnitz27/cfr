@@ -38,4 +38,9 @@ class BytecodeLocSimple extends BytecodeLoc {
     public Collection<Integer> getOffsetsForMethod(Method method) {
         return Collections.singleton(offset);
     }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
 }

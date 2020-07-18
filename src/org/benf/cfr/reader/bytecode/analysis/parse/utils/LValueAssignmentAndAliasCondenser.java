@@ -236,6 +236,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 return null;
             }
             lvSc.copyBlockInformationFrom(statementContainer);
+            lvSc.copyBytecodeInformationFrom(statementContainer);
             statementContainer.nopOut();
         }
 

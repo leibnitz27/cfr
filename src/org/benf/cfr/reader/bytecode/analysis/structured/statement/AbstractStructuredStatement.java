@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactoryImpl;
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -24,6 +26,12 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
 
     public AbstractStructuredStatement(BytecodeLoc loc) {
         this.loc = loc;
+    }
+
+    @Override
+    public void addLoc(HasByteCodeLoc loc) {
+        if (loc.getLoc().isEmpty()) return;
+        this.loc = BytecodeLocFactoryImpl.INSTANCE.combine(this, loc);
     }
 
     @Override

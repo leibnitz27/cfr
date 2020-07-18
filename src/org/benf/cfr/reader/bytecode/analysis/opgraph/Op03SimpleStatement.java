@@ -291,6 +291,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (this.firstStatementInThisBlock == null) this.firstStatementInThisBlock = other3.firstStatementInThisBlock;
     }
 
+    @Override
+    public void copyBytecodeInformationFrom(StatementContainer<Statement> other) {
+        Op03SimpleStatement other3 = (Op03SimpleStatement) other;
+        this.getStatement().addLoc(other3.getStatement());
+
+    }
+
     // Not just a nop, but a nop we've determined we want to remove.
     public boolean isAgreedNop() {
         return isNop;

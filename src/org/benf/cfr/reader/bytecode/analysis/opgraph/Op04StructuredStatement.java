@@ -191,6 +191,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void copyBytecodeInformationFrom(StatementContainer<StructuredStatement> other) {
+        throw new UnsupportedOperationException();
+    }
 
     private boolean hasUnstructuredSource() {
         for (Op04StructuredStatement source : sources) {

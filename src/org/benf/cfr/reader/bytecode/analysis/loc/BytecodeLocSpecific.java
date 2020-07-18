@@ -36,4 +36,9 @@ class BytecodeLocSpecific extends BytecodeLoc {
     public Collection<Integer> getOffsetsForMethod(Method method) {
         return Collections.emptyList();
     }
+
+    @Override
+    public boolean isEmpty() {
+        return true;
+    }
 }

@@ -33,4 +33,6 @@ public abstract class BytecodeLoc {
     public abstract Collection<Method> getMethods();
 
     public abstract Collection<Integer> getOffsetsForMethod(Method method);
+
+    public abstract boolean isEmpty();
 }

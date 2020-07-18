@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.wildcard;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -496,6 +497,10 @@ public class WildcardMatch {
         @Override
         public BytecodeLoc getLoc() {
             throw new ConfusedCFRException("Should not be getting loc of wildcard");
+        }
+
+        @Override
+        public void addLoc(HasByteCodeLoc loc) {
         }
 
         @Override
