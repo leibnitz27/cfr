@@ -3,11 +3,14 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 class BytecodeTrackingDumper extends DelegatingDumper {
 
@@ -17,9 +20,11 @@ class BytecodeTrackingDumper extends DelegatingDumper {
             return new MethodBytecode();
         }
     });
+    private BytecodeDumpConsumer consumer;
 
-    BytecodeTrackingDumper(Dumper dumper) {
+    BytecodeTrackingDumper(Dumper dumper, BytecodeDumpConsumer consumer) {
         super(dumper);
+        this.consumer = consumer;
     }
 
     @Override
@@ -60,6 +65,7 @@ class BytecodeTrackingDumper extends DelegatingDumper {
 
     class MethodBytecode {
         Map<Integer, LocAtLine> locAtLineMap = MapFactory.newTreeMap();
+
         public void add(Collection<Integer> offsetsForMethod, int currentDepth, int currentLine) {
             for (Integer offset : offsetsForMethod) {
                 LocAtLine known = locAtLineMap.get(offset);
@@ -70,5 +76,42 @@ class BytecodeTrackingDumper extends DelegatingDumper {
                 }
             }
         }
+
+        TreeMap<Integer, Integer> getFinal() {
+            TreeMap<Integer, Integer> res = MapFactory.newTreeMap();
+            Integer lastLine = -1;
+            for (Map.Entry<Integer, LocAtLine> entry : locAtLineMap.entrySet()) {
+                Integer line = entry.getValue().currentLine;
+                if (lastLine.equals(line)) continue;
+                res.put(entry.getKey(), line);
+                lastLine = line;
+            }
+            return res;
+        }
+    }
+
+    @Override
+    public void close() {
+        /*
+         * We need to flush the mappings we have generated to an appropriate consumer.
+         */
+        List<BytecodeDumpConsumer.Item> result = ListFactory.newList();
+        for (Map.Entry<Method, MethodBytecode> entry : perMethod.entrySet()) {
+            final TreeMap<Integer, Integer> data = entry.getValue().getFinal();
+            final Method method = entry.getKey();
+            result.add(new BytecodeDumpConsumer.Item() {
+                @Override
+                public Method getMethod() {
+                    return method;
+                }
+
+                @Override
+                public TreeMap<Integer, Integer> getBytecodeLocs() {
+                    return data;
+                }
+            });
+        }
+        consumer.accept(result);
+        delegate.close();
     }
 }

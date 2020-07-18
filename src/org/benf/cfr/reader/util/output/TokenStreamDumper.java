@@ -15,6 +15,7 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 
+import java.io.BufferedOutputStream;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -366,5 +367,11 @@ public class TokenStreamDumper extends AbstractDumper {
     @Override
     public int getCurrentLine() {
         return context.currentLine;
+    }
+
+    @Override
+    public BufferedOutputStream getAdditionalOutputStream(String description) {
+        // Not expected to go down this path?
+        throw new IllegalStateException();
     }
 }

@@ -135,6 +135,7 @@ public abstract class StreamDumper extends AbstractDumper {
     public Dumper newln() {
         if (context.pendingCR) {
             write("\n");
+            context.currentLine++;
             if (context.atStart && context.inBlockComment != BlockCommentState.Not) {
                 doIndent();
             }
@@ -213,6 +214,8 @@ public abstract class StreamDumper extends AbstractDumper {
 
     @Override
     public int getCurrentLine() {
-        return context.currentLine;
+        int res = context.currentLine;
+        if (context.pendingCR) res++;
+        return res;
     }
 }

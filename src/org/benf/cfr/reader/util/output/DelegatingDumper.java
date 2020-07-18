@@ -8,6 +8,8 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
+import java.io.BufferedOutputStream;
+
 public abstract class DelegatingDumper implements Dumper {
     protected Dumper delegate;
 
@@ -190,6 +192,11 @@ public abstract class DelegatingDumper implements Dumper {
     @Override
     public void informBytecodeLoc(HasByteCodeLoc loc) {
         delegate.informBytecodeLoc(loc);
+    }
+
+    @Override
+    public BufferedOutputStream getAdditionalOutputStream(String description) {
+        return delegate.getAdditionalOutputStream(description);
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.TypeContext;
 
+import java.io.BufferedOutputStream;
 import java.util.Set;
 
 public class TypeUsageCollectingDumper implements Dumper {
@@ -201,5 +202,10 @@ public class TypeUsageCollectingDumper implements Dumper {
 
     @Override
     public void informBytecodeLoc(HasByteCodeLoc loc) {
+    }
+
+    @Override
+    public BufferedOutputStream getAdditionalOutputStream(String description) {
+        throw new IllegalStateException();
     }
 }

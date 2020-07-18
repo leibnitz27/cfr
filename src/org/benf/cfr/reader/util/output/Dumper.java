@@ -8,6 +8,8 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
+import java.io.BufferedOutputStream;
+
 /*
  * NB: This interface is NOT an externally visible one, and is subject to change.
  *
@@ -103,4 +105,6 @@ public interface Dumper extends MethodErrorCollector {
 
     void informBytecodeLoc(HasByteCodeLoc loc);
 
+    // TODO : I probably want something more structured here, but this will do for now.
+    BufferedOutputStream getAdditionalOutputStream(String description);
 }

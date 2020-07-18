@@ -10,6 +10,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.MethodErrorCollector.SummaryDumperMethodErrorCollector;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,8 +55,15 @@ public class SinkDumperFactory implements DumperFactory {
 
         for (OutputSinkFactory.SinkClass sinkClass : linesSupported) {
             switch (sinkClass) {
-                case LINE_NUMBER_MAPPING:
-                    return new BytecodeTrackingDumper(dumper);
+                case LINE_NUMBER_MAPPING: {
+                    BytecodeDumpConsumer d = new BytecodeDumpConsumer() {
+                        @Override
+                        public void accept(Collection<Item> items) {
+                            int x = 1;
+                        }
+                    };
+                    return new BytecodeTrackingDumper(dumper, d);
+                }
             }
         }
         return dumper;

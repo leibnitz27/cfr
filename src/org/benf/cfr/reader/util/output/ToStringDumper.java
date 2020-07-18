@@ -11,6 +11,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.collections.SetFactory;
 
+import java.io.BufferedOutputStream;
 import java.util.Set;
 
 public class ToStringDumper extends AbstractDumper {
@@ -187,5 +188,10 @@ public class ToStringDumper extends AbstractDumper {
     @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
         return new TypeOverridingDumper(this, innerclassTypeUsageInformation);
+    }
+
+    @Override
+    public BufferedOutputStream getAdditionalOutputStream(String description) {
+        throw new IllegalStateException();
     }
 }
