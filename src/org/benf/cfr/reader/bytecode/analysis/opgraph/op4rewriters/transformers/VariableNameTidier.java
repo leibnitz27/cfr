@@ -299,9 +299,13 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         }
 
         void defineHere(StructuredStatement statement, LocalVariable localVariable) {
-
             NamedVariable namedVariable = localVariable.getName();
-            if (!namedVariable.isGoodName()) {
+            
+            // "_" as variable name is illegal since java 9: https://en.wikipedia.org/wiki/List_of_Java_keywords#Special_identifiers
+            boolean illegalUnderscore = namedVariable.getStringName().equals("_") && 
+                method.getClassFile().getClassFileVersion().equalOrLater(ClassFileVersion.JAVA_9);
+            
+            if (!namedVariable.isGoodName() || illegalUnderscore) {
                 String suggestion = null;
                 if (statement != null) {
                     suggestion = statement.suggestName(localVariable, new Predicate<String>() {
@@ -317,16 +321,10 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                     namedVariable.forceName(suggestion);
                 }
             }
-            if (Keywords.isAKeyword(namedVariable.getStringName())) {
-                // it is common amongst java users to replace s with z to avoid reserved keywords
-                // very common example: clazz instead of class
-                String transposed = namedVariable.getStringName().replace("s", "z");
-                if (Keywords.isAKeyword(transposed))
-                    namedVariable.forceName("_" + transposed);
-                else
-                    namedVariable.forceName(transposed);
+            String stringName = namedVariable.getStringName();
+            if (Keywords.isAKeyword(stringName)) {
+                namedVariable.forceName(Keywords.getReplacement(stringName));
             }
-
             defineHere(localVariable);
         }
 
