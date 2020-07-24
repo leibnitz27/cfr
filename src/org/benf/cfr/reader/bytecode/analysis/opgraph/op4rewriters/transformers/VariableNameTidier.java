@@ -24,7 +24,7 @@ import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.ClassCache;
-import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
@@ -299,9 +299,13 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         }
 
         void defineHere(StructuredStatement statement, LocalVariable localVariable) {
-
             NamedVariable namedVariable = localVariable.getName();
-            if (!namedVariable.isGoodName()) {
+            
+            // "_" as variable name is illegal since java 9: https://en.wikipedia.org/wiki/List_of_Java_keywords#Special_identifiers
+            boolean illegalUnderscore = namedVariable.getStringName().equals("_") && 
+                method.getClassFile().getClassFileVersion().equalOrLater(ClassFileVersion.JAVA_9);
+            
+            if (!namedVariable.isGoodName() || illegalUnderscore) {
                 String suggestion = null;
                 if (statement != null) {
                     suggestion = statement.suggestName(localVariable, new Predicate<String>() {
@@ -317,10 +321,10 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                     namedVariable.forceName(suggestion);
                 }
             }
-            if (Keywords.isAKeyword(namedVariable.getStringName())) {
-                namedVariable.forceName(namedVariable.getStringName() + "_");
+            String stringName = namedVariable.getStringName();
+            if (Keywords.isAKeyword(stringName)) {
+                namedVariable.forceName(Keywords.getReplacement(stringName));
             }
-
             defineHere(localVariable);
         }
 

@@ -1,12 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.variables;
 
-import org.benf.cfr.reader.util.collections.SetFactory;
+import java.util.*;
 
-import java.util.Set;
+import org.benf.cfr.reader.util.collections.*;
 
 public class Keywords {
     // from https://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html
-    private static final Set<String> keywords = SetFactory.newSet(
+    private static final List<String> keywords =  ListFactory.newList(
             "abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized",
             "boolean", "do", "if", "private", "this",
@@ -19,8 +19,30 @@ public class Keywords {
             "const", "float", "native", "super", "while",
             "true", "false", "null" // Not keywords (see url), but literals you can't use.
     );
+    
+    /**
+     * Replacements for the keywords list, in order
+     * Tries to use common given variable names
+     */
+    private static final List<String> replacements =  ListFactory.newList(
+        "abstrct", "_continue", "_for", "_new", "zwitch",
+        "asert", "deflt", "_goto", "pckg", "synched",
+        "bool", "_do", "_if", "privt", "that",
+        "_break", "doubleVal", "impl", "protctd", "_throw",
+        "byteVal", "elze", "imprt", "pblc", "throwz",
+        "caze", "enumVal", "instanzeof", "ret", "tranzient",
+        "_catch", "extendz", "intVal", "shortVal", "_try",
+        "_char", "_final", "interfaze", "_static", "_void",
+        "clazz", "finaly", "longVal", "strict", "volatil",
+        "constant", "floatVal", "_native", "_super", "_while",
+        "tru", "fals", "nullVal" 
+    );
 
     public static boolean isAKeyword(String string) {
         return keywords.contains(string);
+    }
+
+    public static String getReplacement(String keyword) {
+        return replacements.get(keywords.indexOf(keyword));
     }
 }
