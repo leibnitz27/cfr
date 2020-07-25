@@ -302,7 +302,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             NamedVariable namedVariable = localVariable.getName();
             
             // "_" as variable name is illegal since java 9: https://en.wikipedia.org/wiki/List_of_Java_keywords#Special_identifiers
-            boolean illegalUnderscore = namedVariable.getStringName().equals("_") && 
+            boolean illegalUnderscore = namedVariable.getStringName().equals("_") &&
                 method.getClassFile().getClassFileVersion().equalOrLater(ClassFileVersion.JAVA_9);
             
             if (!namedVariable.isGoodName() || illegalUnderscore) {
@@ -337,19 +337,14 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         }
 
         void defineHere(LocalVariable localVariable) {
-
-            /* Check if it's already defined
-             *
-             */
+            // Check if it's already defined
             NamedVariable namedVariable = localVariable.getName();
             final String base = namedVariable.getStringName();
             if (!alreadyDefined(base)) {
                 scope.getFirst().defineHere(base);
                 return;
             }
-            /*
-             * Already defined.  Get a new name by incrementing postfix.
-             */
+            // Already defined.  Get a new name by incrementing postfix.
             String postfixedVarName;
             do {
                 postfixedVarName = getNext(base);
