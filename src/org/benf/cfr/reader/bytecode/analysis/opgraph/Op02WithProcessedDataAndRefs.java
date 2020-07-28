@@ -1,8 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
-import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactory;
-import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactoryImpl;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecovery;
@@ -384,18 +382,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    private Statement buildInvokeDynamic(Method method, DCCommonState dcCommonState) {
+    private Statement buildInvokeDynamic(Method method, DCCommonState dcCommonState, DecompilerComments comments) {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
         ConstantPoolEntryNameAndType nameAndType = invokeDynamic.getNameAndTypeEntry();
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
         ConstantPoolEntryUTF8 name = nameAndType.getName();
         MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(dcCommonState, null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, false, new VariableNamerDefault());
-        return buildInvokeDynamic(method.getClassFile(), dcCommonState, name.getValue(), dynamicPrototype, idx, false);
+        return buildInvokeDynamic(method.getClassFile(), dcCommonState, name.getValue(), dynamicPrototype, idx, false, comments);
     }
 
     private Statement buildInvokeDynamic(ClassFile classFile, DCCommonState dcCommonState, String name, MethodPrototype dynamicPrototype,
-                                         int idx, boolean showBoilerArgs) {
+                                         int idx, boolean showBoilerArgs, DecompilerComments comments) {
 
         BootstrapMethodInfo bootstrapMethodInfo = classFile.getBootstrapMethods().getBootStrapMethodInfo(idx);
         ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
@@ -410,7 +408,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         switch (dynamicInvokeType) {
             case UNKNOWN:
             case BOOTSTRAP: {
-                callargs = buildInvokeBootstrapArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef, showBoilerArgs, classFile, dcCommonState);
+                callargs = buildInvokeBootstrapArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef, showBoilerArgs, classFile, dcCommonState, comments);
                 List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
                 if (dynamicInvokeType == DynamicInvokeType.UNKNOWN) {
                     List<JavaTypeInstance> typeArgs = dynamicPrototype.getArgs();
@@ -617,7 +615,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     @SuppressWarnings("unused")
     private List<Expression> buildInvokeBootstrapArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef,
-                                                      boolean showBoilerArgs, ClassFile classFile, DCCommonState state) {
+                                                      boolean showBoilerArgs, ClassFile classFile, DCCommonState state, DecompilerComments comments) {
         final int ARG_OFFSET = 3;
         List<JavaTypeInstance> argTypes = prototype.getArgs();
         ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
@@ -637,7 +635,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         if (countMismatch) {
-            throw new IllegalStateException("Dynamic invoke arg count mismatch " + bootstrapArguments.length + "(+3) vs " + argTypes.size());
+            comments.addComment(DecompilerComment.DYNAMIC_SIGNATURE_MISMATCH);
         }
 
         List<Expression> callargs = ListFactory.newList();
@@ -954,7 +952,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return e;
     }
 
-    private Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState, TypeHintRecovery typeHintRecovery) {
+    private Statement createStatement(final Method method, DecompilerComments comments, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState, TypeHintRecovery typeHintRecovery) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -1218,7 +1216,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case INVOKEDYNAMIC: {
                 // Java uses invokedynamic for lambda expressions.
                 // see https://docs.oracle.com/javase/8/docs/api/java/lang/invoke/LambdaMetafactory.html
-                return buildInvokeDynamic(method, dcCommonState);
+                return buildInvokeDynamic(method, dcCommonState, comments);
             }
             case INVOKESPECIAL:
                 // Invoke special == invokenonvirtual.
@@ -1404,7 +1402,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LDC:
             case LDC_W:
             case LDC2_W:
-                return new AssignmentSimple(loc, getStackLValue(0), getLiteralConstantPoolEntry(method, cpEntries[0]));
+                return new AssignmentSimple(loc, getStackLValue(0), getLiteralConstantPoolEntry(method, cpEntries[0], comments));
             case MONITORENTER:
                 return new MonitorEnterStatement(loc, getStackRValue(0), blockIdentifierFactory.getNextBlockIdentifier(BlockType.MONITOR));
             case MONITOREXIT:
@@ -1473,12 +1471,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    private Expression getLiteralConstantPoolEntry(Method m, ConstantPoolEntry cpe) {
+    private Expression getLiteralConstantPoolEntry(Method m, ConstantPoolEntry cpe, DecompilerComments comments) {
         if (cpe instanceof ConstantPoolEntryLiteral) {
             return new Literal(TypedLiteral.getConstantPoolEntry(cp, cpe));
         }
         if (cpe instanceof ConstantPoolEntryDynamicInfo) {
-            return getDynamicLiteral(m, (ConstantPoolEntryDynamicInfo) cpe);
+            return getDynamicLiteral(m, (ConstantPoolEntryDynamicInfo) cpe, comments);
         }
         if (cpe instanceof ConstantPoolEntryMethodHandle) {
             return getMethodHandleLiteral((ConstantPoolEntryMethodHandle) cpe);
@@ -1498,14 +1496,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return new MethodHandlePlaceholder(loc, cpe);
     }
 
-    private Expression getDynamicLiteral(Method method, ConstantPoolEntryDynamicInfo cpe) {
+    private Expression getDynamicLiteral(Method method, ConstantPoolEntryDynamicInfo cpe, DecompilerComments comments) {
         ClassFile classFile = method.getClassFile();
         ConstantPoolEntryNameAndType nameAndType = cpe.getNameAndTypeEntry();
         int idx = cpe.getBootstrapMethodAttrIndex();
         MethodPrototype dynamicProto = new MethodPrototype(cp.getDCCommonState(), classFile, classFile.getClassType(), "???",
                 false, Method.MethodConstructor.NOT, Collections.<FormalTypeParameter>emptyList(), Collections.<JavaTypeInstance>emptyList(),
                 nameAndType.decodeTypeTok(), Collections.<JavaTypeInstance>emptyList(), false, new VariableNamerDefault(), false);
-        Statement s =  buildInvokeDynamic(classFile, cp.getDCCommonState(), nameAndType.getName().getValue(), dynamicProto, idx, true);
+        Statement s = buildInvokeDynamic(method.getClassFile(), cp.getDCCommonState(), nameAndType.getName().getValue(), dynamicProto, idx, true, comments);
         if (!(s instanceof AssignmentSimple)) {
             throw new ConfusedCFRException("Expected a result from a dynamic literal");
         }
@@ -2046,10 +2044,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
 
     public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list,
-                                                              final Method method,
-                                                              final VariableFactory variableFactory,
-                                                              final BlockIdentifierFactory blockIdentifierFactory,
-                                                              final DCCommonState dcCommonState,
+                                                              final Method method, final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory, final DCCommonState dcCommonState, final DecompilerComments comments,
                                                               final TypeHintRecovery typeHintRecovery) {
 
 
@@ -2066,7 +2061,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(method, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery));
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(method, comments, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery));
                         conversionHelper.registerOriginalAndNew(arg1, res);
                         op03SimpleParseNodesTmp.add(res);
                         for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {

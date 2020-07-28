@@ -437,7 +437,7 @@ public class CodeAnalyser {
         TypeHintRecovery typeHintRecovery = options.optionIsSet(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS) ?
                 new TypeHintRecoveryImpl(bytecodeMeta) : TypeHintRecoveryNone.INSTANCE;
 
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery);
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState, comments, typeHintRecovery);
         // Renumber, just in case JSR stage (or something) has left bad labellings.
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
