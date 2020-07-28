@@ -622,15 +622,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         boolean countMismatch = (bootstrapArguments.length + ARG_OFFSET) != argTypes.size();
 
-        JavaTypeInstance last = argTypes.get(argTypes.size()-1);
-        boolean maybeVarArgs = last.getNumArrayDimensions() == 1;
-        if (maybeVarArgs) {
-            if (countMismatch) {
-                return getVarArgs(last, bootstrapArguments);
-            }
-            TypedLiteral val = getBootstrapArg(bootstrapArguments, bootstrapArguments.length-1, cp);
-            if (val.getInferredJavaType().getJavaTypeInstance().getNumArrayDimensions() != last.getNumArrayDimensions()) {
-                return getVarArgs(last, bootstrapArguments);
+        if (!argTypes.isEmpty()) {
+            JavaTypeInstance last = argTypes.get(argTypes.size() - 1);
+            boolean maybeVarArgs = last.getNumArrayDimensions() == 1;
+            if (maybeVarArgs) {
+                if (countMismatch) {
+                    return getVarArgs(last, bootstrapArguments);
+                }
+                TypedLiteral val = getBootstrapArg(bootstrapArguments, bootstrapArguments.length - 1, cp);
+                if (val.getInferredJavaType().getJavaTypeInstance().getNumArrayDimensions() != last.getNumArrayDimensions()) {
+                    return getVarArgs(last, bootstrapArguments);
+                }
             }
         }
 
