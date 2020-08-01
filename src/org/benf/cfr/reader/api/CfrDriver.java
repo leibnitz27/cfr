@@ -30,6 +30,7 @@ public interface CfrDriver {
         ClassFileSource source = null;
         Options builtOptions = null;
         OutputSinkFactory output = null;
+        boolean fallbackToDefaultSource = false;
 
         /**
          * Overrides where CFR searches for bytecode.
@@ -40,6 +41,20 @@ public interface CfrDriver {
          */
         public Builder withClassFileSource(ClassFileSource source) {
             this.source = source;
+            return this;
+        }
+
+        /**
+         * Allows overrides of where CFR searches for bytecode, but will fall back to default
+         * behaviour if null is returned.
+         * See {@link ClassFileSource}.
+         *
+         * @param source class file source.
+         * @return this builder.
+         */
+        public Builder withOverrideClassFileSource(ClassFileSource source) {
+            this.source = source;
+            this.fallbackToDefaultSource = true;
             return this;
         }
 
@@ -93,7 +108,7 @@ public interface CfrDriver {
          * @return Constructed instance of {@link CfrDriver}
          */
         public CfrDriver build() {
-            return new CfrDriverImpl(source, output, builtOptions);
+            return new CfrDriverImpl(source, output, builtOptions, fallbackToDefaultSource);
         }
     }
 }

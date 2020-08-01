@@ -48,7 +48,7 @@ public class LambdaUtils {
             case MethodType: {
                 ConstantPoolEntryMethodType targetFnType = getType(arg);
                 ConstantPoolEntryUTF8 descriptor = targetFnType.getDescriptor();
-                return ConstantPoolUtils.parseJavaMethodPrototype(null,null, null, null, false, Method.MethodConstructor.NOT, descriptor, targetFnType.getCp(), false, false, null);
+                return ConstantPoolUtils.parseJavaMethodPrototype(null,null, null, null, false, Method.MethodConstructor.NOT, descriptor, targetFnType.getCp(), false, false, null, descriptor.getValue());
             }
             default:
                 throw new ConfusedCFRException("Can't understand this lambda - disable lambdas.");

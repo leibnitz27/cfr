@@ -823,7 +823,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         String name = nameAndType.getName().getValue();
         VariableNamer fakeNamer = new VariableNamerDefault();
 
-        MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(state,null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer);
+        MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(state,null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer, descriptor.getValue());
 
         try {
             Method m = containingClassFile.getMethodByPrototype(basePrototype);

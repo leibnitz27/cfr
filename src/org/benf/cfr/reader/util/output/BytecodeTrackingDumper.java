@@ -10,17 +10,18 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 
 class BytecodeTrackingDumper extends DelegatingDumper {
 
-    private Map<Method, MethodBytecode> perMethod = MapFactory.newLazyMap(MapFactory.<Method, MethodBytecode>newIdentityMap(), new UnaryFunction<Method, MethodBytecode>() {
+    private final Map<Method, MethodBytecode> perMethod = MapFactory.newLazyMap(MapFactory.<Method, MethodBytecode>newIdentityMap(), new UnaryFunction<Method, MethodBytecode>() {
         @Override
         public MethodBytecode invoke(Method arg) {
             return new MethodBytecode();
         }
     });
-    private BytecodeDumpConsumer consumer;
+    private final BytecodeDumpConsumer consumer;
 
     BytecodeTrackingDumper(Dumper dumper, BytecodeDumpConsumer consumer) {
         super(dumper);
@@ -38,7 +39,7 @@ class BytecodeTrackingDumper extends DelegatingDumper {
         }
     }
 
-    class LocAtLine {
+    static class LocAtLine {
         int depth;
         int currentLine;
 
@@ -63,7 +64,7 @@ class BytecodeTrackingDumper extends DelegatingDumper {
         }
     }
 
-    class MethodBytecode {
+    static class MethodBytecode {
         Map<Integer, LocAtLine> locAtLineMap = MapFactory.newTreeMap();
 
         public void add(Collection<Integer> offsetsForMethod, int currentDepth, int currentLine) {
@@ -81,7 +82,7 @@ class BytecodeTrackingDumper extends DelegatingDumper {
             TreeMap<Integer, Integer> res = MapFactory.newTreeMap();
             Integer lastLine = -1;
             for (Map.Entry<Integer, LocAtLine> entry : locAtLineMap.entrySet()) {
-                Integer line = entry.getValue().currentLine;
+                Integer line = entry.getValue().getCurrentLine();
                 if (lastLine.equals(line)) continue;
                 res.put(entry.getKey(), line);
                 lastLine = line;
@@ -106,7 +107,7 @@ class BytecodeTrackingDumper extends DelegatingDumper {
                 }
 
                 @Override
-                public TreeMap<Integer, Integer> getBytecodeLocs() {
+                public NavigableMap<Integer, Integer> getBytecodeLocs() {
                     return data;
                 }
             });

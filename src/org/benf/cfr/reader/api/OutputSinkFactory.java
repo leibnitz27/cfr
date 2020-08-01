@@ -31,9 +31,17 @@ public interface OutputSinkFactory {
          */
         TOKEN_STREAM(SinkReturns.Token.class),
         /**
+         * Sink will accept {@link org.benf.cfr.reader.api.SinkReturns.LineNumberMapping}s
+         * This will contain a mapping, per method, of bytecode location in a method to the line
+         * number in the generated text.
          *
+         * Note that due to lambda inlining/bridges/friends etc, this means that methods which are not emitted in the
+         * eventual decompilation will receive line number mappings, which will point to line numbers that are
+         * visibly contained in other methods.
+         *
+         * see {@link org.benf.cfr.reader.api.SinkReturns.LineNumberMapping} for further details.
          */
-        LINE_NUMBER_MAPPING(SinkReturns.LineNumberMapping_DO_NOT_USE.class);
+        LINE_NUMBER_MAPPING(SinkReturns.LineNumberMapping.class);
 
         /**
          * Get the type of message that the sink will be expected to take.

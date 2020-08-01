@@ -388,7 +388,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
         ConstantPoolEntryUTF8 name = nameAndType.getName();
-        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(dcCommonState, null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, false, new VariableNamerDefault());
+        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(dcCommonState, null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, false, new VariableNamerDefault(), descriptor.getValue());
         return buildInvokeDynamic(method.getClassFile(), dcCommonState, name.getValue(), dynamicPrototype, idx, false, comments);
     }
 
@@ -1504,7 +1504,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int idx = cpe.getBootstrapMethodAttrIndex();
         MethodPrototype dynamicProto = new MethodPrototype(cp.getDCCommonState(), classFile, classFile.getClassType(), "???",
                 false, Method.MethodConstructor.NOT, Collections.<FormalTypeParameter>emptyList(), Collections.<JavaTypeInstance>emptyList(),
-                nameAndType.decodeTypeTok(), Collections.<JavaTypeInstance>emptyList(), false, new VariableNamerDefault(), false);
+                nameAndType.decodeTypeTok(), Collections.<JavaTypeInstance>emptyList(), false, new VariableNamerDefault(), false, "");
         Statement s = buildInvokeDynamic(method.getClassFile(), cp.getDCCommonState(), nameAndType.getName().getValue(), dynamicProto, idx, true, comments);
         if (!(s instanceof AssignmentSimple)) {
             throw new ConfusedCFRException("Expected a result from a dynamic literal");

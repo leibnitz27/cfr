@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.api;
 
-import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 
 /**
@@ -64,13 +64,48 @@ public interface SinkReturns {
         int getRuntimeFrom();
     }
 
-    interface LineNumberMapping_DO_NOT_USE {
+    interface LineNumberMapping {
         /**
-         * Get mapping from line number to bytecode loc in contained function.
-         *
          * @return
+         * Name of method for which these line number mappings apply.
          */
-        Map<Integer, Integer> getMapping();
+        String methodName();
+
+        /**
+         * @return
+         * Descriptor of method for which these line number mappings apply.
+         **/
+        String methodDescriptor();
+
+        /**
+         * @return
+         * Mapping from bytecode location in contained method to line number.
+         * Note that this is indexed by bytecode location, not by line number (as is found in javap output).
+         * (multiple bytecodes may appear on the same line out of order).
+         * and only applies to the method which is described by methodDescriptor.
+         *
+         * Line numbers apply to the entire output file/text, and include all emitted
+         * comments etc.
+         */
+        NavigableMap<Integer, Integer> getMappings();
+
+        /**
+         * @return
+         * Mappings from bytecode location in contained method to line number,
+         * as specified by the class file.
+         * This corresponds to the LineNumber table in the original class file.
+         *
+         * Note:
+         * These mappings are unreliable, not verified, and may contain entirely invalid data.
+         *
+         * This may be null, if the original class file did not contain line number information.
+         *
+         * Why provide this at all?  Some editors (notably intellij's IDEA) don't allow decompilers
+         * to return mappings between bytecode and line numbers, just between 'original line numbers'
+         * and 'decompiled line numbers'.  When correlated with {@link #getMappings() getMappings},
+         * this is sufficient to provide that.
+         */
+        NavigableMap<Integer, Integer> getClassFileMappings();
     }
 
     enum TokenTypeFlags {

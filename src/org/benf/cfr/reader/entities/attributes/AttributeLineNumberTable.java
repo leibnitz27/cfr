@@ -58,4 +58,8 @@ public class AttributeLineNumberTable extends Attribute {
     public String toString() {
         return ATTRIBUTE_NAME;
     }
+
+    public NavigableMap<Integer, Integer> getEntries() {
+        return entries;
+    }
 }

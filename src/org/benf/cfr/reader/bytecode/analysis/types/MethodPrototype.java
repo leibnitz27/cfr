@@ -61,6 +61,10 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     private MethodPrototype descriptorProto;
+    // Used when generating external labels for this method.
+    // This is the only reliable unique label for this method.
+    // Note that this will contain synthetic fields.
+    private final String originalDescriptor;
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
     private final List<JavaTypeInstance> exceptionTypes;
@@ -81,9 +85,10 @@ public class MethodPrototype implements TypeUsageCollectable {
 //    private static int sid = 0;
 //    private final int id = sid++;
 
-    public MethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, List<JavaTypeInstance> exceptionTypes, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
+    public MethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, List<JavaTypeInstance> exceptionTypes, boolean varargs, VariableNamer variableNamer, boolean synthetic, String originalDescriptor) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
+        this.originalDescriptor = originalDescriptor;
         /*
          * We add a fake String and Int argument onto NON SYNTHETIC methods.
          * Can't add onto synthetic methods, as they don't get mutilated to have their args removed.
@@ -918,5 +923,9 @@ public class MethodPrototype implements TypeUsageCollectable {
             originalHaystack.addAll(haystack);
         }
         return true;
+    }
+
+    public String getOriginalDescriptor() {
+        return originalDescriptor;
     }
 }

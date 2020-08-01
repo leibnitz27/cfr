@@ -286,13 +286,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         }
         if (signature != null) {
             try {
-                sigproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, signature, cp, isVarargs, isSynthetic, variableNamer);
+                sigproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, signature, cp, isVarargs, isSynthetic, variableNamer, descriptor.getValue());
             } catch (MalformedPrototypeException e) {
                 // deliberately empty.
             }
         }
         try {
-            desproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, descriptor, cp, isVarargs, isSynthetic, variableNamer);
+            desproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, descriptor, cp, isVarargs, isSynthetic, variableNamer, descriptor.getValue());
         } catch (MalformedPrototypeException e) {
             if (sigproto == null) throw e;
             // this shouln't be possible, but we might be able to handle it.

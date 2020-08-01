@@ -78,8 +78,8 @@ public class InternalDumperFactoryImpl implements DumperFactory {
         return res;
     }
 
-    private class BytecodeDumpConsumerImpl implements BytecodeDumpConsumer {
-        private Dumper dumper;
+    private static class BytecodeDumpConsumerImpl implements BytecodeDumpConsumer {
+        private final Dumper dumper;
 
         BytecodeDumpConsumerImpl(Dumper dumper) {
             this.dumper = dumper;

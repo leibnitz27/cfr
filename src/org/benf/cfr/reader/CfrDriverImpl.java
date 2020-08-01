@@ -4,6 +4,7 @@ import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.api.OutputSinkFactory;
 import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
+import org.benf.cfr.reader.state.ClassFileSourceChained;
 import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.ClassFileSourceWrapper;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -14,6 +15,7 @@ import org.benf.cfr.reader.util.output.DumperFactory;
 import org.benf.cfr.reader.util.output.InternalDumperFactoryImpl;
 import org.benf.cfr.reader.util.output.SinkDumperFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -23,16 +25,22 @@ public class CfrDriverImpl implements CfrDriver {
     private final ClassFileSource2 classFileSource;
     private final OutputSinkFactory outputSinkFactory;
 
-    public CfrDriverImpl(ClassFileSource source, OutputSinkFactory outputSinkFactory, Options options) {
+    public CfrDriverImpl(ClassFileSource source, OutputSinkFactory outputSinkFactory, Options options, boolean fallbackToDefaultSource) {
         if (options == null) {
             options = new OptionsImpl(new HashMap<String, String>());
         }
+        ClassFileSource2 tmpSource;
         if (source == null) {
-            source = new ClassFileSourceImpl(options);
+            tmpSource = new ClassFileSourceImpl(options);
+        } else {
+            tmpSource = source instanceof ClassFileSource2 ? (ClassFileSource2)source : new ClassFileSourceWrapper(source);
+            if (fallbackToDefaultSource) {
+                tmpSource = new ClassFileSourceChained(Arrays.asList(tmpSource, new ClassFileSourceImpl(options)));
+            }
         }
         this.outputSinkFactory = outputSinkFactory;
         this.options = options;
-        this.classFileSource = source instanceof ClassFileSource2 ? (ClassFileSource2)source : new ClassFileSourceWrapper(source);
+        this.classFileSource = tmpSource;
     }
 
     @Override
