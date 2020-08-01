@@ -13,6 +13,8 @@ public class Keywords {
     static {
         // In general, keywords don't have a particularly common 'corresponding variable' name, however
         // some special ones (class -> clazz) are very well known.  For all others, tweak in a consistent way.
+        // This is likely to be moderately contentious, so please be aware that styles may vary.
+        // (I.e. don't submit a PR for personal preferences).
         keywords.put("abstract", null);
         keywords.put("assert", null);
         keywords.put("boolean", null);
@@ -30,7 +32,7 @@ public class Keywords {
         keywords.put("else", null);
         keywords.put("enum", null);
         keywords.put("extends", null);
-        keywords.put("false", "fals");
+        keywords.put("false", null);
         keywords.put("final", null);
         keywords.put("finally", null);
         keywords.put("float", null);
@@ -57,11 +59,11 @@ public class Keywords {
         keywords.put("super", null);
         keywords.put("switch", null);
         keywords.put("synchronized", null);
-        keywords.put("this", "that");
+        keywords.put("this", null);
         keywords.put("throw", null);
         keywords.put("throws", null);
         keywords.put("transient", null);
-        keywords.put("true", "tru");
+        keywords.put("true", null);
         keywords.put("try", null);
         keywords.put("void", null);
         keywords.put("volatile", null);
