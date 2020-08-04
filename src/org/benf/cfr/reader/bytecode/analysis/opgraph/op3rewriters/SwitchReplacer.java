@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
@@ -511,10 +512,13 @@ public class SwitchReplacer {
                 Op03SimpleStatement target = statements.get(indexLastCase);
                 // We expect target to be our case statement - and IT should have 1 target.
                 boolean handled = false;
-                if (target.getStatement() instanceof CaseStatement) {
+                Statement targetStatement = target.getStatement();
+                if (targetStatement instanceof CaseStatement) {
+                    caseBlock = ((CaseStatement) targetStatement).getCaseBlock();
                     Op03SimpleStatement t2 = target.getTargets().get(0);
-                    if (t2.getStatement() instanceof ReturnStatement) {
-                        Op03SimpleStatement dupCase = new Op03SimpleStatement(switchStatement.getBlockIdentifiers(), target.getStatement(), lastInBlock.getIndex().justAfter());
+                    Statement statement = t2.getStatement();
+                    if (statement instanceof ReturnStatement || statement instanceof GotoStatement) {
+                        Op03SimpleStatement dupCase = new Op03SimpleStatement(switchStatement.getBlockIdentifiers(), targetStatement, lastInBlock.getIndex().justAfter());
                         indexLastCase = indexLastInLastBlock + 1;
                         statements.add(indexLastCase, dupCase);
                         target.removeSource(switchStatement);
@@ -522,10 +526,17 @@ public class SwitchReplacer {
                         switchStatement.replaceTarget(target, dupCase);
                         dupCase.addSource(switchStatement);
 
-                        Op03SimpleStatement dupReturn = new Op03SimpleStatement(dupCase.getBlockIdentifiers(), t2.getStatement(), dupCase.getIndex().justAfter());
-                        statements.add(indexLastCase+1, dupReturn);
-                        dupCase.addTarget(dupReturn);
-                        dupReturn.addSource(dupCase);
+                        Op03SimpleStatement dupStm = new Op03SimpleStatement(dupCase.getBlockIdentifiers(), statement, dupCase.getIndex().justAfter());
+                        statements.add(indexLastCase+1, dupStm);
+                        dupCase.addTarget(dupStm);
+                        dupStm.addSource(dupCase);
+                        dupStm.getBlockIdentifiers().addAll(Arrays.asList(caseBlock, switchBlock));
+                        lastCase = dupCase;
+                        for (Op03SimpleStatement tgt : t2.getTargets()) {
+                            dupStm.addTarget(tgt);
+                            tgt.addSource(dupStm);
+                        }
+
                         handled = true;
                     }
                 }
