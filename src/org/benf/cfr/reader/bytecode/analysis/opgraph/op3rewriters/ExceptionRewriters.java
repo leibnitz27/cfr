@@ -348,15 +348,14 @@ public class ExceptionRewriters {
             boolean printable = false;
 
             Op03SimpleStatement last = tryStatement.getTargets().get(tryStatement.getTargets().size() - 1);
-            Iterator<Op03SimpleStatement> targets = tryStatement.getTargets().iterator();
-            Op03SimpleStatement target;
-            while (targets.hasNext()) {
-                target = targets.next();
-                if (target == last) break; // dont check the terminating catch statement
+            for (Op03SimpleStatement target : tryStatement.getTargets()) {
                 Statement statement = target.getStatement();
 
+                // dont check the terminating catch statement
+                if (target == last && statement instanceof CatchStatement) break;
+
                 if (!(
-                    statement instanceof GotoStatement
+                    (statement instanceof GotoStatement && !(statement instanceof IfStatement))
                     ||
                     statement instanceof Nop
                 )) {
