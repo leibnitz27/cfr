@@ -22,7 +22,7 @@ public class CompareByIndex implements Comparator<Op03SimpleStatement> {
         int res = a.getIndex().compareTo(b.getIndex());
         if (!asc) res = -res;
         if (res == 0) {
-            throw new ConfusedCFRException("Can't sort instructions:\n" + a + "\n" + b);
+            throw new ConfusedCFRException("Can't sort instructions [" + a + ", " + b + "]");
         }
         //noinspection ComparatorMethodParameterNotUsed
         return res;
