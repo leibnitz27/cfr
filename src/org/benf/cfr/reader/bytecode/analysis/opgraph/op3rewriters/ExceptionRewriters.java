@@ -7,10 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.CatchStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.CommentStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
@@ -39,7 +36,6 @@ public class ExceptionRewriters {
         }
         return statements;
     }
-
 
     private static boolean eliminateCatchTemporary(Op03SimpleStatement catchh) {
         if (catchh.getTargets().size() != 1) return false;
@@ -346,25 +342,48 @@ public class ExceptionRewriters {
         List<Op03SimpleStatement> tries = getTries(in);
         for (Op03SimpleStatement tryStatement : tries) {
             BlockIdentifier block = ((TryStatement)tryStatement.getStatement()).getBlockIdentifier();
+
+            // Check whether the contents of the try block can either throw an exception, or be dumped to output
+            // If both are false then this try catch block should be removed
+            boolean printable = false;
+
+            Op03SimpleStatement last = tryStatement.getTargets().get(tryStatement.getTargets().size() - 1);
+            Iterator<Op03SimpleStatement> targets = tryStatement.getTargets().iterator();
+            Op03SimpleStatement target;
+            while (targets.hasNext()) {
+                target = targets.next();
+                if (target == last) break; // dont check the terminating catch statement
+                Statement statement = target.getStatement();
+
+                if (!(
+                    statement instanceof GotoStatement
+                    ||
+                    statement instanceof Nop
+                )) {
+                    printable = true;
+                    break;
+                }
+            }
+
             Op03SimpleStatement tgtStm = tryStatement.getTargets().get(0);
-            if (tgtStm.getBlockIdentifiers().contains(block)) {
+            if (printable && tgtStm.getBlockIdentifiers().contains(block)) {
                 continue;
             }
+
             // Ok, it doesn't contain it.  We now have to check if that block is used anywhere :(
             if (firstByBlock == null) {
                 firstByBlock = getFirstByBlock(in);
             }
-            if (firstByBlock.containsKey(block)) {
+            if (printable && firstByBlock.containsKey(block)) {
                 continue;
             }
-            // Either remove altogether (not implemented yet), or insert a spurious statement
-            Op03SimpleStatement newStm = new Op03SimpleStatement(tryStatement.getBlockIdentifiers(),
-                    new CommentStatement("empty try"), tryStatement.getIndex().justAfter());
-            newStm.getBlockIdentifiers().add(block);
-            newStm.addSource(tryStatement);
-            newStm.addTarget(tgtStm);
-            tgtStm.replaceSource(tryStatement, newStm);
-            tryStatement.replaceTarget(tgtStm, newStm);
+
+            tgtStm.removeSource(tryStatement);
+            for (Op03SimpleStatement source : tryStatement.getSources()) {
+                source.replaceTarget(tryStatement, tgtStm);
+                tgtStm.addSource(source);
+            }
+            
             effect = true;
         }
 
