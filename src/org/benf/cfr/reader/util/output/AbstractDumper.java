@@ -26,12 +26,12 @@ abstract class AbstractDumper implements Dumper {
 
     @Override
     public Dumper endBlockComment() {
-
         if (context.inBlockComment == BlockCommentState.Not) {
             throw new IllegalStateException("Attempt to end block comment when not in one.");
         }
         BlockCommentState old = context.inBlockComment;
         context.inBlockComment = BlockCommentState.Not;
+        context.blockCommentIndent = 0;
         if (old == BlockCommentState.In) {
             if (!context.atStart) {
                 newln();
@@ -77,7 +77,7 @@ abstract class AbstractDumper implements Dumper {
 
     @Override
     public int getIndentLevel() {
-        return context.indent;
+        return context.indent + context.blockCommentIndent;
     }
 
     @Override
