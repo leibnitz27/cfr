@@ -39,7 +39,10 @@ public class CloneHelper {
 
     public Expression replaceOrClone(Expression source) {
         Expression replacement = expressionMap.get(source);
-        if (replacement == null) return source.deepClone(this);
+        if (replacement == null) {
+            if (source == null) return null;
+            return source.deepClone(this);
+        }
         return replacement;
     }
 
