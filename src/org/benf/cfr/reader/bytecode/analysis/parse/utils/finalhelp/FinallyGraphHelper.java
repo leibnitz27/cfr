@@ -128,6 +128,10 @@ public class FinallyGraphHelper {
             for (int x = 0, len = tgta.size(); x < len; ++x) {
                 Op03SimpleStatement tgttestx = tgta.get(x);   // test tgt
                 Op03SimpleStatement tgthayx = tgtb.get(x); // expected tgt
+                // Skip Comments.
+                tgttestx = Misc.skipComments(tgttestx);
+                tgthayx = Misc.skipComments(tgthayx);
+
                 Op03SimpleStatement tgttestx2 = Misc.followNopGotoChain(tgttestx, false, false);
                 Op03SimpleStatement tgthayx2 = Misc.followNopGotoChain(tgthayx, false, false);
                 Op03SimpleStatement finalyThrowProxy2 = Misc.followNopGotoChain(finalThrowProxy, false, false);

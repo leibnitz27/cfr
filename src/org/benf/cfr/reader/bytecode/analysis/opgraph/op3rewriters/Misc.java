@@ -45,6 +45,13 @@ public class Misc {
         return lst.get(0);
     }
 
+    public static Op03SimpleStatement skipComments(Op03SimpleStatement stm) {
+        while (stm.getStatement() instanceof CommentStatement) {
+            stm = stm.getTargets().get(0);
+        }
+        return stm;
+    }
+
     public static class IsForwardJumpTo implements Predicate<Op03SimpleStatement> {
         private final InstrIndex thisIndex;
 
