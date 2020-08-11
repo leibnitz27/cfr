@@ -185,11 +185,6 @@ public abstract class StreamDumper extends AbstractDumper {
     }
 
     @Override
-    public int getIndentLevel() {
-        return context.indent + context.blockCommentIndent;
-    }
-
-    @Override
     public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
         identifier(name, null, defines);
         return this;
