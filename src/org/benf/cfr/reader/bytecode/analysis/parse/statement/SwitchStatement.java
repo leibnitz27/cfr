@@ -64,6 +64,14 @@ public class SwitchStatement extends AbstractStatement {
         return new UnstructuredSwitch(getLoc(), switchOn, switchBlock, safeExpression);
     }
 
+    public Expression getSwitchOn() {
+        return switchOn;
+    }
+
+    public void setSwitchOn(Expression switchOn) {
+        this.switchOn = switchOn;
+    }
+
     public BlockIdentifier getSwitchBlock() {
         return switchBlock;
     }

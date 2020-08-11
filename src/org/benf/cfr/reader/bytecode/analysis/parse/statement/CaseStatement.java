@@ -88,6 +88,10 @@ public class CaseStatement extends AbstractStatement {
         return caseBlock;
     }
 
+    public List<Expression> getValues() {
+        return values;
+    }
+
     @Override
     public boolean canThrow(ExceptionCheck caught) {
         return false;

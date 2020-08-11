@@ -55,6 +55,10 @@ public class NegativeJumps {
                     if (!(xStatement.getStatement() instanceof IfStatement)) continue;
                 }
 
+                if (zStatement.getSources().size() != 1) {
+                    continue;
+                }
+
                 if (aStatement.getTargets().get(0) == zStatement &&
                         aStatement.getTargets().get(1) == xStatement) {
 
