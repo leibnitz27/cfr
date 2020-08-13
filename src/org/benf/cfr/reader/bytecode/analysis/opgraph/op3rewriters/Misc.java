@@ -47,7 +47,11 @@ public class Misc {
 
     public static Op03SimpleStatement skipComments(Op03SimpleStatement stm) {
         while (stm.getStatement() instanceof CommentStatement) {
-            stm = stm.getTargets().get(0);
+            List<Op03SimpleStatement> targets = stm.getTargets();
+            if (targets.size() != 1) {
+                return stm;
+            }
+            stm = targets.get(0);
         }
         return stm;
     }
