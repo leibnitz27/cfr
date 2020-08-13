@@ -122,12 +122,19 @@ public class ToStringDumper extends AbstractDumper {
         String indents = "    ";
         for (int x = 0; x < context.indent; ++x) sb.append(indents);
         context.atStart = false;
-        if (context.inBlockComment != BlockCommentState.Not) sb.append(" * ");
+        if (context.inBlockComment != BlockCommentState.Not) {
+            sb.append(" * ");
+            for (int x = 0; x < context.blockCommentIndent; ++x) sb.append(indents);
+        }
     }
 
     @Override
     public void indent(int diff) {
-        context.indent += diff;
+        if (context.inBlockComment == BlockCommentState.Not) {
+            context.indent += diff;
+        } else {
+            context.blockCommentIndent += diff;
+        }
     }
 
     @Override
