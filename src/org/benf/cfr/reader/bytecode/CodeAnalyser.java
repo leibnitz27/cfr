@@ -113,6 +113,7 @@ public class CodeAnalyser {
 
     private static final RecoveryOptions recoverPre1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
+            new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DUFF, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.TRUE),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
@@ -480,7 +481,7 @@ public class CodeAnalyser {
         // generates for string switches.
         op03SimpleParseNodes = KotlinSwitchHandler.extractStringSwitches(op03SimpleParseNodes, bytecodeMeta);
         // Expand raw switch statements into more useful ones.
-        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, variableFactory, comments, options);
+        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
@@ -579,7 +580,12 @@ public class CodeAnalyser {
                 Op03Rewriters.replaceReturningIfs(op03SimpleParseNodes, true);
             }
         }
-
+        if (options.getOption(OptionsImpl.AGGRESSIVE_DUFF) == Troolean.TRUE) {
+            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.SWITCHES)) {
+                op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
+                op03SimpleParseNodes = SwitchReplacer.rewriteDuff(op03SimpleParseNodes, variableFactory, comments, options);
+            }
+        }
         /*
          * Push constants through conditionals to returns ( move the returns back )- i.e. if the value we're
          * returning is deterministic, return that.

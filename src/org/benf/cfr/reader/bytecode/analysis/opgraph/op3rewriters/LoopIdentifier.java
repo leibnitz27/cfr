@@ -268,6 +268,14 @@ public class LoopIdentifier {
 
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(conditional ? BlockType.DOLOOP : BlockType.UNCONDITIONALDOLOOP);
 
+        if (!start.getBlockIdentifiers().equals(lastJump.getBlockIdentifiers())) {
+            /* bit of a hack - but the only time this really causes problems is duff.
+             * This could definitely be rewritten to be more thorough, given failing examples.
+             *
+             * See Duff test.
+             */
+            if (start.getStatement() instanceof CaseStatement) return null;
+        }
         /* Given that the potential statements inside this block are idxConditional+1 -> idxAfterEnd-1, [a->b]
         * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
         * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
