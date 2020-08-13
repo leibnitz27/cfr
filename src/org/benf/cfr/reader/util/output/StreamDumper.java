@@ -157,12 +157,10 @@ public abstract class StreamDumper extends AbstractDumper {
 
     private void doIndent() {
         if (!context.atStart) return;
-        String indents = "    ";
-        for (int x = 0; x < context.indent; ++x) write(indents);
+        for (int x = 0; x < context.indent; ++x) write(STANDARD_INDENT);
         context.atStart = false;
         if (context.inBlockComment != BlockCommentState.Not) {
             write (" * ");
-            for (int x = 0; x < context.blockCommentIndent; ++x) write(indents);
         }
     }
 
@@ -176,12 +174,14 @@ public abstract class StreamDumper extends AbstractDumper {
     }
 
     @Override
+    public Dumper explicitIndent() {
+        print(STANDARD_INDENT);
+        return this;
+    }
+
+    @Override
     public void indent(int diff) {
-        if (context.inBlockComment == BlockCommentState.Not) {
-            context.indent += diff;
-        } else {
-            context.blockCommentIndent += diff;
-        }
+        context.indent += diff;
     }
 
     @Override

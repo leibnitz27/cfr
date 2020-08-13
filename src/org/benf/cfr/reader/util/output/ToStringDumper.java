@@ -119,22 +119,22 @@ public class ToStringDumper extends AbstractDumper {
 
     private void doIndent() {
         if (!context.atStart) return;
-        String indents = "    ";
-        for (int x = 0; x < context.indent; ++x) sb.append(indents);
+        for (int x = 0; x < context.indent; ++x) sb.append(STANDARD_INDENT);
         context.atStart = false;
         if (context.inBlockComment != BlockCommentState.Not) {
             sb.append(" * ");
-            for (int x = 0; x < context.blockCommentIndent; ++x) sb.append(indents);
         }
     }
 
     @Override
     public void indent(int diff) {
-        if (context.inBlockComment == BlockCommentState.Not) {
-            context.indent += diff;
-        } else {
-            context.blockCommentIndent += diff;
-        }
+        context.indent += diff;
+    }
+
+    @Override
+    public Dumper explicitIndent() {
+        print(STANDARD_INDENT);
+        return this;
     }
 
     @Override

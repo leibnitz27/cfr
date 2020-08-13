@@ -55,6 +55,11 @@ public interface Dumper extends MethodErrorCollector {
 
     Dumper endCodeln();
 
+    // Add an explicit indent, which is consistent with the dumper's behaviour,
+    // but don't affect indent state.
+    Dumper explicitIndent();
+
+    // Change per-line indent level by XXX.
     void indent(int diff);
 
     int getIndentLevel();

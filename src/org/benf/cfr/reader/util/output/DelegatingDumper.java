@@ -116,6 +116,12 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
+    public Dumper explicitIndent() {
+        delegate.explicitIndent();
+        return this;
+    }
+
+    @Override
     public int getIndentLevel() {
         return delegate.getIndentLevel();
     }

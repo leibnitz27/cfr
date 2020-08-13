@@ -309,6 +309,12 @@ public class TokenStreamDumper extends AbstractDumper {
     }
 
     @Override
+    public Dumper explicitIndent() {
+        sink(EXPLICIT_INDENT, "");
+        return this;
+    }
+
+    @Override
     public void indent(int diff) {
         sink(diff > 0 ? INDENT : UNINDENT, "");
     }

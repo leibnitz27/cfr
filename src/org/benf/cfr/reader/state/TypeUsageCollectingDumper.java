@@ -126,6 +126,11 @@ public class TypeUsageCollectingDumper implements Dumper {
     }
 
     @Override
+    public Dumper explicitIndent() {
+        return this;
+    }
+
+    @Override
     public void close() {
 
     }

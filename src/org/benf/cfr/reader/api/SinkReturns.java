@@ -127,7 +127,8 @@ public interface SinkReturns {
         UNCLASSIFIED,
         EOF(true),
         INDENT(true),
-        UNINDENT(true);
+        UNINDENT(true),
+        EXPLICIT_INDENT;
 
         private final boolean control;
 
