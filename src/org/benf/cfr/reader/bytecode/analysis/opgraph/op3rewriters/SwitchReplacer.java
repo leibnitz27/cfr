@@ -89,7 +89,7 @@ public class SwitchReplacer {
         boolean pullCodeIntoCase = options.getOption(OptionsImpl.PULL_CODE_CASE);
         for (Op03SimpleStatement switchStatement : switches) {
             // (assign switch block).
-            examineSwitchContiguity(switchStatement, in, pullCodeIntoCase);
+            switchStatement = examineSwitchContiguity(switchStatement, in, pullCodeIntoCase);
             moveJumpsToCaseStatements(switchStatement);
             moveJumpsToTerminalIfEmpty(switchStatement, in);
         }
@@ -419,7 +419,7 @@ public class SwitchReplacer {
         return true;
     }
 
-    private static void examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements,
+    private static Op03SimpleStatement examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements,
                                                 boolean pullCodeIntoCase) {
         Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
 
@@ -427,10 +427,16 @@ public class SwitchReplacer {
         List<Op03SimpleStatement> targets = ListFactory.newList(switchStatement.getTargets());
         Collections.sort(targets, new CompareByIndex());
 
-        int idxFirstCase = statements.indexOf(targets.get(0));
+        Op03SimpleStatement firstCase = targets.get(0);
+        int idxFirstCase = statements.indexOf(firstCase);
 
         if (idxFirstCase != statements.indexOf(switchStatement) + 1) {
-            throw new ConfusedCFRException("First case is not immediately after switch.");
+            // We need to do a proper reordering, which is trickier with switches, as we need to discover
+            // content.  In the simplest case, we can move the start.
+            switchStatement = moveSwitch(switchStatement, statements, firstCase, idxFirstCase, targets);
+            if (switchStatement == null) {
+                throw new ConfusedCFRException("First case is not immediately after switch.");
+            }
         }
 
         BlockIdentifier switchBlock = ((SwitchStatement) switchStatement.getStatement()).getSwitchBlock();
@@ -642,7 +648,7 @@ public class SwitchReplacer {
          * Sanity check:
          * If we've SOMEHOW decided the break target is inside the switch, we're wrong.
          */
-        if (breakStatementTarget.getBlockIdentifiers().contains(switchBlock)) return;
+        if (breakStatementTarget.getBlockIdentifiers().contains(switchBlock)) return switchStatement;
 
         /*
          * Follow the graph backwards - anything that's an effective jump to the breakstatementtarget
@@ -692,7 +698,39 @@ public class SwitchReplacer {
                 }
             }
         }
+        return switchStatement;
+    }
 
+    private static Op03SimpleStatement moveSwitch(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements, Op03SimpleStatement firstCase, int idxFirstCase, List<Op03SimpleStatement> targets) {
+        if (idxFirstCase == 0) {
+            return null;
+        }
+
+        Statement swstm = switchStatement.getStatement();
+        Op03SimpleStatement pre = statements.get(idxFirstCase-1);
+        if (pre != firstCase.getLinearlyPrevious()) {
+            return null;
+        }
+        if (pre.getStatement() instanceof SwitchStatement || pre.getTargets().contains(firstCase)) {
+            return null;
+        }
+
+        switchStatement.replaceStatement(new GotoStatement(BytecodeLoc.NONE));
+        Op03SimpleStatement gotostm = switchStatement;
+        gotostm.getTargets().clear();
+
+        switchStatement = new Op03SimpleStatement(switchStatement.getBlockIdentifiers(),
+                swstm,
+                switchStatement.getSSAIdentifiers(),
+                firstCase.getIndex().justBefore());
+        statements.add(switchStatement);
+        gotostm.addTarget(switchStatement);
+        switchStatement.addSource(gotostm);
+        for (Op03SimpleStatement target : targets) {
+            target.replaceSource(gotostm, switchStatement);
+        }
+        switchStatement.getTargets().addAll(targets);
+        return switchStatement;
     }
 
     /*
