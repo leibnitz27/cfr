@@ -66,7 +66,8 @@ class Driver {
             dumperFactory.getProgressDumper().analysingType(c.getClassType());
 
             // This may seem odd, but we want to make sure we're analysing the version
-            // from the cache.  Because we might have been fed a random filename
+            // from the cache, in case that's loaded and tweaked.
+            // ClassPathRelocator handles ensuring we don't reload the wrong file.
             try {
                 c = dcCommonState.getClassFile(c.getClassType());
             } catch (CannotLoadClassException ignore) {
