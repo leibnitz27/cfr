@@ -364,11 +364,11 @@ public class CodeAnalyser {
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
              */
-            exceptions.aggressivePruning(lutByOffset, instrs);
+            exceptions.aggressivePruning();
             /*
              * This one's less safe, but...
              */
-            exceptions.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
+            exceptions.removeSynchronisedHandlers(lutByIdx);
         }
 
         /*

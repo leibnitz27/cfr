@@ -351,9 +351,7 @@ public class ExceptionAggregator {
     /*
      * Remove try statements which simply jump to monitorexit+ , throw statements.
      */
-    public void removeSynchronisedHandlers(final Map<Integer, Integer> lutByOffset,
-                                           final Map<Integer, Integer> lutByIdx,
-                                           List<Op01WithProcessedDataAndByteJumps> instrs) {
+    public void removeSynchronisedHandlers(final Map<Integer, Integer> lutByIdx) {
         Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
         while (groupIterator.hasNext()) {
             ExceptionGroup group = groupIterator.next();
@@ -390,10 +388,8 @@ public class ExceptionAggregator {
      * by any other try handler.
      *
      * We should then re-cover the try block with the coverage which is applied to the exception handler (if any).
-     *
      */
-    public void aggressivePruning(final Map<Integer, Integer> lutByOffset,
-                                  List<Op01WithProcessedDataAndByteJumps> instrs) {
+    public void aggressiveRethrowPruning() {
         Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
         while (groupIterator.hasNext()) {
             ExceptionGroup group = groupIterator.next();
@@ -406,9 +402,44 @@ public class ExceptionAggregator {
             Op01WithProcessedDataAndByteJumps handlerStartInstr = instrs.get(index);
             if (handlerStartInstr.getJVMInstr() == JVMInstr.ATHROW) {
                 groupIterator.remove();
-                continue;
             }
         }
+    }
+
+    /*
+     * We can also remove exception handlers that can't possibly be called.
+     * Need to be extremely conservative about this.
+     *
+     * We do this very early (at Op01 stage) as doing it later would require undoing work,
+     * and allows us to leave exception handlers unlinked.
+     */
+    public void aggressiveImpossiblePruning() {
+        TreeMap<Integer, Op01WithProcessedDataAndByteJumps> sortedNodes = MapFactory.newTreeMap();
+        for (Op01WithProcessedDataAndByteJumps instr : instrs) {
+            sortedNodes.put(instr.getOriginalRawOffset(), instr);
+        }
+        Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
+        nextGroup : while (groupIterator.hasNext()) {
+            ExceptionGroup group = groupIterator.next();
+            int from = group.getBytecodeIndexFrom();
+            int to = group.getBytecodeIndexTo();
+            Integer fromKey = sortedNodes.floorKey(from);
+            Collection<Op01WithProcessedDataAndByteJumps> content = sortedNodes.tailMap(fromKey, true).values();
+            for (Op01WithProcessedDataAndByteJumps item : content) {
+                if (item.getOriginalRawOffset() >= to) {
+                    break;
+                }
+                if (!item.getJVMInstr().isNoThrow()) {
+                    continue nextGroup;
+                }
+            }
+            groupIterator.remove();
+        }
+    }
+
+    public void aggressivePruning() {
+        aggressiveRethrowPruning();
+        aggressiveImpossiblePruning();
     }
 
     public boolean RemovedLoopingExceptions() {

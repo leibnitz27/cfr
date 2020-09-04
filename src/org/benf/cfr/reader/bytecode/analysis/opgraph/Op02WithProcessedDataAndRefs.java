@@ -2105,7 +2105,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             if (other == this) return 0;
             int startCompare = triggeringGroup.getBytecodeIndexFrom() - other.triggeringGroup.getBytecodeIndexFrom();
             if (startCompare != 0) return startCompare;
-            int endCompare = triggeringGroup.getByteCodeIndexTo() - other.triggeringGroup.getByteCodeIndexTo();
+            int endCompare = triggeringGroup.getBytecodeIndexTo() - other.triggeringGroup.getBytecodeIndexTo();
             return 0 - endCompare;
 //            throw new ConfusedCFRException("Can't compare these exception groups.");
         }
@@ -2239,7 +2239,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
             BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
             int originalIndex = lutByOffset.get(exceptionGroup.getBytecodeIndexFrom());
-            int exclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, exceptionGroup.getByteCodeIndexTo());
+            int exclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, exceptionGroup.getBytecodeIndexTo());
 
             for (int x = originalIndex; x < exclusiveLastIndex; ++x) {
                 op2list.get(x).containedInTheseBlocks.add(tryBlockIdentifier);
@@ -2256,7 +2256,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             int originalIndex = lutByOffset.get(exceptionGroup.getBytecodeIndexFrom());
             Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
 
-            int inclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, exceptionGroup.getByteCodeIndexTo());
+            int inclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, exceptionGroup.getBytecodeIndexTo());
             Op02WithProcessedDataAndRefs lastTryInstruction = op2list.get(inclusiveLastIndex);
 
 
@@ -2384,7 +2384,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
             BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
-            int beforeLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, exceptionGroup.getByteCodeIndexTo()) - 1;
+            int beforeLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, exceptionGroup.getBytecodeIndexTo()) - 1;
 
             Op02WithProcessedDataAndRefs lastStatement = op2list.get(beforeLastIndex);
             Set<BlockIdentifier> blocks = SetFactory.newSet(lastStatement.containedInTheseBlocks);
