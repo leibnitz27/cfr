@@ -9,6 +9,7 @@ import java.util.SortedMap;
 
 public class Op02Obf {
     public static void removeControlFlowExceptions(Method method, ExceptionAggregator exceptions, List<Op02WithProcessedDataAndRefs> op2list, SortedMap<Integer, Integer> lutByOffset) {
-        new ControlFlowExceptions().process(method, exceptions, op2list, lutByOffset);
+        ControlFlowIntDiv0Exception.Instance.process(method, exceptions, op2list, lutByOffset);
+        ControlFlowNullException.Instance.process(method, exceptions, op2list, lutByOffset);
     }
 }
