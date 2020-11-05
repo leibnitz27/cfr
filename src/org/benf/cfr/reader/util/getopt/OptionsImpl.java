@@ -405,6 +405,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS_ALWAYS = register(new PermittedOptionProvider.Argument<Boolean>(
             "ignoreexceptionsalways", defaultFalseBooleanDecoder,
             "Drop exception information (WARNING : changes semantics, dangerous!)"));
+    public static final PermittedOptionProvider.Argument<Boolean> CONTROL_FLOW = register(new PermittedOptionProvider.Argument<Boolean>(
+            "controlflowobf", defaultFalseBooleanDecoder,
+            "Undo control flow obfuscation"));
     public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS = register(new PermittedOptionProvider.Argument<Boolean>(
             "ignoreexceptions", defaultFalseBooleanDecoder,
             "Drop exception information if completely stuck (WARNING : changes semantics, dangerous!)"));

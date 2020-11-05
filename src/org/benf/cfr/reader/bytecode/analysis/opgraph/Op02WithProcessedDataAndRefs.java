@@ -1606,8 +1606,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         this.instr = JVMInstr.NOP;
     }
 
-    public void swap() {
-        this.instr = JVMInstr.SWAP;
+    public void replaceInstr(JVMInstr newInstr) {
+        // Only works if the instrs need the same data!
+        this.instr = newInstr;
     }
 
     private void collectLocallyMutatedVariables(SSAIdentifierFactory<Slot, StackType> ssaIdentifierFactory) {

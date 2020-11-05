@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRef
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03Blocks;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op02obf.Op02Obf;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.GetClassTestInnerConstructor;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.GetClassTestLambda;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02GetClassRewriter;
@@ -384,6 +385,9 @@ public class CodeAnalyser {
         Op02GetClassRewriter.removeInvokeGetClass(classFile, op2list, GetClassTestInnerConstructor.INSTANCE);
 
         long codeLength = originalCodeAttribute.getCodeLength();
+        if (options.getOption(OptionsImpl.CONTROL_FLOW)) {
+            Op02Obf.removeControlFlowExceptions(method, exceptions, op2list, lutByOffset);
+        }
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, options);
         // lutByOffset is no longer valid at this point, but we might still need it to determine variable lifetime (i.e what
         // was the instruction BEFORE this one)
@@ -444,6 +448,7 @@ public class CodeAnalyser {
 
         // Expand any 'multiple' statements (eg from dups)
         Misc.flattenCompoundStatements(op03SimpleParseNodes);
+
         // Before we get complicated, see if there are any values which have been left with null/void types, but have
         // known base information which can improve it.
         Op03Rewriters.rewriteWith(op03SimpleParseNodes, new NullTypedLValueRewriter());

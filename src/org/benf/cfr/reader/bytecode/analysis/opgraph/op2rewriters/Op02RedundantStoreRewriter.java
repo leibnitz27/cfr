@@ -98,7 +98,7 @@ public class Op02RedundantStoreRewriter {
                             nopCount+=2;
                         } else if (lastloadidx == laststoreidx+2) {
                             instrs.get(laststoreidx).nop();
-                            instrs.get(lastloadidx).swap();
+                            instrs.get(lastloadidx).replaceInstr(JVMInstr.SWAP);
                             nopCount++;
                         }
                     } else if (loadsSinceStore[storeidx] == 0) {
