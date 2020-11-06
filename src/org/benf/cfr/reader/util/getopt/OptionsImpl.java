@@ -405,9 +405,15 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS_ALWAYS = register(new PermittedOptionProvider.Argument<Boolean>(
             "ignoreexceptionsalways", defaultFalseBooleanDecoder,
             "Drop exception information (WARNING : changes semantics, dangerous!)"));
-    public static final PermittedOptionProvider.Argument<Boolean> CONTROL_FLOW = register(new PermittedOptionProvider.Argument<Boolean>(
-            "controlflowobf", defaultFalseBooleanDecoder,
+    public static final PermittedOptionProvider.Argument<Boolean> ANTI_OBF = register(new PermittedOptionProvider.Argument<Boolean>(
+            "antiobf", defaultFalseBooleanDecoder,
+            "Undo various obfuscations"));
+    public static final PermittedOptionProvider.Argument<Boolean> CONTROL_FLOW_OBF = register(new PermittedOptionProvider.Argument<Boolean>(
+            "obfcontrol", new DefaultChainBooleanDecoder(ANTI_OBF),
             "Undo control flow obfuscation"));
+    public static final PermittedOptionProvider.Argument<Boolean> ATTRIBUTE_OBF = register(new PermittedOptionProvider.Argument<Boolean>(
+            "obfattr", new DefaultChainBooleanDecoder(ANTI_OBF),
+            "Undo attribute obfuscation"));
     public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS = register(new PermittedOptionProvider.Argument<Boolean>(
             "ignoreexceptions", defaultFalseBooleanDecoder,
             "Drop exception information if completely stuck (WARNING : changes semantics, dangerous!)"));

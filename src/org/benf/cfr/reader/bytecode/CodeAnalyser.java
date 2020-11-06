@@ -385,7 +385,7 @@ public class CodeAnalyser {
         Op02GetClassRewriter.removeInvokeGetClass(classFile, op2list, GetClassTestInnerConstructor.INSTANCE);
 
         long codeLength = originalCodeAttribute.getCodeLength();
-        if (options.getOption(OptionsImpl.CONTROL_FLOW)) {
+        if (options.getOption(OptionsImpl.CONTROL_FLOW_OBF)) {
             Op02Obf.removeControlFlowExceptions(method, exceptions, op2list, lutByOffset);
         }
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, options);
