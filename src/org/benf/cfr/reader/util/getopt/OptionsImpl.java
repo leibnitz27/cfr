@@ -113,9 +113,11 @@ public class OptionsImpl implements Options {
     private static class DefaultChainBooleanDecoder implements OptionDecoder<Boolean> {
 
         private final PermittedOptionProvider.Argument<Boolean> chain;
+        private final boolean negate;
 
-        DefaultChainBooleanDecoder(PermittedOptionProvider.Argument<Boolean> chain) {
+        DefaultChainBooleanDecoder(PermittedOptionProvider.Argument<Boolean> chain, boolean negate) {
             this.chain = chain;
+            this.negate = negate;
         }
 
         @Override
@@ -131,7 +133,7 @@ public class OptionsImpl implements Options {
         @Override
         public Boolean invoke(String arg, Void arg2, Options options) {
             if (arg == null) {
-                return options.getOption(chain);
+                return (!negate) == options.getOption(chain);
             }
             return java.lang.Boolean.parseBoolean(arg);
         }
@@ -339,9 +341,6 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = register(new PermittedOptionProvider.Argument<Boolean>(
             "removeinnerclasssynthetics", defaultTrueBooleanDecoder,
             "Remove (where possible) implicit outer class references in inner classes"));
-    public static final PermittedOptionProvider.Argument<Boolean> HIDE_BRIDGE_METHODS = register(new PermittedOptionProvider.Argument<Boolean>(
-            "hidebridgemethods", defaultTrueBooleanDecoder,
-            "Hide bridge methods"));
     public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANT_STRINGS = register(new PermittedOptionProvider.Argument<Boolean>(
             "relinkconststring", defaultTrueBooleanDecoder,
             "Relink constant strings - if there is a local reference to a string which matches a static final, use the static final."));
@@ -409,11 +408,14 @@ public class OptionsImpl implements Options {
             "antiobf", defaultFalseBooleanDecoder,
             "Undo various obfuscations"));
     public static final PermittedOptionProvider.Argument<Boolean> CONTROL_FLOW_OBF = register(new PermittedOptionProvider.Argument<Boolean>(
-            "obfcontrol", new DefaultChainBooleanDecoder(ANTI_OBF),
+            "obfcontrol", new DefaultChainBooleanDecoder(ANTI_OBF, false),
             "Undo control flow obfuscation"));
     public static final PermittedOptionProvider.Argument<Boolean> ATTRIBUTE_OBF = register(new PermittedOptionProvider.Argument<Boolean>(
-            "obfattr", new DefaultChainBooleanDecoder(ANTI_OBF),
+            "obfattr", new DefaultChainBooleanDecoder(ANTI_OBF, false),
             "Undo attribute obfuscation"));
+    public static final PermittedOptionProvider.Argument<Boolean> HIDE_BRIDGE_METHODS = register(new PermittedOptionProvider.Argument<Boolean>(
+            "hidebridgemethods", new DefaultChainBooleanDecoder(ATTRIBUTE_OBF, true),
+            "Hide bridge methods"));
     public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS = register(new PermittedOptionProvider.Argument<Boolean>(
             "ignoreexceptions", defaultFalseBooleanDecoder,
             "Drop exception information if completely stuck (WARNING : changes semantics, dangerous!)"));
@@ -484,16 +486,16 @@ public class OptionsImpl implements Options {
             "rename", defaultFalseBooleanDecoder,
             "Synonym for 'renamedupmembers' + 'renameillegalidents' + 'renameenumidents'"));
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_DUP_MEMBERS = register(new PermittedOptionProvider.Argument<Boolean>(
-            "renamedupmembers", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
+            "renamedupmembers", new DefaultChainBooleanDecoder(RENAME_MEMBERS, false),
             "Rename ambiguous/duplicate fields.  Note - this WILL break reflection based access, so is not automatically enabled."));
     public static final PermittedOptionProvider.Argument<Integer> RENAME_SMALL_MEMBERS = register(new PermittedOptionProvider.Argument<Integer>(
             "renamesmallmembers", new DefaultingIntDecoder(0),
             "Rename small members.  Note - this WILL break reflection based access, so is not automatically enabled."));
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_ILLEGAL_IDENTS = register(new PermittedOptionProvider.Argument<Boolean>(
-            "renameillegalidents", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
+            "renameillegalidents", new DefaultChainBooleanDecoder(RENAME_MEMBERS, false),
             "Rename identifiers which are not valid java identifiers.  Note - this WILL break reflection based access, so is not automatically enabled."));
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_ENUM_MEMBERS = register(new PermittedOptionProvider.Argument<Boolean>(
-            "renameenumidents", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
+            "renameenumidents", new DefaultChainBooleanDecoder(RENAME_MEMBERS, false),
             "Rename ENUM identifiers which do not match their 'expected' string names.  Note - this WILL break reflection based access, so is not automatically enabled."));
     public static final PermittedOptionProvider.Argument<Troolean> REMOVE_DEAD_CONDITIONALS = register(new PermittedOptionProvider.Argument<Troolean>(
             "removedeadconditionals", defaultNeitherTrooleanDecoder,
