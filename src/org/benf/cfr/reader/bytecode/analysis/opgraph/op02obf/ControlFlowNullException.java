@@ -30,8 +30,9 @@ public class ControlFlowNullException extends SimpleControlFlowBase {
         MethodPrototype mp = function.getMethodPrototype();
         if (mp.getClassType() != TypeConstants.OBJECT) return false;
         if (!mp.getName().equals(MiscConstants.GET_CLASS_NAME)) return false;
-        start.replaceInstr(JVMInstr.IFNULL);
 
+        // nothing destructive till here - we could use this as test.
+        start.replaceInstr(JVMInstr.IFNULL);
         tgt.nop();
         start.addTarget(handlerJmp);
         handlerJmp.addSource(start);
