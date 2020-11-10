@@ -124,9 +124,12 @@ public class JumpsIntoDoRewriter {
                 Set<BlockIdentifier> newBlocks = SetFactory.newSet(doS.getBlockIdentifiers());
                 newBlocks.add(doBlockIdentifier);
                 Op03SimpleStatement newStm = new Op03SimpleStatement(newBlocks, newIf, doId, doS.getIndex().justAfter());
-                doS.replaceTarget(afterDo, newStm);
-                afterDo.replaceSource(doS, newStm);
-                newStm.addSource(doS);
+                for (Op03SimpleStatement prevSource : ListFactory.newList(afterDo.getSources())) {
+                    prevSource.replaceTarget(afterDo, newStm);
+                    newStm.addSource(prevSource);
+                }
+                afterDo.getSources().clear();
+                afterDo.addSource(newStm);
                 newStm.addTarget(afterDo);
                 newStm.addTarget(prevTgt);
                 prevTgt.addSource(newStm);
