@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -302,6 +303,22 @@ public class LoopIdentifier {
                 doStatement.addSource(source);
             }
         }
+        // If all the jumps to the start of the loop occurred inside the loop, we'll lose this
+        // when we remove dead code.
+        // find a jump into the loop from OUTSIDE
+        // (this only occurs in obfuscated code, it seems).
+        if (doStatement.getSources().isEmpty()) {
+            Op03SimpleStatement source = getCloseFwdJumpInto(start, blockIdentifier, statements, startIdx, endIdx + 1);
+            if (source != null) {
+                if (source.getStatement().getClass() == GotoStatement.class) {
+                    source.replaceStatement(new IfStatement(BytecodeLoc.NONE, BooleanExpression.TRUE));
+                    source.getTargets().add(0, doStatement);
+                    doStatement.addSource(source);
+                } else {
+                    // Have to add a node.
+                }
+            }
+        }
         doStatement.addTarget(start);
         start.addSource(doStatement);
         Op03SimpleStatement postBlock;
@@ -467,6 +484,33 @@ public class LoopIdentifier {
         postBlockCache.put(blockIdentifier, postBlock);
 
         return blockIdentifier;
+    }
+
+    static Op03SimpleStatement getCloseFwdJumpInto(Op03SimpleStatement start, BlockIdentifier blockIdentifier, List<Op03SimpleStatement> statements, int startIdx, int lastIdx) {
+        Op03SimpleStatement linearlyPrevious = start.getLinearlyPrevious();
+        if (containsTargetInBlock(linearlyPrevious, blockIdentifier)) {
+            return linearlyPrevious;
+        }
+        Op03SimpleStatement earliest = null;
+        for (int x=startIdx;x<lastIdx;++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            if (!stm.getBlockIdentifiers().contains(blockIdentifier)) continue;
+            for (Op03SimpleStatement source : stm.getSources()) {
+                if (source.getIndex().isBackJumpFrom(start) && !source.getBlockIdentifiers().contains(blockIdentifier)) {
+                    if (earliest == null || earliest.getIndex().isBackJumpFrom(source)) {
+                        earliest = source;
+                    }
+                }
+            }
+        }
+        return earliest;
+    }
+
+    static boolean containsTargetInBlock(Op03SimpleStatement stm, BlockIdentifier block) {
+        for (Op03SimpleStatement tgt : stm.getTargets()) {
+            if (tgt.getBlockIdentifiers().contains(block)) return true;
+        }
+        return false;
     }
 
     /* Is the first conditional jump NOT one of the sources of start?
