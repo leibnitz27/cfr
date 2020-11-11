@@ -387,6 +387,8 @@ public class CodeAnalyser {
         long codeLength = originalCodeAttribute.getCodeLength();
         if (options.getOption(OptionsImpl.CONTROL_FLOW_OBF)) {
             Op02Obf.removeControlFlowExceptions(method, exceptions, op2list, lutByOffset);
+            // Bundled under control flow obfuscation because it can make loops less pleasant.
+            Op02Obf.removeNumericObf(method, op2list);
         }
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, options);
         // lutByOffset is no longer valid at this point, but we might still need it to determine variable lifetime (i.e what

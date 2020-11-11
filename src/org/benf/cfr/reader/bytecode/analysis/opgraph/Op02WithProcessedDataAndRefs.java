@@ -1473,6 +1473,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
+    public Pair<Integer, Integer> getIincInfo() {
+        if (instr != JVMInstr.IINC) throw new ConfusedCFRException("Should be IINC");
+        int variableIndex = getInstrArgU1(0);
+        int incrAmount = getInstrArgByte(1);
+        return Pair.make(variableIndex, incrAmount);
+    }
+
     private Expression getLiteralConstantPoolEntry(Method m, ConstantPoolEntry cpe, DecompilerComments comments) {
         if (cpe instanceof ConstantPoolEntryLiteral) {
             return new Literal(TypedLiteral.getConstantPoolEntry(cp, cpe));
@@ -2018,6 +2025,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             localVariablesBySlot.put(entry.getKey().getIdx(), ident);
         }
+    }
+
+    public ConstantPool getCp() {
+        return cp;
+    }
+
+    public int getOriginalRawOffset() {
+        return originalRawOffset;
+    }
+
+    public BytecodeLoc getBytecodeLoc() {
+        return loc;
     }
 
     private static class IdentFactory {
@@ -2888,5 +2907,19 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             out.add(mapped);
         }
+    }
+
+    // You must have fixed op in the container first!
+    public static void replace(Op02WithProcessedDataAndRefs oldOp, Op02WithProcessedDataAndRefs newOp) {
+        for (Op02WithProcessedDataAndRefs source : oldOp.sources) {
+            source.replaceTarget(oldOp, newOp);
+        }
+        for (Op02WithProcessedDataAndRefs target : oldOp.targets) {
+            target.replaceSource(oldOp, newOp);
+        }
+        newOp.targets.addAll(oldOp.targets);
+        newOp.sources.addAll(oldOp.sources);
+        oldOp.sources.clear();
+        oldOp.targets.clear();
     }
 }

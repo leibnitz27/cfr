@@ -12,4 +12,8 @@ public class Op02Obf {
         ControlFlowIntDiv0Exception.Instance.process(method, exceptions, op2list, lutByOffset);
         ControlFlowNullException.Instance.process(method, exceptions, op2list, lutByOffset);
     }
+
+    public static void removeNumericObf(Method method, List<Op02WithProcessedDataAndRefs> op2list) {
+        ControlFlowNumericObf.Instance.process(method, op2list);
+    }
 }
