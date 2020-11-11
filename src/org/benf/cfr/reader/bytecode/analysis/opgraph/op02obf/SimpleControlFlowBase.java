@@ -27,6 +27,21 @@ public abstract class SimpleControlFlowBase {
         }
     }
 
+    public boolean check(ExceptionAggregator exceptions, List<Op02WithProcessedDataAndRefs> op2list, SortedMap<Integer, Integer> lutByOffset) {
+        for (ExceptionGroup group : exceptions.getExceptionsGroups()) {
+            Op02WithProcessedDataAndRefs handlerJmp = checkHandler(group, op2list, lutByOffset);
+            if (handlerJmp == null) continue;
+            Integer from = lutByOffset.get(group.getBytecodeIndexFrom());
+            Integer to = lutByOffset.get(group.getBytecodeIndexTo());
+            if (from == null || to == null) continue;
+            if (from >= op2list.size() || to >= op2list.size()) continue;
+            if (checkTry(op2list, from, to, handlerJmp)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     protected Op02WithProcessedDataAndRefs getLastTargetIf(List<Op02WithProcessedDataAndRefs> op2list, Integer start, JVMInstr... instrs) {
         if (start + instrs.length > op2list.size()) return null;
         for (int x = 0;x<instrs.length;++x) {
