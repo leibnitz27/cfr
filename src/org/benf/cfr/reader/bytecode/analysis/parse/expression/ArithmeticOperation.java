@@ -23,6 +23,8 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
+
 public class ArithmeticOperation extends AbstractExpression implements BoxingProcessor {
     private Expression lhs;
     private Expression rhs;
@@ -88,6 +90,61 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         d.operator(" " + op.getShowAs() + " ");
         rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.FALSE);
         return d;
+    }
+
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        Literal l = lhs.getComputedLiteral(display);
+        if (l == null || !(l.getValue().getValue() instanceof Number)) return null;
+        Literal r = rhs.getComputedLiteral(display);
+        if (r == null || !(r.getValue().getValue() instanceof Number)) return null;
+        long lv = ((Number) l.value.getValue()).longValue();
+        long rv = ((Number) r.value.getValue()).longValue();
+        long res = 0;
+        switch (op) {
+            case PLUS:
+                res = lv + rv;
+                break;
+            case MINUS:
+                res = lv - rv;
+                break;
+            case MULTIPLY:
+                res = lv * rv;
+                break;
+            case DIVIDE:
+                res = lv / rv;
+                break;
+            case REM:
+                res = lv % rv;
+                break;
+            case OR:
+                res = lv | rv;
+                break;
+            case AND:
+                res = lv & rv;
+                break;
+            case SHR:
+                res = lv >> rv;
+                break;
+            case SHL:
+                res = lv << rv;
+                break;
+            case SHRU:
+                res = lv >>> rv;
+                break;
+            case XOR:
+                res = lv ^ rv;
+                break;
+            case NEG:
+                res = -lv;
+                break;
+            default:
+                return null;
+        }
+        if (res > Integer.MAX_VALUE || res < Integer.MIN_VALUE) {
+            return new Literal(TypedLiteral.getLong(res));
+        }
+        return new Literal(TypedLiteral.getInt((int) res));
     }
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
