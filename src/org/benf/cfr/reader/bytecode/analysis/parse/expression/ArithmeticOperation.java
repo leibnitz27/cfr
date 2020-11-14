@@ -23,6 +23,8 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
+
 public class ArithmeticOperation extends AbstractExpression implements BoxingProcessor {
     private Expression lhs;
     private Expression rhs;
@@ -56,6 +58,37 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new ArithmeticOperation(getLoc(), cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
+    }
+
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        // sample only implemented for int.
+        if (lhs.getInferredJavaType().getJavaTypeInstance() != RawJavaType.INT ||
+                lhs.getInferredJavaType().getJavaTypeInstance() != RawJavaType.INT) return null;
+        Literal l = lhs.getComputedLiteral(display);
+        if (l == null) return null;
+        Literal r = rhs.getComputedLiteral(display);
+        if (r == null) return null;
+        int lv = l.value.getIntValue();
+        int rv = r.value.getIntValue();
+        int res = 0;
+        switch (op) {
+            case XOR:
+                res = lv ^ rv;
+                break;
+            case PLUS:
+                res = lv + rv;
+                break;
+            case MINUS:
+                res = lv - rv;
+                break;
+            case MULTIPLY:
+                res = lv * rv;
+                break;
+            default:
+                return null;
+        }
+        return new Literal(TypedLiteral.getInt(res));
     }
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b, ArithOp op) {

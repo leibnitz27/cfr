@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticMonOperation;
@@ -19,6 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.NonaryFunction;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
@@ -34,6 +36,8 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
 
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        Expression lit = expression.getComputedLiteral(MapFactory.<LValue, Literal>newMap());
+        if (lit != null) expression = lit;
         expression = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         if (expression instanceof Literal) {
             Literal literal = (Literal) expression;
