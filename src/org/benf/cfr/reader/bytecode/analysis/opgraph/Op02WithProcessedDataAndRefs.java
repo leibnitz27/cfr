@@ -162,13 +162,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     @SuppressWarnings("SameParameterValue")
-    private int getInstrArgByte(int index) {
+    public int getInstrArgByte(int index) {
         return rawData[index];
     }
 
     // Cheap unsigned byte read, save constructing a baseByteData.
     @SuppressWarnings("SameParameterValue")
-    public int getInstrArgU1(int index) {
+    private int getInstrArgU1(int index) {
         int res = rawData[index];
         if (res < 0) {
             res = 256 + res;

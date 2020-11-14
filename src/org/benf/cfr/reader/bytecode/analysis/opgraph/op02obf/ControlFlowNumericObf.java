@@ -63,23 +63,43 @@ public class ControlFlowNumericObf {
     }
 
     private void processTwo(Op02WithProcessedDataAndRefs op, List<Op02WithProcessedDataAndRefs> op2list, int idx) {
-        Op02WithProcessedDataAndRefs prev1 = op2list.get(idx - 1);
-        Op02WithProcessedDataAndRefs prev2 = op2list.get(idx - 2);
+        Op02WithProcessedDataAndRefs prev1 = op.getSources().get(0);
+        Op02WithProcessedDataAndRefs prev2 = prev1.getSources().get(0);
         if (!isIntConstant(prev1.getInstr())) return;
         if (!isIntConstant(prev2.getInstr())) return;
         int v1 = getConstValue(prev1);
-        int v2 = (prev2.getInstr() == JVMInstr.BIPUSH) ? prev2.getInstrArgU1(0) : prev2.getInstrArgShort(0);;
+        int v2 = getConstValue(prev2);
         int value = doMath(op.getInstr(), v1, v2);
         // don't mutate the data, that's shared between passes - create new.
-        Op02WithProcessedDataAndRefs replace = new Op02WithProcessedDataAndRefs(
-                JVMInstr.SIPUSH,
-                new byte[]{(byte)(value >>> 8 & 0xFF), (byte)(value & 0xFF)},
-                op.getIndex(),
-                op.getCp(),
-                null,
-                op.getOriginalRawOffset(),
-                op.getBytecodeLoc()
-        );
+        Op02WithProcessedDataAndRefs replace;
+        if (value > Short.MAX_VALUE || value < Short.MIN_VALUE) {
+            replace = new Op02WithProcessedDataAndRefs(
+                    JVMInstr.LDC,
+                    new byte[]{
+                            (byte) (value >>> 24 & 0xFF),
+                            (byte) (value >>> 16 & 0xFF),
+                            (byte) (value >>> 8 & 0xFF),
+                            (byte) (value & 0xFF)},
+                    op.getIndex(),
+                    op.getCp(),
+                    null,
+                    op.getOriginalRawOffset(),
+                    op.getBytecodeLoc()
+            );
+        } else {
+            replace = new Op02WithProcessedDataAndRefs(
+                    JVMInstr.SIPUSH,
+                    new byte[]{
+                            (byte) (value >>> 8 & 0xFF),
+                            (byte) (value & 0xFF)},
+                    op.getIndex(),
+                    op.getCp(),
+                    null,
+                    op.getOriginalRawOffset(),
+                    op.getBytecodeLoc()
+            );
+        }
+
         op2list.set(idx, replace);
         Op02WithProcessedDataAndRefs.replace(op, replace);
         prev1.nop();
@@ -89,32 +109,32 @@ public class ControlFlowNumericObf {
     private int doMath(JVMInstr instr, int arg1, int arg2) {
         switch (instr) {
             case IXOR:
-                return arg1 ^ arg2;
+                return arg2 ^ arg1;
             case IOR:
-                return arg1 | arg2;
+                return arg2 | arg1;
             case IAND:
-                return arg1 & arg2;
+                return arg2 & arg1;
             case IADD:
-                return arg1 + arg2;
+                return arg2 + arg1;
             case ISUB:
-                return arg1 - arg2;
+                return arg2 - arg1;
             case IMUL:
-                return arg1 * arg2;
+                return arg2 * arg1;
             case IDIV:
-                return arg1 / arg2;
+                return arg2 / arg1;
             case ISHL:
-                return arg1 << arg2;
+                return arg2 << arg1;
             case ISHR:
-                return arg1 >> arg2;
+                return arg2 >> arg1;
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private int getConstValue(Op02WithProcessedDataAndRefs prev1) {
-        JVMInstr instr = prev1.getInstr();
+    private int getConstValue(Op02WithProcessedDataAndRefs op) {
+        JVMInstr instr = op.getInstr();
         if (instr == JVMInstr.BIPUSH) {
-            return prev1.getInstrArgU1(0);
+            return op.getInstrArgByte(0);
         } else if (instr == JVMInstr.ICONST_M1) {
             return -1;
         } else if (instr == JVMInstr.ICONST_0) {
@@ -130,7 +150,7 @@ public class ControlFlowNumericObf {
         } else if (instr == JVMInstr.ICONST_5) {
             return 5;
         }
-        return prev1.getInstrArgShort(0);
+        return op.getInstrArgShort(0);
     }
 
     private boolean isIntConstant(JVMInstr instr) {
