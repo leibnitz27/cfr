@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 public class ConstantPool {
     private static final Logger logger = LoggerFactory.create(ConstantPool.class);
 
-    private final long length;
+    private long length;
     private final List<ConstantPoolEntry> entries;
     private final Options options;
     private final DCCommonState dcCommonState;
@@ -26,7 +26,7 @@ public class ConstantPool {
     private boolean isLoaded;
     private final int idx = sidx++;
     private static int sidx = 0;
-    private final boolean dynamicConstants;
+    private boolean dynamicConstants;
 
     public ConstantPool(ClassFile classFile, DCCommonState dcCommonState, ByteData raw, int count) {
         this.classFile = classFile;
@@ -148,6 +148,17 @@ public class ConstantPool {
 
     public long getRawByteLength() {
         return length;
+    }
+
+    public int addEntry(ConstantPoolEntry entry) {
+        length += entry.getRawByteLength();
+        dynamicConstants |= entry instanceof ConstantPoolEntryDynamicInfo;
+        entries.add(entry);
+        int index = entries.size();
+        if (entry instanceof ConstantPoolEntryLong || entry instanceof ConstantPoolEntryDouble) {
+            entries.add(null);
+        }
+        return index;
     }
 
     public ConstantPoolEntry getEntry(int index) {

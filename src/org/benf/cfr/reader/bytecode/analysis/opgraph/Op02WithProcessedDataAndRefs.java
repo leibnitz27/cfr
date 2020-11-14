@@ -181,6 +181,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return tmp.getS2At(index);
     }
 
+    public int getInstrArgInt(int index) {
+        BaseByteData tmp = new BaseByteData(rawData);
+        return tmp.getS4At(index);
+    }
+
     @Override
     public List<Op02WithProcessedDataAndRefs> getTargets() {
         return targets;
