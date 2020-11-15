@@ -51,6 +51,9 @@ public class AnonymousArray {
         Literal lit = (Literal) dimSize0;
         if (lit.getValue().getType() != TypedLiteral.LiteralType.Integer) return false;
         int bound = (Integer) lit.getValue().getValue();
+        // Don't attempt to resugar invalid arrays.
+        // (we'll still resugar empty ones, as it reads a little nicer.)
+        if (bound < 0) return false;
 
         Op03SimpleStatement next = newArray;
         List<Expression> anon = ListFactory.newList();
