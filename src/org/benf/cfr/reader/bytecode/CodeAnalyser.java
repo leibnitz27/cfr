@@ -910,6 +910,8 @@ public class CodeAnalyser {
 
             Op04StructuredStatement.miscKeyholeTransforms(variableFactory, block);
 
+            Op04StructuredStatement.tidyObfuscation(options, block);
+
             /*
              * Now finally run some extra checks to spot wierdness.
              */
