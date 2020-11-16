@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperatio
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.util.collections.MapFactory;
 
 import java.util.Map;
@@ -18,6 +19,9 @@ public class ConstantFoldingRewriter extends AbstractExpressionRewriter {
 	@Override
 	public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
 		expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+		// Skip if expression type is non-primitive
+		if (expression.getInferredJavaType().getRawType().ordinal() > RawJavaType.DOUBLE.ordinal())
+			return expression;
 		// Simplify arithmetic
 		if (expression instanceof ArithmeticOperation) {
 			Expression computed = expression.getComputedLiteral(getDisplayMap());
