@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticMonOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
@@ -23,7 +24,7 @@ public class ConstantFoldingRewriter extends AbstractExpressionRewriter {
 		if (expression.getInferredJavaType().getRawType().ordinal() > RawJavaType.DOUBLE.ordinal())
 			return expression;
 		// Simplify arithmetic
-		if (expression instanceof ArithmeticOperation) {
+		if (expression instanceof ArithmeticOperation || expression instanceof ArithmeticMonOperation) {
 			Expression computed = expression.getComputedLiteral(getDisplayMap());
 			if (computed != null) {
 				expression = computed;
