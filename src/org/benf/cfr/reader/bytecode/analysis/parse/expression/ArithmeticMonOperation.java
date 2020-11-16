@@ -2,8 +2,10 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -13,6 +15,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Map;
 
 public class ArithmeticMonOperation extends AbstractExpression {
     private Expression lhs;
@@ -56,6 +60,83 @@ public class ArithmeticMonOperation extends AbstractExpression {
         d.print(op.getShowAs());
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
+    }
+
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        Literal l = lhs.getComputedLiteral(display);
+        if (l == null || !(l.getValue().getValue() instanceof Number))
+            return null;
+        Number lv = ((Number) l.value.getValue());
+        switch (l.getInferredJavaType().getRawType()) {
+            case BOOLEAN:
+            case BYTE:
+            case CHAR:
+            case SHORT:
+            case INT:
+                return getComputedInt(lv.intValue());
+            case LONG:
+                return getComputedLong(lv.longValue());
+            case FLOAT:
+                return getComputedFloat(lv.floatValue());
+            case DOUBLE:
+                return getComputedDouble(lv.doubleValue());
+        }
+        return null;
+    }
+
+    private Literal getComputedInt(int lv) {
+        int res;
+        switch (op) {
+            case MINUS:
+                res = -lv;
+                break;
+            case NEG:
+                res = ~lv;
+                break;
+            default:
+                return null;
+        }
+        return new Literal(TypedLiteral.getInt(res));
+    }
+
+    private Literal getComputedLong(long lv) {
+        long res;
+        switch (op) {
+            case MINUS:
+                res = -lv;
+                break;
+            case NEG:
+                res = ~lv;
+                break;
+            default:
+                return null;
+        }
+        return new Literal(TypedLiteral.getLong(res));
+    }
+
+    private Literal getComputedFloat(float lv) {
+        float res;
+        switch (op) {
+            case MINUS:
+                res = -lv;
+                break;
+            default:
+                return null;
+        }
+        return new Literal(TypedLiteral.getFloat(res));
+    }
+
+    private Literal getComputedDouble(double lv) {
+        double res;
+        switch (op) {
+            case MINUS:
+                res = -lv;
+                break;
+            default:
+                return null;
+        }
+        return new Literal(TypedLiteral.getDouble(res));
     }
 
     @Override

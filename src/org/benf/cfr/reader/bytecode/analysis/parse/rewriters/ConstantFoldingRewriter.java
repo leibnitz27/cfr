@@ -20,8 +20,7 @@ public class ConstantFoldingRewriter extends AbstractExpressionRewriter {
 		expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
 		// Simplify arithmetic
 		if (expression instanceof ArithmeticOperation) {
-			ArithmeticOperation operation = (ArithmeticOperation) expression;
-			Expression computed = operation.getComputedLiteral(getDisplayMap());
+			Expression computed = expression.getComputedLiteral(getDisplayMap());
 			if (computed != null) {
 				expression = computed;
 			}
