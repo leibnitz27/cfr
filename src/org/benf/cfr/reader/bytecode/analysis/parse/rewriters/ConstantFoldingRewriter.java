@@ -9,15 +9,26 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.collections.MapFactory;
 
-public class RedundantCastingRewriter extends AbstractExpressionRewriter {
-	public static final RedundantCastingRewriter INSTANCE = new RedundantCastingRewriter();
+import java.util.Map;
+
+public class ConstantFoldingRewriter extends AbstractExpressionRewriter {
+	public static final ConstantFoldingRewriter INSTANCE = new ConstantFoldingRewriter();
+	private static final Map<LValue, Literal> DISPLAY_MAP = MapFactory.<LValue, Literal>newMap();
 
 	@Override
 	public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
 		expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+		// Simplify arithmetic
+		if (expression instanceof ArithmeticOperation) {
+			ArithmeticOperation operation = (ArithmeticOperation) expression;
+			Expression computed = operation.getComputedLiteral(getDisplayMap());
+			if (computed != null) {
+				expression = computed;
+			}
+		}
 		// Simplify casts for cases like "(int) 0" into just "0"
-		if (expression instanceof CastExpression) {
-			Expression computed = expression.getComputedLiteral(MapFactory.<LValue, Literal>newMap());
+		else if (expression instanceof CastExpression) {
+			Expression computed = expression.getComputedLiteral(getDisplayMap());
 			if (computed != null) {
 				expression = computed;
 			}
@@ -29,5 +40,11 @@ public class RedundantCastingRewriter extends AbstractExpressionRewriter {
 	public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
 		lValue.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
 		return lValue;
+	}
+
+	private Map<LValue, Literal> getDisplayMap() {
+		// TODO: It would be cool to later populate this map so variables that behave
+		//  as constants can be folded as well. This would be more simple in Op03 stage.
+		return DISPLAY_MAP;
 	}
 }

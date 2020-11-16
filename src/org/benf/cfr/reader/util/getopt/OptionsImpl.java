@@ -416,9 +416,6 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> CONST_OBF = register(new PermittedOptionProvider.Argument<Boolean>(
             "constobf", new DefaultChainBooleanDecoder(ANTI_OBF, false),
             "Undo constant obfuscation"));
-    public static final PermittedOptionProvider.Argument<Boolean> REDUNDANT_CASTS = register(new PermittedOptionProvider.Argument<Boolean>(
-            "redunantcasts", new DefaultChainBooleanDecoder(ANTI_OBF, false),
-            "Remove redundant casting"));
     public static final PermittedOptionProvider.Argument<Boolean> HIDE_BRIDGE_METHODS = register(new PermittedOptionProvider.Argument<Boolean>(
             "hidebridgemethods", new DefaultChainBooleanDecoder(ATTRIBUTE_OBF, true),
             "Hide bridge methods"));
