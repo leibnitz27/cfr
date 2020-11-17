@@ -88,14 +88,15 @@ public enum RawJavaType implements JavaTypeInstance {
         this(name, suggestedVarName, stackType, usableType, boxedName, isNumber, objectType, Integer.MAX_VALUE, Integer.MIN_VALUE);
     }
 
-
-        RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, boolean objectType) {
+    RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, boolean objectType) {
         this(name, suggestedVarName, stackType, usableType, null, false, objectType);
     }
 
     public String getName() {
         return name;
     }
+
+    public boolean isNumber() { return isNumber; }
 
     @Override
     public JavaAnnotatedTypeInstance getAnnotatedInstance() {

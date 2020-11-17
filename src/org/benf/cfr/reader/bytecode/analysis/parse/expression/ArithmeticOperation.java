@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.LiteralFolding;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -94,170 +95,12 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     @Override
     public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType)) return null;
         Literal l = lhs.getComputedLiteral(display);
-        if (l == null || !(l.getValue().getValue() instanceof Number))
-            return null;
+        if (l == null) return null;
         Literal r = rhs.getComputedLiteral(display);
-        if (r == null || !(r.getValue().getValue() instanceof Number))
-            return null;
-        RawJavaType lType = l.getInferredJavaType().getRawType();
-        RawJavaType rType = r.getInferredJavaType().getRawType();
-        Number lv = ((Number) l.value.getValue());
-        Number rv = ((Number) r.value.getValue());
-        RawJavaType widestType = lType.ordinal() > rType.ordinal() ? lType : rType;
-        switch (widestType) {
-            case BOOLEAN:
-            case BYTE:
-            case CHAR:
-            case SHORT:
-            case INT:
-                return getComputedInt(rv.intValue(), lv.intValue());
-            case LONG:
-                return getComputedLong(rv.longValue(), lv.longValue());
-            case FLOAT:
-                return getComputedFloat(rv.floatValue(), lv.floatValue());
-            case DOUBLE:
-                return getComputedDouble(rv.doubleValue(), lv.doubleValue());
-        }
-        return null;
-    }
-
-    private Literal getComputedInt(int rv, int lv) {
-        int res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            case OR:
-                res = lv | rv;
-                break;
-            case AND:
-                res = lv & rv;
-                break;
-            case SHR:
-                res = lv >> rv;
-                break;
-            case SHL:
-                res = lv << rv;
-                break;
-            case SHRU:
-                res = lv >>> rv;
-                break;
-            case XOR:
-                res = lv ^ rv;
-                break;
-            case NEG:
-                res = ~lv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getInt(res));
-    }
-
-    private Literal getComputedLong(long rv, long lv) {
-        long res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            case OR:
-                res = lv | rv;
-                break;
-            case AND:
-                res = lv & rv;
-                break;
-            case SHR:
-                res = lv >> rv;
-                break;
-            case SHL:
-                res = lv << rv;
-                break;
-            case SHRU:
-                res = lv >>> rv;
-                break;
-            case XOR:
-                res = lv ^ rv;
-                break;
-            case NEG:
-                res = ~lv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getLong(res));
-    }
-
-    private Literal getComputedFloat(float rv, float lv) {
-        float res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getFloat(res));
-    }
-
-    private Literal getComputedDouble(double rv, double lv) {
-        double res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getDouble(res));
+        if (r == null) return null;
+        return LiteralFolding.foldArith((RawJavaType)getInferredJavaType().getJavaTypeInstance(), l, r, op);
     }
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
