@@ -75,10 +75,13 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             RawJavaType rawType = (RawJavaType) type;
             switch (rawType) {
                 case BOOLEAN:
+                    return new Literal(TypedLiteral.getBoolean(value.intValue()));
                 case BYTE:
+                    return new Literal(TypedLiteral.getInt(value.byteValue()));
                 case CHAR:
+                    return new Literal(TypedLiteral.getInt((char) value.shortValue()));
                 case SHORT:
-                    return new Literal(TypedLiteral.getInt(value.shortValue(), getInferredJavaType()));
+                    return new Literal(TypedLiteral.getInt(value.shortValue()));
                 case INT:
                     return new Literal(TypedLiteral.getInt(value.intValue()));
                 case LONG:
