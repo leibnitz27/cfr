@@ -79,7 +79,7 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
                 case BYTE:
                     return new Literal(TypedLiteral.getInt(value.byteValue()));
                 case CHAR:
-                    return new Literal(TypedLiteral.getInt((char) value.shortValue()));
+                    return new Literal(TypedLiteral.getChar((char) value.shortValue()));
                 case SHORT:
                     return new Literal(TypedLiteral.getInt(value.shortValue()));
                 case INT:

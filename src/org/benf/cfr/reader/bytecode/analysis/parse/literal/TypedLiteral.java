@@ -264,7 +264,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return getInt(v, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL));
     }
 
-    private static TypedLiteral getChar(int v) {
+    public static TypedLiteral getChar(int v) {
         return getInt(v, new InferredJavaType(RawJavaType.CHAR, InferredJavaType.Source.LITERAL));
     }
 
