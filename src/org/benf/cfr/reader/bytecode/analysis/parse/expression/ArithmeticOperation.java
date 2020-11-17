@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -100,8 +101,9 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         Literal r = rhs.getComputedLiteral(display);
         if (r == null || !(r.getValue().getValue() instanceof Number))
             return null;
-        RawJavaType lType = l.getInferredJavaType().getRawType();
-        RawJavaType rType = r.getInferredJavaType().getRawType();
+        // Since the values are numeric we know the lhs/rhs can be treated as raw types
+        RawJavaType lType = (RawJavaType) l.getInferredJavaType().getJavaTypeInstance();
+        RawJavaType rType = (RawJavaType) r.getInferredJavaType().getJavaTypeInstance();
         Number lv = ((Number) l.value.getValue());
         Number rv = ((Number) r.value.getValue());
         RawJavaType widestType = lType.ordinal() > rType.ordinal() ? lType : rType;
@@ -212,7 +214,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         return new Literal(TypedLiteral.getLong(res));
     }
 
-    private Literal getComputedFloat(float rv, float lv) {
+    private strictfp Literal getComputedFloat(float rv, float lv) {
         float res;
         switch (op) {
             case PLUS:
@@ -236,7 +238,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         return new Literal(TypedLiteral.getFloat(res));
     }
 
-    private Literal getComputedDouble(double rv, double lv) {
+    private strictfp Literal getComputedDouble(double rv, double lv) {
         double res;
         switch (op) {
             case PLUS:

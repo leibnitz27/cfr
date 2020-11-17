@@ -251,23 +251,28 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return ToStringDumper.toString(this);
     }
 
+
     public static TypedLiteral getLong(long v) {
         return new TypedLiteral(LiteralType.Long, new InferredJavaType(RawJavaType.LONG, InferredJavaType.Source.LITERAL), v);
     }
 
+    public static TypedLiteral getInt(int v, InferredJavaType type) {
+        return new TypedLiteral(LiteralType.Integer, type, v);
+    }
+
     public static TypedLiteral getInt(int v) {
-        return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), v);
+        return getInt(v, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL));
     }
 
     private static TypedLiteral getChar(int v) {
-        return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.CHAR, InferredJavaType.Source.LITERAL), v);
+        return getInt(v, new InferredJavaType(RawJavaType.CHAR, InferredJavaType.Source.LITERAL));
     }
 
     // We don't know that a literal 1 or 0 is an integer, short or boolean.
     // We always guess at boolean, that way if we're proved wrong we can easily
     // promote the type to integer.
     public static TypedLiteral getBoolean(int v) {
-        return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.LITERAL), v);
+        return getInt(v, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.LITERAL));
     }
 
     public static TypedLiteral getDouble(double v) {

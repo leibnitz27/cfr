@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperatio
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.util.collections.MapFactory;
 
@@ -21,21 +22,16 @@ public class ConstantFoldingRewriter extends AbstractExpressionRewriter {
 	public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
 		expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
 		// Skip if expression type is non-primitive
-		if (expression.getInferredJavaType().getRawType().ordinal() > RawJavaType.DOUBLE.ordinal())
-			return expression;
-		// Simplify arithmetic
-		if (expression instanceof ArithmeticOperation || expression instanceof ArithmeticMonOperation) {
-			Expression computed = expression.getComputedLiteral(getDisplayMap());
-			if (computed != null) {
-				expression = computed;
-			}
+		JavaTypeInstance type = expression.getInferredJavaType().getJavaTypeInstance();
+		if (type instanceof RawJavaType) {
+			RawJavaType rawType = (RawJavaType) type;
+			if (rawType.ordinal() > RawJavaType.DOUBLE.ordinal())
+				return expression;
 		}
-		// Simplify casts for cases like "(int) 0" into just "0"
-		else if (expression instanceof CastExpression) {
-			Expression computed = expression.getComputedLiteral(getDisplayMap());
-			if (computed != null) {
-				expression = computed;
-			}
+		// Simplify arithmetic / casting by replacing with the computed value
+		Expression computed = expression.getComputedLiteral(getDisplayMap());
+		if (computed != null) {
+			expression = computed;
 		}
 		return expression;
 	}

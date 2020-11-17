@@ -65,19 +65,21 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
 
     @Override
     public Literal getComputedLiteral(Map<LValue, Literal> display) {
-        if (getChild() instanceof Literal) {
-            Literal childLiteral = (Literal) getChild();
-            CastAction action = childLiteral.getValue().getInferredJavaType().chain(getInferredJavaType());
-            if (action == CastAction.None) {
-                return childLiteral;
-            }
-            Number value = (Number) childLiteral.getValue().getValue();
-            switch (getInferredJavaType().getRawType()) {
+        Literal childLiteral = getChild().getComputedLiteral(display);
+        if (childLiteral == null) {
+            return super.getComputedLiteral(display);
+        }
+        Number value = (Number) childLiteral.getValue().getValue();
+        JavaTypeInstance type = getInferredJavaType().getJavaTypeInstance();
+        if (type instanceof RawJavaType) {
+            RawJavaType rawType = (RawJavaType) type;
+            switch (rawType) {
                 case BOOLEAN:
+                case BYTE:
                 case CHAR:
                 case SHORT:
+                    return new Literal(TypedLiteral.getInt(value.shortValue(), getInferredJavaType()));
                 case INT:
-                case BYTE:
                     return new Literal(TypedLiteral.getInt(value.intValue()));
                 case LONG:
                     return new Literal(TypedLiteral.getLong(value.longValue()));

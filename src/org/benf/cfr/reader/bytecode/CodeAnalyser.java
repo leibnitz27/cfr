@@ -908,9 +908,10 @@ public class CodeAnalyser {
             // Tidy variable names
             Op04StructuredStatement.tidyVariableNames(method, block, bytecodeMeta, comments, cp.getClassCache());
 
+            Op04StructuredStatement.tidyObfuscation(options, block);
+
             Op04StructuredStatement.miscKeyholeTransforms(variableFactory, block);
 
-            Op04StructuredStatement.tidyObfuscation(options, block);
 
             /*
              * Now finally run some extra checks to spot wierdness.
