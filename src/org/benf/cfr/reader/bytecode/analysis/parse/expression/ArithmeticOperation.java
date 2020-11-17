@@ -137,6 +137,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
                 res = lv * rv;
                 break;
             case DIVIDE:
+                if (rv == 0) return null;
                 res = lv / rv;
                 break;
             case REM:
@@ -182,6 +183,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
                 res = lv * rv;
                 break;
             case DIVIDE:
+                if (rv == 0) return null;
                 res = lv / rv;
                 break;
             case REM:
@@ -227,6 +229,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
                 res = lv * rv;
                 break;
             case DIVIDE:
+                if (rv == 0) return null;
                 res = lv / rv;
                 break;
             case REM:
@@ -251,6 +254,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
                 res = lv * rv;
                 break;
             case DIVIDE:
+                if (rv == 0) return null;
                 res = lv / rv;
                 break;
             case REM:
