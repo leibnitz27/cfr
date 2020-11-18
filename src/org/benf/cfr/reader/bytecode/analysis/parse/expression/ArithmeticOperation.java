@@ -98,13 +98,11 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     @Override
     public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType)) return null;
         Literal l = lhs.getComputedLiteral(display);
-        if (l == null || !(l.getValue().getValue() instanceof Number))
-            return null;
+        if (l == null) return null;
         Literal r = rhs.getComputedLiteral(display);
-        if (r == null || !(r.getValue().getValue() instanceof Number))
-            return null;
-        // Since the values are numeric we know the lhs/rhs can be treated as raw types
+        if (r == null) return null;
         return LiteralFolding.foldArithmetic((RawJavaType)getInferredJavaType().getJavaTypeInstance(), l, r, op);
     }
 

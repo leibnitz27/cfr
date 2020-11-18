@@ -66,8 +66,7 @@ public class ArithmeticMonOperation extends AbstractExpression {
     @Override
     public Literal getComputedLiteral(Map<LValue, Literal> display) {
         Literal l = lhs.getComputedLiteral(display);
-        if (l == null || !(l.getValue().getValue() instanceof Number))
-            return null;
+        if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType)) return null;
         return LiteralFolding.foldArithmetic((RawJavaType)getInferredJavaType().getJavaTypeInstance(), l, op);
     }
 
