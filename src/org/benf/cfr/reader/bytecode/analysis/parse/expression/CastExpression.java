@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.LiteralFolding;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral.LiteralType;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -63,38 +64,15 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return new CastExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(child), forced);
     }
 
-    @Override
-    public Literal getComputedLiteral(Map<LValue, Literal> display) {
-        Literal childLiteral = getChild().getComputedLiteral(display);
-        if (childLiteral == null) {
-            return super.getComputedLiteral(display);
-        }
-        Number value = (Number) childLiteral.getValue().getValue();
-        JavaTypeInstance type = getInferredJavaType().getJavaTypeInstance();
-        if (type instanceof RawJavaType) {
-            RawJavaType rawType = (RawJavaType) type;
-            switch (rawType) {
-                case BOOLEAN:
-                    return new Literal(TypedLiteral.getBoolean(value.intValue()));
-                case BYTE:
-                    return new Literal(TypedLiteral.getInt(value.byteValue()));
-                case CHAR:
-                    return new Literal(TypedLiteral.getChar((char) value.shortValue()));
-                case SHORT:
-                    return new Literal(TypedLiteral.getInt(value.shortValue()));
-                case INT:
-                    return new Literal(TypedLiteral.getInt(value.intValue()));
-                case LONG:
-                    return new Literal(TypedLiteral.getLong(value.longValue()));
-                case FLOAT:
-                    return new Literal(TypedLiteral.getFloat(value.floatValue()));
-                case DOUBLE:
-                    return new Literal(TypedLiteral.getDouble(value.doubleValue()));
-            }
-        }
-        // Unable to determine value
-        return super.getComputedLiteral(display);
-    }
+	@Override
+	public Literal getComputedLiteral(Map<LValue, Literal> display) {
+		if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType))
+			return null;
+		Literal computedChild = child.getComputedLiteral(display);
+		if (computedChild == null)
+			return null;
+		return LiteralFolding.foldCast(computedChild, (RawJavaType) getInferredJavaType().getJavaTypeInstance());
+	}
 
     public boolean couldBeImplicit(GenericTypeBinder gtb) {
         if (forced) return false;

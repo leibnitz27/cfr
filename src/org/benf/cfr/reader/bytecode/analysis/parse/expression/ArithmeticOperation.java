@@ -7,13 +7,16 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.LiteralFolding;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -102,168 +105,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         if (r == null || !(r.getValue().getValue() instanceof Number))
             return null;
         // Since the values are numeric we know the lhs/rhs can be treated as raw types
-        RawJavaType lType = (RawJavaType) l.getInferredJavaType().getJavaTypeInstance();
-        RawJavaType rType = (RawJavaType) r.getInferredJavaType().getJavaTypeInstance();
-        Number lv = ((Number) l.value.getValue());
-        Number rv = ((Number) r.value.getValue());
-        RawJavaType widestType = lType.ordinal() > rType.ordinal() ? lType : rType;
-        switch (widestType) {
-            case BOOLEAN:
-            case BYTE:
-            case CHAR:
-            case SHORT:
-            case INT:
-                return getComputedInt(rv.intValue(), lv.intValue());
-            case LONG:
-                return getComputedLong(rv.longValue(), lv.longValue());
-            case FLOAT:
-                return getComputedFloat(rv.floatValue(), lv.floatValue());
-            case DOUBLE:
-                return getComputedDouble(rv.doubleValue(), lv.doubleValue());
-        }
-        return null;
-    }
-
-    private Literal getComputedInt(int rv, int lv) {
-        int res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                if (rv == 0) return null;
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            case OR:
-                res = lv | rv;
-                break;
-            case AND:
-                res = lv & rv;
-                break;
-            case SHR:
-                res = lv >> rv;
-                break;
-            case SHL:
-                res = lv << rv;
-                break;
-            case SHRU:
-                res = lv >>> rv;
-                break;
-            case XOR:
-                res = lv ^ rv;
-                break;
-            case NEG:
-                res = ~lv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getInt(res));
-    }
-
-    private Literal getComputedLong(long rv, long lv) {
-        long res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                if (rv == 0) return null;
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            case OR:
-                res = lv | rv;
-                break;
-            case AND:
-                res = lv & rv;
-                break;
-            case SHR:
-                res = lv >> rv;
-                break;
-            case SHL:
-                res = lv << rv;
-                break;
-            case SHRU:
-                res = lv >>> rv;
-                break;
-            case XOR:
-                res = lv ^ rv;
-                break;
-            case NEG:
-                res = ~lv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getLong(res));
-    }
-
-    private strictfp Literal getComputedFloat(float rv, float lv) {
-        float res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                if (rv == 0) return null;
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getFloat(res));
-    }
-
-    private strictfp Literal getComputedDouble(double rv, double lv) {
-        double res;
-        switch (op) {
-            case PLUS:
-                res = lv + rv;
-                break;
-            case MINUS:
-                res = lv - rv;
-                break;
-            case MULTIPLY:
-                res = lv * rv;
-                break;
-            case DIVIDE:
-                if (rv == 0) return null;
-                res = lv / rv;
-                break;
-            case REM:
-                res = lv % rv;
-                break;
-            default:
-                return null;
-        }
-        return new Literal(TypedLiteral.getDouble(res));
+        return LiteralFolding.foldArithmetic((RawJavaType)getInferredJavaType().getJavaTypeInstance(), l, r, op);
     }
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
