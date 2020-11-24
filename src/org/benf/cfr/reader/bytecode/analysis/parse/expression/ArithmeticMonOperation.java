@@ -2,8 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.LiteralFolding;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -13,6 +16,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Map;
 
 public class ArithmeticMonOperation extends AbstractExpression {
     private Expression lhs;
@@ -56,6 +61,13 @@ public class ArithmeticMonOperation extends AbstractExpression {
         d.print(op.getShowAs());
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
+    }
+
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        Literal l = lhs.getComputedLiteral(display);
+        if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType)) return null;
+        return LiteralFolding.foldArithmetic((RawJavaType)getInferredJavaType().getJavaTypeInstance(), l, op);
     }
 
     @Override

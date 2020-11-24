@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ConstantFoldingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.LiteralRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverImpl;
@@ -771,6 +772,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new HexLiteralTidier().transform(root);
         new ExpressionRewriterTransformer(LiteralRewriter.INSTANCE).transform(root);
         new InvalidExpressionStatementCleaner(variableFactory).transform(root);
+    }
+
+    public static void tidyObfuscation(Options options, Op04StructuredStatement root) {
+        if (options.getOption(OptionsImpl.CONST_OBF)) {
+            new ExpressionRewriterTransformer(ConstantFoldingRewriter.INSTANCE).transform(root);
+        }
     }
 
     public static void prettifyBadLoops(Op04StructuredStatement root) {

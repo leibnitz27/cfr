@@ -186,6 +186,10 @@ public enum RawJavaType implements JavaTypeInstance {
         return usableType;
     }
 
+    public boolean isNumber() {
+        return isNumber;
+    }
+
     @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return this;

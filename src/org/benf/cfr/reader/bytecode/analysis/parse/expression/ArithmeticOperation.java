@@ -7,12 +7,16 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.LiteralFolding;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -22,6 +26,8 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Map;
 
 public class ArithmeticOperation extends AbstractExpression implements BoxingProcessor {
     private Expression lhs;
@@ -88,6 +94,16 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         d.operator(" " + op.getShowAs() + " ");
         rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.FALSE);
         return d;
+    }
+
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType)) return null;
+        Literal l = lhs.getComputedLiteral(display);
+        if (l == null) return null;
+        Literal r = rhs.getComputedLiteral(display);
+        if (r == null) return null;
+        return LiteralFolding.foldArithmetic((RawJavaType)getInferredJavaType().getJavaTypeInstance(), l, r, op);
     }
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
