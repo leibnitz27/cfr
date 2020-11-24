@@ -25,8 +25,10 @@ public class ConstantFoldingRewriter extends AbstractExpressionRewriter {
 		JavaTypeInstance type = expression.getInferredJavaType().getJavaTypeInstance();
 		if (type instanceof RawJavaType) {
 			RawJavaType rawType = (RawJavaType) type;
-			if (rawType.ordinal() > RawJavaType.DOUBLE.ordinal())
+			if (!rawType.isNumber())
 				return expression;
+		} else {
+			return expression;
 		}
 		// Simplify arithmetic / casting by replacing with the computed value
 		Expression computed = expression.getComputedLiteral(getDisplayMap());

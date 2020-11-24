@@ -227,7 +227,10 @@ public class LiteralFolding {
 	public static Literal foldCast(Literal val, RawJavaType returnType) {
 		RawJavaType fromType = getRawType(val);
 		if (fromType == null) return null;
-		if (!fromType.isNumber()) return null;
+		if (!fromType.isNumber()) {
+			// We also need to allow bool, as we might have accidentally classified a 0 as a false boolean.
+			if (fromType != RawJavaType.BOOLEAN) return null;
+		}
 		if (!returnType.isNumber()) return null;
 		TypedLiteral tl = getCast(val.getValue(), fromType, returnType);
 		if (tl == null) return null;
@@ -237,12 +240,17 @@ public class LiteralFolding {
 	/*
 	 * Yes, this is incredibly tedious.  We could probably do some reflection based technique, but it's certainly
 	 * NOT reasonable to convert into a common type to remove the square of cases.
+	 *
+	 * NB: Booleans in here are because we aggressively try to classify 1/0 as bool, which occasionally leads
+	 * to us having the wrong type inside a literal cast - this is normally sorted out later, however we can cope
+	 * here.
 	 */
 	private static TypedLiteral getCast(TypedLiteral val, RawJavaType fromType, RawJavaType returnType) {
 		if (fromType == returnType) return val;
 		switch (returnType) {
 			case BYTE:
 				switch (fromType) {
+					case BOOLEAN:
 					case SHORT:
 					case INT:
 						return TypedLiteral.getInt((byte)val.getIntValue(), returnType);
@@ -256,6 +264,7 @@ public class LiteralFolding {
 				break;
 			case SHORT:
 				switch (fromType) {
+					case BOOLEAN:
 					case BYTE:
 					case INT:
 						return TypedLiteral.getInt((short)val.getIntValue(), returnType);
@@ -269,6 +278,7 @@ public class LiteralFolding {
 				break;
 			case INT:
 				switch (fromType) {
+					case BOOLEAN:
 					case BYTE:
 					case SHORT:
 						return TypedLiteral.getInt(val.getIntValue(), returnType);
@@ -282,6 +292,7 @@ public class LiteralFolding {
 				break;
 			case LONG:
 				switch (fromType) {
+					case BOOLEAN:
 					case BYTE:
 					case SHORT:
 					case INT:
@@ -294,6 +305,7 @@ public class LiteralFolding {
 				break;
 			case FLOAT:
 				switch (fromType) {
+					case BOOLEAN:
 					case BYTE:
 					case SHORT:
 					case INT:
@@ -306,6 +318,7 @@ public class LiteralFolding {
 				break;
 			case DOUBLE:
 				switch (fromType) {
+					case BOOLEAN:
 					case BYTE:
 					case SHORT:
 					case INT:
