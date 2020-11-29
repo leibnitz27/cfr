@@ -463,8 +463,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             innerClassFile.collectTypeUsages(collector);
         }
         collector.collectFrom(dumpHelper);
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
     }
 
     private void getAllClassTypes(List<JavaTypeInstance> tgt) {

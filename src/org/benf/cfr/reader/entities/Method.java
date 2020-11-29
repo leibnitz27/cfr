@@ -188,19 +188,19 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         methodPrototype.collectTypeUsages(collector);
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
         if (codeAttribute != null) {
             codeAttribute.collectTypeUsages(collector);
             codeAttribute.analyse().collectTypeUsages(collector);
         }
         collector.collect(localClasses.keySet());
-        collector.collectFrom(attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME));
     }
 
     public boolean copyLocalClassesFrom(Method other) {

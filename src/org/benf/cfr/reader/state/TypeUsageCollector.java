@@ -13,6 +13,9 @@ public interface TypeUsageCollector {
 
     void collect(Collection<? extends JavaTypeInstance> types);
 
+    // Explicitly named helper to allow J8's less lenient bridging.
+    void collectFromT(TypeUsageCollectable collectable);
+
     void collectFrom(TypeUsageCollectable collectable);
 
     void collectFrom(Collection<? extends TypeUsageCollectable> collectables);
