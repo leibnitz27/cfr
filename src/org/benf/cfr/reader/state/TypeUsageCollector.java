@@ -13,9 +13,9 @@ public interface TypeUsageCollector {
 
     void collect(Collection<? extends JavaTypeInstance> types);
 
-    void collectFrom(TypeUsageCollectable collectable);
+    void collectFrom(Object collectable);
 
-    void collectFrom(Collection<? extends TypeUsageCollectable> collectables);
+//    void collectFrom(Collection<? extends TypeUsageCollectable> collectables);
 
     TypeUsageInformation getTypeUsageInformation();
 

@@ -13,16 +13,20 @@ public abstract class AbstractTypeUsageCollector implements TypeUsageCollector {
     }
 
     @Override
-    public void collectFrom(TypeUsageCollectable collectable) {
-        if (collectable != null) collectable.collectTypeUsages(this);
-    }
-
-    @Override
-    public void collectFrom(Collection<? extends TypeUsageCollectable> collectables) {
-        if (collectables != null) {
+    public void collectFrom(Object collectValue) {
+        if (collectValue == null) {
+            return;
+        } else if (collectValue instanceof TypeUsageCollectable) {
+            ((TypeUsageCollectable) collectValue).collectTypeUsages(this);
+        } else if (collectValue instanceof Collection) {
+            Collection<? extends TypeUsageCollectable> collectables = (Collection<? extends TypeUsageCollectable>) collectValue;
             for (TypeUsageCollectable collectable : collectables) {
-                if (collectable != null) collectable.collectTypeUsages(this);
+                if (collectable != null) {
+                    collectable.collectTypeUsages(this);
+                }
             }
+        } else {
+            throw new UnsupportedOperationException("Unsupported type:" + collectValue.getClass());
         }
     }
 }

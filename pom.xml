@@ -174,7 +174,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <javaVersion>1.6</javaVersion>
+        <javaVersion>1.8</javaVersion>
         <!-- These are also used by javadoc plugin, see MJAVADOC-562 -->
         <maven.compiler.source>${javaVersion}</maven.compiler.source>
         <maven.compiler.target>${javaVersion}</maven.compiler.target>
