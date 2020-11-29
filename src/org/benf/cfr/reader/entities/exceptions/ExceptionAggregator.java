@@ -437,11 +437,6 @@ public class ExceptionAggregator {
         }
     }
 
-    public void aggressivePruning() {
-        aggressiveRethrowPruning();
-        aggressiveImpossiblePruning();
-    }
-
     public boolean RemovedLoopingExceptions() {
         return removedLoopingExceptions;
     }

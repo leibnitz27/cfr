@@ -365,7 +365,14 @@ public class CodeAnalyser {
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
              */
-            exceptions.aggressivePruning();
+            exceptions.aggressiveRethrowPruning();
+
+            /*
+             * We need to be more paranoid here - this will mess up some finally detection if we over-apply it.
+             */
+            if (options.getOption(OptionsImpl.ANTI_OBF)) {
+                exceptions.aggressiveImpossiblePruning();
+            }
             /*
              * This one's less safe, but...
              */
