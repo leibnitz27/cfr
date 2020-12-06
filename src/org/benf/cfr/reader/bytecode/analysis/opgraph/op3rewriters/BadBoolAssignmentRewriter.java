@@ -17,7 +17,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
  *
  * true ^ true === 1 ^ 1
  *
- * However,
+ * We don't try and turn things INTO booleans at this stage, as we are early in the pipeline, and
+ * we are likely still dealing with misclassified bools.
  */
 public class BadBoolAssignmentRewriter extends AbstractExpressionRewriter {
     @Override
