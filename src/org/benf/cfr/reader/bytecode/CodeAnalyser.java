@@ -614,6 +614,8 @@ public class CodeAnalyser {
 
             Op03Rewriters.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options, classFileVersion);
 
+            // We need to resugar early as anonymous arrays will hurt conditional rollup.
+            AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
             // Collapse conditionals into || / &&
             reloop = Op03Rewriters.condenseConditionals(op03SimpleParseNodes);
             // Condense odder conditionals, which may involve inline ternaries which are
@@ -629,7 +631,6 @@ public class CodeAnalyser {
         } while (reloop);
 
         AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
-
         Op03Rewriters.simplifyConditionals(op03SimpleParseNodes, false, method);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
