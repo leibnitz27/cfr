@@ -58,7 +58,15 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
                 }
                 break;
             case 1:
-                isMethodRef = targetFnArgTypes.size() <= 1 && instance;
+                // we could just check if we're an instance function.  Be a bit more paranoid.
+                if (instance && lambdaFn.isInstanceMethod()) {
+                    // But use degenerified types, don't think we have to be THAT paranoid.
+                    JavaTypeInstance thisType = lambdaFn.getClassType().getDeGenerifiedType();
+                    JavaTypeInstance curriedType = curriedArgs.get(0).getInferredJavaType().getJavaTypeInstance().getDeGenerifiedType();
+                    if (curriedType.implicitlyCastsTo(thisType, null)) {
+                        isMethodRef = true;
+                    }
+                }
                 break;
         }
         this.methodRef = isMethodRef;
