@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
@@ -257,6 +258,15 @@ public class LoopIdentifier {
                 if (prevJumpStatement.getClass() == GotoStatement.class) {
                     conditional = false;
                     break;
+                }
+                if (prevJumpStatement instanceof IfStatement) {
+                    IfStatement backJumpIf = (IfStatement)prevJumpStatement;
+                    Expression prevCond = ifStatement.getCondition();
+                    Expression thisCond = backJumpIf.getCondition();
+                    if (!prevCond.equals(thisCond)) {
+                        conditional = false;
+                        break;
+                    }
                 }
             }
         }
