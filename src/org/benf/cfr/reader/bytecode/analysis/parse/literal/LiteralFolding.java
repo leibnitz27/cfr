@@ -225,6 +225,7 @@ public class LiteralFolding {
 	}
 
 	public static Literal foldCast(Literal val, RawJavaType returnType) {
+		if (val == null) return null;
 		RawJavaType fromType = getRawType(val);
 		if (fromType == null) return null;
 		if (!fromType.isNumber()) {
