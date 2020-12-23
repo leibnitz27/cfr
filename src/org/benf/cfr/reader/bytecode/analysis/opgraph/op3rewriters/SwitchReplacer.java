@@ -603,6 +603,22 @@ public class SwitchReplacer {
             lastCase.markBlock(switchBlock);
             breakTarget = indexLastCase + 1;
         } else {
+            /*
+             * Prune example where we jump into the back of the default from outside - this indicates we've been too
+             * greedy selecting the default block.
+             */
+            int validatedLastInThis = checkPreSwitchJump(statements, switchStatement, indexLastCase + 1, indexLastInThis);
+            if (validatedLastInThis != indexLastInThis) {
+                /*
+                 * We have jumps into the end of the last branch from outside the switch.  We're going to have to cut it short at
+                 * validatedLastInThis.
+                 *
+                 * Other branches will have jumped over this, so we will end up with an anonymous block wrapping the switch
+                 * statement. (if they have)
+                 */
+                indexLastInThis = validatedLastInThis;
+            }
+
             for (int y = indexLastCase + 1; y <= indexLastInThis; ++y) {
                 Op03SimpleStatement statement = statements.get(y);
                 statement.markBlock(caseBlock);
@@ -639,8 +655,6 @@ public class SwitchReplacer {
                     statements.add(breakTarget, retie);
                     breakStatementTarget = retie;
                 }
-
-
             }
         }
 
@@ -699,6 +713,17 @@ public class SwitchReplacer {
             }
         }
         return switchStatement;
+    }
+
+    private static int checkPreSwitchJump(List<Op03SimpleStatement> statements, Op03SimpleStatement switchStm, int idxLastStart, int idxLastEnd) {
+        InstrIndex idx = switchStm.getIndex();
+        for (int x=idxLastStart+1;x<=idxLastEnd;++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            for (Op03SimpleStatement source : stm.getSources()) {
+                if (idx.isBackJumpTo(source)) return x-1;
+            }
+        }
+        return idxLastEnd;
     }
 
     private static Op03SimpleStatement moveSwitch(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements, Op03SimpleStatement firstCase, int idxFirstCase, List<Op03SimpleStatement> targets) {
