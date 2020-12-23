@@ -261,7 +261,7 @@ public class AssertRewriter {
                                             new StructuredBreak(BytecodeLoc.NONE, wcm1.getBlockIdentifier("breakblock"), false)
                                     ),
                                     new EndBlock(wcm1.getBlockWildcard("condBlock")),
-                                    new CollectMatch("ass2throw", new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("exception2", TypeConstants.ASSERTION_ERROR)))
+                                    new CollectMatch("ass2throw", new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)))
                             )),
                             new CollectMatch("assonly", new MatchSequence(
                                     new StructuredIf(BytecodeLoc.NONE,
