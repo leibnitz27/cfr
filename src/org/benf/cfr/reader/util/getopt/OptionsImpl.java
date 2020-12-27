@@ -398,6 +398,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_COND_PROPAGATE = register(new PermittedOptionProvider.Argument<Troolean>(
             "forcecondpropagate", defaultNeitherTrooleanDecoder,
             "Pull results of deterministic jumps back through some constant assignments"));
+    public static final PermittedOptionProvider.Argument<Troolean> REDUCE_COND_SCOPE = register(new PermittedOptionProvider.Argument<Troolean>(
+            "reducecondscope", defaultNeitherTrooleanDecoder,
+            "Reduce the scope of conditionals, possibly generating more anonymous blocks"));
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_RETURNING_IFS = register(new PermittedOptionProvider.Argument<Troolean>(
             "forcereturningifs", defaultNeitherTrooleanDecoder,
             "Move return up to jump site"));

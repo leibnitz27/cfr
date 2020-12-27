@@ -114,6 +114,7 @@ public class CodeAnalyser {
 
     private static final RecoveryOptions recoverPre1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
+            new RecoveryOption.TrooleanRO(OptionsImpl.REDUCE_COND_SCOPE, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DUFF, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.TRUE),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
@@ -700,7 +701,7 @@ public class CodeAnalyser {
 
         // Identify simple (nested) conditionals - note that this also generates ternary expressions,
         // if the conditional is simple enough.
-        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory, options);
 
         // If we have a conditional JUST before a do statement which jumps in, then see if we can
         // safely move it inside, and have another go.
@@ -738,7 +739,7 @@ public class CodeAnalyser {
         // By this point, we've tried to classify ternaries.  We could try pushing some literals
         // very aggressively. (i.e. a=1, if (a) b=1 else b =0; return b. ) -> return 1;
         //
-        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory, options);
 
         /*
          * Now we've got here, there's no benefit in having spurious inline assignments.  Where possible,

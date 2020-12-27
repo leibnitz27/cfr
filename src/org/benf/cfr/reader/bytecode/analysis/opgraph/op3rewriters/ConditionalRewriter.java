@@ -22,6 +22,8 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.collections.SetUtil;
 import org.benf.cfr.reader.util.functors.Predicate;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,16 +43,17 @@ public class ConditionalRewriter {
         }
     }
 
-    public static void identifyNonjumpingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void identifyNonjumpingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Options options) {
         boolean success;
         Set<Op03SimpleStatement> ignoreTheseJumps = SetFactory.newSet();
+        boolean reduceSimpleScope = options.getOption(OptionsImpl.REDUCE_COND_SCOPE) == Troolean.TRUE;
         do {
             success = false;
             List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
             Collections.reverse(forwardIfs);
             for (Op03SimpleStatement forwardIf : forwardIfs) {
                 if (considerAsTrivialIf(forwardIf, statements) ||
-                        considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
+                        considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps, reduceSimpleScope) ||
                         considerAsDexIf(forwardIf, statements)) {
                     success = true;
                 }
@@ -313,7 +316,7 @@ lbl10: // 1 sources:
     *
     * We trim that GOTO when we move from an UnstructuredIf to a StructuredIf.
     */
-    private static boolean considerAsSimpleIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
+    private static boolean considerAsSimpleIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps, boolean reduceSimpleScope) {
         Op03SimpleStatement takenTarget = ifStatement.getTargets().get(1);
         Op03SimpleStatement notTakenTarget = ifStatement.getTargets().get(0);
         int idxTaken = statements.indexOf(takenTarget);
@@ -510,10 +513,33 @@ lbl10: // 1 sources:
         // We've reached the "other" branch of the conditional.
         // If maybeSimpleIfElse is set, then there was a final jump to
 
+        boolean reducedScope = false;
         if (maybeSimpleIfElse) {
             // If there is a NO JUMP path between takenTarget and maybeElseEnd, then that's the ELSE block
             elseBranch = ListFactory.newList();
             idxCurrent = idxTaken;
+
+            if (reduceSimpleScope) {
+                int test = Misc.getFarthestReachableInRange(statements, idxCurrent, maybeElseEndIdx);
+                if (test < maybeElseEndIdx - 1) {
+                    InstrIndex startIdx = statementStart.getIndex();
+                    // If there are jumps into the range test->maybeElseIdx from before idxCurrent
+                    // (other than the statementStart), we need to reduce the scope of the else block.
+                    testSources:
+                    for (int x = test + 1; x < maybeElseEndIdx; ++x) {
+                        Op03SimpleStatement testStm = statements.get(x);
+                        for (Op03SimpleStatement source : testStm.getSources()) {
+                            if (source.getIndex().isBackJumpFrom(startIdx)) {
+                                reducedScope = true;
+                                break testSources;
+                            }
+                        }
+                    }
+                    if (reducedScope) {
+                        maybeElseEndIdx = test + 1;
+                    }
+                }
+            }
             idxEnd = maybeElseEndIdx;
             do {
                 Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
@@ -714,7 +740,9 @@ lbl10: // 1 sources:
         }
 
 
-        if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_OUT_OF_IF);
+        if (!reducedScope) {
+            if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_OUT_OF_IF);
+        }
         innerIfStatement.setJumpType(JumpType.GOTO_OUT_OF_IF);
         innerIfStatement.setKnownBlocks(ifBlockLabel, elseBlockLabel);
         ignoreTheseJumps.addAll(ignoreLocally);
