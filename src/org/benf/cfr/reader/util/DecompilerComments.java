@@ -37,6 +37,10 @@ public class DecompilerComments implements Dumpable {
         return d;
     }
 
+    public boolean contains(DecompilerComment comment) {
+        return comments.contains(comment);
+    }
+
     public Collection<DecompilerComment> getCommentCollection() {
         return comments;
     }

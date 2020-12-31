@@ -145,11 +145,20 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG2, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
 
-    private static final RecoveryOptions recoverLast = new RecoveryOptions(recover3,
+    /*
+     * These recoveries allow potential semantic changes, so we want to be very careful and make sure that we don't apply unless we have to,
+     * and warn if we base actions off them.
+     */
+    private static final RecoveryOptions recoverIgnoreExceptions = new RecoveryOptions(recover3,
             new RecoveryOption.BooleanRO(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS, true, BytecodeMeta.checkParam(OptionsImpl.IGNORE_EXCEPTIONS), DecompilerComment.DROP_EXCEPTIONS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recover1, recover2, recoverExAgg, recover3, recover3a, recoverLast};
+    private static final RecoveryOptions recoverMalformed2a = new RecoveryOptions(recover2,
+            // Don't bother with this recovery pass unless we've detected it will make a difference.
+            new RecoveryOption.TrooleanRO(OptionsImpl.ALLOW_MALFORMED_SWITCH, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.MALFORMED_SWITCH))
+    );
+
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recover1, recover2, recoverExAgg, recover3, recover3a, recoverIgnoreExceptions, recoverMalformed2a};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -500,7 +509,7 @@ public class CodeAnalyser {
         // generates for string switches.
         op03SimpleParseNodes = KotlinSwitchHandler.extractStringSwitches(op03SimpleParseNodes, bytecodeMeta);
         // Expand raw switch statements into more useful ones.
-        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options);
+        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options, comments, bytecodeMeta);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
@@ -584,7 +593,7 @@ public class CodeAnalyser {
             /*
              * Now we've sorted, we need to rebuild switch blocks.....
              */
-            SwitchReplacer.rebuildSwitches(op03SimpleParseNodes, options);
+            SwitchReplacer.rebuildSwitches(op03SimpleParseNodes, options, comments, bytecodeMeta);
             /*
              * This set of operations is /very/ aggressive.
              */

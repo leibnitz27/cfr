@@ -533,6 +533,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> PULL_CODE_CASE = register(new PermittedOptionProvider.Argument<Boolean>(
             "pullcodecase", defaultFalseBooleanDecoder,
             "Pull code into case statements agressively"));
+    public static final PermittedOptionProvider.Argument<Troolean> ALLOW_MALFORMED_SWITCH = register(new PermittedOptionProvider.Argument<Troolean>(
+            "allowmalformedswitch", defaultNeitherTrooleanDecoder,
+            "Allow potentially malformed switch statements"));
     public static final PermittedOptionProvider.Argument<Boolean> ELIDE_SCALA = register(new PermittedOptionProvider.Argument<Boolean>(
             "elidescala", defaultFalseBooleanDecoder,
             "Elide things which aren't helpful in scala output (serialVersionUID, @ScalaSignature)"));

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
@@ -57,7 +58,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SwitchReplacer {
-    public static void replaceRawSwitches(Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory, Options options) {
+    public static void replaceRawSwitches(Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory, Options options, DecompilerComments comments, BytecodeMeta bytecodeMeta) {
         List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
         // Replace raw switch statements with switches and case statements inline.
         List<Op03SimpleStatement> switches = ListFactory.newList();
@@ -87,9 +88,10 @@ public class SwitchReplacer {
 
 
         boolean pullCodeIntoCase = options.getOption(OptionsImpl.PULL_CODE_CASE);
+        boolean allowMalformedSwitch = options.getOption(OptionsImpl.ALLOW_MALFORMED_SWITCH) == Troolean.TRUE;
         for (Op03SimpleStatement switchStatement : switches) {
             // (assign switch block).
-            switchStatement = examineSwitchContiguity(switchStatement, in, pullCodeIntoCase);
+            switchStatement = examineSwitchContiguity(switchStatement, in, pullCodeIntoCase, allowMalformedSwitch, comments, bytecodeMeta);
             moveJumpsToCaseStatements(switchStatement);
             moveJumpsToTerminalIfEmpty(switchStatement, in);
         }
@@ -350,7 +352,7 @@ public class SwitchReplacer {
         }
     }
 
-    public static void rebuildSwitches(List<Op03SimpleStatement> statements, Options options) {
+    public static void rebuildSwitches(List<Op03SimpleStatement> statements, Options options, DecompilerComments comments, BytecodeMeta bytecodeMeta) {
 
         List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
         /*
@@ -398,9 +400,10 @@ public class SwitchReplacer {
             buildSwitchCases(switchStatement, switchStatement.getTargets(), switchStatementInr.getSwitchBlock(), statements, true);
         }
         boolean pullCodeIntoCase = options.getOption(OptionsImpl.PULL_CODE_CASE);
+        boolean allowMalformedSwitch = options.getOption(OptionsImpl.ALLOW_MALFORMED_SWITCH) == Troolean.TRUE;
         for (Op03SimpleStatement switchStatement : switchStatements) {
             // removePointlessSwitchDefault(switchStatement);
-            examineSwitchContiguity(switchStatement, statements, pullCodeIntoCase);
+            examineSwitchContiguity(switchStatement, statements, pullCodeIntoCase, allowMalformedSwitch, comments, bytecodeMeta);
             moveJumpsToTerminalIfEmpty(switchStatement, statements);
         }
 
@@ -420,7 +423,8 @@ public class SwitchReplacer {
     }
 
     private static Op03SimpleStatement examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements,
-                                                boolean pullCodeIntoCase) {
+                                                               boolean pullCodeIntoCase, boolean allowMalformedSwitch, DecompilerComments comments,
+                                                               BytecodeMeta bytecodeMeta) {
         Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
 
         // Create a copy of the targets.  We're going to have to copy because we want to sort.
@@ -597,7 +601,15 @@ public class SwitchReplacer {
                     }
                 }
                 if (!handled) {
-                    throw new ConfusedCFRException("Extractable last case doesn't follow previous, and can't clone.");
+                    // If we didn't handle it, there's a reasonable chance we can produce tolerable code, but it will likely
+                    // look a little dodgy.  (Kotlin's coroutines generate code which contains interleaved switches, which
+                    // are a pain to untangle).
+                    if (allowMalformedSwitch) {
+                        comments.addComment(DecompilerComment.MALFORMED_SWITCH);
+                    } else {
+                        bytecodeMeta.set(BytecodeMeta.CodeInfoFlag.MALFORMED_SWITCH);
+                        throw new ConfusedCFRException("Extractable last case doesn't follow previous, and can't clone.");
+                    }
                 }
             }
             lastCase.markBlock(switchBlock);

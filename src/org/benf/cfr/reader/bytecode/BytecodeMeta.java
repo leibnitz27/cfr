@@ -26,6 +26,7 @@ public class BytecodeMeta {
         // Kotlin uses string switches, even though it marks class files as java6.
         STRING_SWITCHES,
         INSTANCE_OF_MATCHES,
+        MALFORMED_SWITCH
     }
 
     private final EnumSet<CodeInfoFlag> flags = EnumSet.noneOf(CodeInfoFlag.class);
