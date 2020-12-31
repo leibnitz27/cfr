@@ -164,6 +164,7 @@ public class LoopIdentifier {
              * add a 'while true' (or block to that effect).
              */
             Op03SimpleStatement oldEnd = lastForBlock.get(extendThis);
+            if (oldEnd == null) continue;
 
             int start = statements.indexOf(oldEnd);
             int end = statements.indexOf(extendTo);
