@@ -837,7 +837,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
         if (scopeDiscoverer.didDetectInstanceOfMatching()) {
-            bytecodeMeta.set(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATHCES);
+            bytecodeMeta.set(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATCHES);
         }
     }
 

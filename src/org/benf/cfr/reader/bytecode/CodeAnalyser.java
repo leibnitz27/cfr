@@ -880,7 +880,7 @@ public class CodeAnalyser {
             // We therefore need a SEPARATE pass, post lambda, to ensure that local classes are
             // correctly processed.
             Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory, options, classFileVersion, bytecodeMeta);
-            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATHCES)) {
+            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATCHES)) {
                 Op04StructuredStatement.tidyInstanceMatches(block);
             }
             if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, classFileVersion)) {
