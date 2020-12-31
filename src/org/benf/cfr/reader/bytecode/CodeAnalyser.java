@@ -197,14 +197,18 @@ public class CodeAnalyser {
                     RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                     if (!applied.valid) continue;
                     AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments, bytecodeMeta);
-                    if (nextRes != null) {
-                        if (res.isFailed() && nextRes.isFailed()) {
-                            // If they both failed, only replace if the later failure is not an exception.
-                            // (or if the earlier one is).
-                            if (res.isThrown() || !nextRes.isThrown()) res = nextRes;
-                        } else {
-                            res = nextRes;
+                    if (res.isFailed() && nextRes.isFailed()) {
+                        if (!nextRes.isThrown()) {
+                            if (res.isThrown()) {
+                                // If they both failed, only replace if the later failure is not an exception, and the earlier one was.
+                                res = nextRes;
+                            } else if (res.getComments().contains(DecompilerComment.UNABLE_TO_STRUCTURE) && !nextRes.getComments().contains(DecompilerComment.UNABLE_TO_STRUCTURE)) {
+                                // Or if we've failed, but managed to structure.
+                                res = nextRes;
+                            }
                         }
+                    } else {
+                        res = nextRes;
                     }
                     if (res.isFailed()) continue;
                     break;
