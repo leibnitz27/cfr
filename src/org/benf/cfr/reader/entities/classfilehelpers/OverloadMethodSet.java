@@ -203,6 +203,8 @@ public class OverloadMethodSet {
                     if (gtb != null) {
                         JavaTypeInstance bound = gtb.getBindingFor(origArgType);
                         if (bound.equals(actual)) {
+                            // it's not perfect if we had to use gtb.
+                            perfect = false;
                             continue;
                         }
                     }
