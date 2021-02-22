@@ -45,6 +45,11 @@ public class CfrDriverImpl implements CfrDriver {
 
     @Override
     public void analyse(List<String> toAnalyse) {
+        analyse(toAnalyse,null);
+    }
+
+    @Override
+    public void analyse(List<String> toAnalyse, ClassFileSource externalFileSource) {
         /*
          * There's an interesting question here - do we want to skip inner classes, if we've been given a wildcard?
          * (or a wildcard expanded by the operating system).
@@ -59,7 +64,7 @@ public class CfrDriverImpl implements CfrDriver {
             // it causes test fails.  (used class name table retains useful symbols).
             classFileSource.informAnalysisRelativePathDetail(null, null);
             // Note - both of these need to be reset, as they have caches.
-            DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
+            DCCommonState dcCommonState = new DCCommonState(options, classFileSource, externalFileSource);
             DumperFactory dumperFactory = outputSinkFactory != null ?
                     new SinkDumperFactory(outputSinkFactory, options) :
                     new InternalDumperFactoryImpl(options);

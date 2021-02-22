@@ -17,6 +17,14 @@ public interface CfrDriver {
      * Analyse and dump to configured output sink.
      *
      * @param toAnalyse list of class file FQN / path of jar / path of class file
+     * @param externalFileSource implementation of ClassFileSource to find class dependencies
+     */
+    void analyse(List<String> toAnalyse, ClassFileSource externalFileSource);
+
+    /**
+     * Analyse and dump to configured output sink.
+     *
+     * @param toAnalyse list of class file FQN / path of jar / path of class file
      */
     void analyse(List<String> toAnalyse);
 
