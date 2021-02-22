@@ -516,7 +516,7 @@ public class OptionsImpl implements Options {
             "aggressivedocopy", new DefaultingIntDecoder(0),
             "Clone code from impossible jumps into loops with 'first' test"));
     public static final PermittedOptionProvider.Argument<Integer> AGGRESSIVE_SIZE_REDUCTION_THRESHOLD = register(new PermittedOptionProvider.Argument<Integer>(
-            "aggressivesizethreshold", new DefaultingIntDecoder(15000),
+            "aggressivesizethreshold", new DefaultingIntDecoder(13000),
             "Opcode count at which to trigger aggressive reductions"));
     public static final PermittedOptionProvider.Argument<Boolean> STATIC_INIT_RETURN = register(new PermittedOptionProvider.Argument<Boolean>(
             "staticinitreturn", defaultTrueBooleanDecoder,

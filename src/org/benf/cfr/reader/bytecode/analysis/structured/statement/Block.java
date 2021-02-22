@@ -376,7 +376,6 @@ public class Block extends AbstractStructuredStatement {
                     StructuredStatement nextStatement = next.getStatement();
                     if (nextStatement instanceof StructuredComment) {
                         next.nopOut(); // pointless.
-                        // Nothing.
                     } else if (nextStatement instanceof StructuredCatch) {
                         Set<BlockIdentifier> blocks = ((StructuredCatch) nextStatement).getPossibleTryBlocks();
                         if (!blocks.contains(tryBlockIdent)) {
@@ -384,25 +383,19 @@ public class Block extends AbstractStructuredStatement {
                             break;
                         }
                         structuredTry.addCatch(next.nopThisAndReplace());
-                        if (x < size) {
-                            next = containedStatements.get(x);
-                        } else {
-                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = null;
-                            finished = true;
-                        }
                     } else if (next.getStatement() instanceof StructuredFinally) {
                         structuredTry.setFinally(next.nopThisAndReplace());
-                        if (x < size) {
-                            next = containedStatements.get(x);
-                        } else {
-                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = null;
-                            finished = true;
-                        }
                     } else {
                         --x;
                         break;
+                    }
+
+                    if (x < size) {
+                        next = containedStatements.get(x);
+                    } else {
+                        // We'll have to find some other way of getting the next statement, probably need a DFS :(
+                        next = null;
+                        finished = true;
                     }
                 }
                 --x;

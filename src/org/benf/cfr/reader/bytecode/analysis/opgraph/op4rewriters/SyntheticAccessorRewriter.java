@@ -170,6 +170,9 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(otherCode);
 
+        if (structuredStatements == null) {
+            return null;
+        }
         Expression res = tryRewriteAccessor(structuredStatements, otherType, appliedArgs, methodArgs);
         if (res == null) {
             res = tryRewriteFunctionCall(structuredStatements, otherType, appliedArgs, methodArgs);

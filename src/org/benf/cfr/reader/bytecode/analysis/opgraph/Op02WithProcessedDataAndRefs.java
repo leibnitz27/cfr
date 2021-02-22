@@ -768,7 +768,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             default:
                 return null;
         }
-        int idx;
+        Integer idx = getRetrieveIdx();
+        if (idx == null) return null;
+        return Pair.make(type, idx);
+    }
+
+    public Integer getRetrieveIdx() {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -776,53 +781,44 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case DLOAD:
             case FLOAD:
             case IINC:
-                idx = getInstrArgU1(0);
-                break;
+                return getInstrArgU1(0);
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
             case FLOAD_0:
-                idx = 0;
-                break;
+                return 0;
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
             case FLOAD_1:
-                idx = 1;
-                break;
+                return 1;
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
             case FLOAD_2:
-                idx = 2;
-                break;
+                return 2;
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
             case FLOAD_3:
-                idx = 3;
-                break;
+                return 3;
             case ALOAD_WIDE:
             case ILOAD_WIDE:
             case LLOAD_WIDE:
             case DLOAD_WIDE:
             case FLOAD_WIDE:
-                idx = getInstrArgShort(1);
-                break;
+                return getInstrArgShort(1);
             case RET:
-                idx = getInstrArgByte(0);
-                break;
+                return getInstrArgByte(0);
             case RET_WIDE:
-                idx = getInstrArgShort(1);
-                break;
+                return getInstrArgShort(1);
             default:
                 return null;
         }
-        return Pair.make(type, idx);
     }
 
     public Pair<JavaTypeInstance, Integer> getStorageType() {
@@ -873,7 +869,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             default:
                 return null;
         }
-        int idx;
+        Integer idx = getStoreIdx();
+        if (idx == null) return null;
+        return Pair.make(type, idx);
+    }
+
+    public Integer getStoreIdx() {
         switch (instr) {
             case ASTORE:
             case ISTORE:
@@ -881,48 +882,41 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case DSTORE:
             case FSTORE:
             case IINC:
-                idx = getInstrArgU1(0);
-                break;
+                return getInstrArgU1(0);
             case ASTORE_0:
             case ISTORE_0:
             case LSTORE_0:
             case DSTORE_0:
             case FSTORE_0:
-                idx = 0;
-                break;
+                return 0;
             case ASTORE_1:
             case ISTORE_1:
             case LSTORE_1:
             case DSTORE_1:
             case FSTORE_1:
-                idx = 1;
-                break;
+                return 1;
             case ASTORE_2:
             case ISTORE_2:
             case LSTORE_2:
             case DSTORE_2:
             case FSTORE_2:
-                idx = 2;
-                break;
+                return 2;
             case ASTORE_3:
             case ISTORE_3:
             case LSTORE_3:
             case DSTORE_3:
             case FSTORE_3:
-                idx = 3;
-                break;
+                return 3;
             case IINC_WIDE:
             case ASTORE_WIDE:
             case ISTORE_WIDE:
             case LSTORE_WIDE:
             case DSTORE_WIDE:
             case FSTORE_WIDE:
-                idx = getInstrArgShort(1);
-                break;
+                return getInstrArgShort(1);
             default:
                 return null;
         }
-        return Pair.make(type, idx);
     }
 
     private Statement mkAssign(VariableFactory variableFactory) {

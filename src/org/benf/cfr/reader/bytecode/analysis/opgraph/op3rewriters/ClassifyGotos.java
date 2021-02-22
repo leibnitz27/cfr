@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.*;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -135,7 +136,27 @@ class ClassifyGotos {
         int idxtgt = in.indexOf(gotoTgt);
         if (idxtgt == 0) return false;
         Op03SimpleStatement prev = in.get(idxtgt - 1);
-        if (!SetUtil.hasIntersection(prev.getBlockIdentifiers(), catchForThis)) return false;
+        if (!SetUtil.hasIntersection(prev.getBlockIdentifiers(), catchForThis)) {
+
+            if (catchForThis.size() == 1 && after.getStatement() instanceof CatchStatement) {
+                boolean emptyCatch = after == prev;
+                if (!emptyCatch) {
+                    Op03SimpleStatement catchSucc = after.getTargets().get(0);
+                    if (Misc.followNopGotoChain(catchSucc, false, true) == Misc.followNopGotoChain(prev, false, true)) {
+                        emptyCatch = true;
+                    }
+                }
+                if (emptyCatch) {
+                    CatchStatement catchTest = (CatchStatement) after.getStatement();
+                    if (catchTest.getCatchBlockIdent() == catchForThis.get(0)) {
+                        // Try statement jumping over an empty catch block - allowed!
+                        gotoStatement.setJumpType(JumpType.GOTO_OUT_OF_TRY);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
         // YAY!
         gotoStatement.setJumpType(JumpType.GOTO_OUT_OF_TRY);
         return true;
