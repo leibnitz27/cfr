@@ -44,6 +44,7 @@ public class ConditionalCondenser {
         boolean preCondAssignmentSeen = false;
         while (statement.getSources().size() == 1) {
             Op03SimpleStatement source = statement.getSources().get(0);
+            if (source == statement) break;
             // If there's a single parent, and it's a backjump, then I'm confused, as that means
             // we have a loop with no entry point...
             if (statement.getIndex().isBackJumpFrom(source)) break;
