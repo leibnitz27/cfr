@@ -86,10 +86,18 @@ public class CodeAnalyserWholeClass {
         if (options.getOption(OptionsImpl.RECORD_TYPES, classFile.getClassFileVersion())) {
             resugarRecords(classFile, state);
         }
+
+        if (options.getOption(OptionsImpl.SUGAR_RETRO_LAMBDA)) {
+            resugarRetroLambda(classFile, state);
+        }
     }
 
     private static void resugarRecords(ClassFile classFile, DCCommonState state) {
         RecordRewriter.rewrite(classFile, state);
+    }
+
+    private static void resugarRetroLambda(ClassFile classFile, DCCommonState state) {
+        RetroLambdaRewriter.rewrite(classFile, state);
     }
 
     private static void removeRedundantSupers(ClassFile classFile) {

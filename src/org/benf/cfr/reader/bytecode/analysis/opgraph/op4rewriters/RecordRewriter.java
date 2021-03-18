@@ -34,6 +34,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperRecord;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -208,7 +209,7 @@ public class RecordRewriter {
         StructuredStatement item = getSingleCodeLine(method);
         if (!stm.equals(item)) return;
         if (!cmpArgsEq(wcm.getExpressionWildCard("array").getMatch(), thisType, fields)) return;
-        if (!isThis(wcm.getExpressionWildCard("this").getMatch(), thisType)) return;
+        if (!MiscUtils.isThis(wcm.getExpressionWildCard("this").getMatch(), thisType)) return;
         method.hideDead();
     }
 
@@ -340,20 +341,10 @@ public class RecordRewriter {
         }
     }
 
-    private static boolean isThis(Expression obj, JavaTypeInstance thisType) {
-        if (!(obj instanceof LValueExpression)) return false;
-        LValue thisExp = ((LValueExpression) obj).getLValue();
-        if (!(thisExp instanceof LocalVariable)) return false;
-        LocalVariable lv = (LocalVariable)thisExp;
-        if (!(lv.getIdx() == 0 && MiscConstants.THIS.equals(lv.getName().getStringName()))) return false;
-        if (!thisType.equals(lv.getInferredJavaType().getJavaTypeInstance())) return false;
-        return true;
-    }
-
     private static ClassFileField getCFF(LValue lhs, JavaRefTypeInstance thisType) {
         if (!(lhs instanceof FieldVariable)) return null;
         Expression obj = ((FieldVariable) lhs).getObject();
-        if (!isThis(obj, thisType)) return null;
+        if (!MiscUtils.isThis(obj, thisType)) return null;
         return ((FieldVariable) lhs).getClassFileField();
     }
 

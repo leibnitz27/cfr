@@ -359,6 +359,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> SUGAR_BOXING = register(new PermittedOptionProvider.Argument<Boolean>(
             "sugarboxing", defaultTrueBooleanDecoder,
             "Where possible, remove pointless boxing wrappers"));
+    public static final PermittedOptionProvider.Argument<Boolean> SUGAR_RETRO_LAMBDA = register(new PermittedOptionProvider.Argument<Boolean>(
+            "sugarretrolambda", defaultFalseBooleanDecoder,
+            "Where possible, resugar uses of retro lambda"));
     public static final PermittedOptionProvider.Argument<Boolean> SHOW_CFR_VERSION = register(new PermittedOptionProvider.Argument<Boolean>(
             "showversion", defaultTrueBooleanDecoder,
             "Show used CFR version in header (handy to turn off when regression testing)"));
