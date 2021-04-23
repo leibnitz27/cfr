@@ -343,7 +343,7 @@ public class OptionsImpl implements Options {
             "Remove (where possible) implicit outer class references in inner classes"));
     public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANTS = register(new PermittedOptionProvider.Argument<Boolean>(
             "relinkconst", defaultTrueBooleanDecoder,
-            "Relink constant strings - if there is a local reference to a string which matches a static final, use the static final."));
+            "Relink constants - if there is an inlined reference to a field, attempt to de-inline."));
     public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANT_STRINGS = register(new PermittedOptionProvider.Argument<Boolean>(
             "relinkconststring", new DefaultChainBooleanDecoder(RELINK_CONSTANTS, false),
             "Relink constant strings - if there is a local reference to a string which matches a static final, use the static final."));
