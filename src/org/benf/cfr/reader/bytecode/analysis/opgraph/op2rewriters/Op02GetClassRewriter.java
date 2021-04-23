@@ -14,7 +14,7 @@ import java.util.List;
 
 public class Op02GetClassRewriter {
 
-    private static Op02GetClassRewriter INSTANCE = new Op02GetClassRewriter();
+    private static final Op02GetClassRewriter INSTANCE = new Op02GetClassRewriter();
 
     private Op02WithProcessedDataAndRefs getSinglePrev(Op02WithProcessedDataAndRefs item) {
         if (item.getSources().size() != 1) return null;
@@ -25,6 +25,8 @@ public class Op02GetClassRewriter {
 
     /*
      * This is all a very cheap and dirty way of doing things - replace with a regex?
+     * Note that some getClass / requireNonNull is removed later when we make more explicit use of types
+     * (see InstanceConstants).
      */
     private void tryRemove(ClassFile classFile, Op02WithProcessedDataAndRefs item, GetClassTest classTest) {
 

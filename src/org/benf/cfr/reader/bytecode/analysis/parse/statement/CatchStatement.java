@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -22,7 +24,8 @@ public class CatchStatement extends AbstractStatement {
     private BlockIdentifier catchBlockIdent;
     private LValue catching;
 
-    public CatchStatement(List<ExceptionGroup.Entry> exceptions, LValue catching) {
+    public CatchStatement(BytecodeLoc loc, List<ExceptionGroup.Entry> exceptions, LValue catching) {
+        super(loc);
         this.exceptions = exceptions;
         this.catching = catching;
         if (!exceptions.isEmpty()) {
@@ -30,6 +33,11 @@ public class CatchStatement extends AbstractStatement {
             InferredJavaType catchType = new InferredJavaType(collapsedCatchType, InferredJavaType.Source.EXCEPTION, true);
             this.catching.getInferredJavaType().chain(catchType);
         }
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     private static JavaTypeInstance determineType(List<ExceptionGroup.Entry> exceptions) {
@@ -42,6 +50,14 @@ public class CatchStatement extends AbstractStatement {
             ijt.collapseTypeClash();
         }
         return ijt.getJavaTypeInstance();
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        // TODO: blockidents when cloning.
+        CatchStatement res = new CatchStatement(getLoc(), exceptions, cloneHelper.replaceOrClone(catching));
+        res.setCatchBlockIdent(catchBlockIdent);
+        return res;
     }
 
     public void removeCatchBlockFor(final BlockIdentifier tryBlockIdent) {

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -114,7 +115,7 @@ public class InlineDeAssigner {
                 ConditionalExpression lhs = booleanOperation.getLhs();
                 ConditionalExpression lhs2 = rewriteExpression(lhs, ssaIdentifiers, statementContainer, flags);
                 if (lhs2 != lhs) {
-                    return new BooleanOperation(lhs2, booleanOperation.getRhs(), booleanOperation.getOp());
+                    return new BooleanOperation(BytecodeLoc.TODO, lhs2, booleanOperation.getRhs(), booleanOperation.getOp());
                 }
                 noFurther = true;
                 return expression;
@@ -157,7 +158,7 @@ public class InlineDeAssigner {
         container.getSources().clear();
         for (AssignmentExpression expression : assignmentExpressions) {
             index = index.justBefore();
-            AssignmentSimple assignmentSimple = new AssignmentSimple(expression.getlValue(), expression.getrValue());
+            AssignmentSimple assignmentSimple = new AssignmentSimple(BytecodeLoc.TODO, expression.getlValue(), expression.getrValue());
             Op03SimpleStatement newAssign = new Op03SimpleStatement(container.getBlockIdentifiers(), assignmentSimple, index);
             added.add(newAssign);
             newAssign.addTarget(last);
@@ -189,7 +190,7 @@ public class InlineDeAssigner {
         Expression rhs2 = deassigner.rewriteExpression(rhs, container.getSSAIdentifiers(), container, ExpressionRewriterFlags.RVALUE);
         if (deassigner.extracted.isEmpty()) return;
         for (LValue outer : lValues) {
-            rhs2 = new AssignmentExpression(outer, rhs2);
+            rhs2 = new AssignmentExpression(BytecodeLoc.TODO, outer, rhs2);
         }
         assignmentSimple.setRValue(rhs2);
         rewrite(deassigner, container, added);

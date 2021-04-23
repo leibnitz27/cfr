@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -19,9 +20,14 @@ import java.util.Set;
 public class NotOperation extends AbstractExpression implements ConditionalExpression {
     private ConditionalExpression inner;
 
-    public NotOperation(ConditionalExpression lhs) {
-        super(lhs.getInferredJavaType());
+    public NotOperation(BytecodeLoc loc, ConditionalExpression lhs) {
+        super(loc, lhs.getInferredJavaType());
         this.inner = lhs;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, inner);
     }
 
     @Override
@@ -31,7 +37,7 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new NotOperation((ConditionalExpression) cloneHelper.replaceOrClone(inner));
+        return new NotOperation(getLoc(), (ConditionalExpression) cloneHelper.replaceOrClone(inner));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.ExactTypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
@@ -662,7 +663,7 @@ public class Op03Blocks {
                 source.targets.remove(block);
 
                 // index doesn't really matter, we'll re-index at combination.
-                Op03SimpleStatement newGoto = new Op03SimpleStatement(sourceEnd.getBlockIdentifiers(), new GotoStatement(), sourceEnd.getIndex().justAfter());
+                Op03SimpleStatement newGoto = new Op03SimpleStatement(sourceEnd.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), sourceEnd.getIndex().justAfter());
                 source.getContent().add(newGoto);
 
                 // What was 'taken' becomes the fallthrough, and newGoto becomes the explicit taken target.
@@ -958,7 +959,7 @@ public class Op03Blocks {
                 } else {
                     patched = true;
                     // Oh great.  Something's got very interesting. We need to add ANOTHER goto.
-                    Op03SimpleStatement extra = new Op03SimpleStatement(stm.getBlockIdentifiers(), new GotoStatement(), stm.getSSAIdentifiers(), stm.getIndex().justAfter());
+                    Op03SimpleStatement extra = new Op03SimpleStatement(stm.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), stm.getSSAIdentifiers(), stm.getIndex().justAfter());
                     Op03SimpleStatement target0 = targets.get(0);
                     extra.addSource(stm);
                     extra.addTarget(target0);
@@ -1143,7 +1144,7 @@ public class Op03Blocks {
          * Ok, we have reordered something in a way that will cause problems.
          * We need to insert an extra goto, and change relations of the Op03 to handle.
          */
-        Op03SimpleStatement newGoto = new Op03SimpleStatement(last.getBlockIdentifiers(), new GotoStatement(), last.getIndex().justAfter());
+        Op03SimpleStatement newGoto = new Op03SimpleStatement(last.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), last.getIndex().justAfter());
         a.append(newGoto);
         last.replaceTarget(fallThroughTarget, newGoto);
         newGoto.addSource(last);

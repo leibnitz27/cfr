@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnNothingStatement;
@@ -25,7 +26,7 @@ public class StaticInitReturnRewriter {
         for (int x =0, len=statementList.size()-1;x<len;++x) {
             Op03SimpleStatement stm = statementList.get(x);
             if (stm.getStatement().getClass() == ReturnNothingStatement.class) {
-                stm.replaceStatement(new GotoStatement());
+                stm.replaceStatement(new GotoStatement(BytecodeLoc.TODO));
                 stm.addTarget(last);
                 last.addSource(stm);
             }

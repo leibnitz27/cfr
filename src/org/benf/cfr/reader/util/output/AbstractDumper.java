@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 
 abstract class AbstractDumper implements Dumper {
+    protected static final String STANDARD_INDENT = "    ";
     final MovableDumperContext context;
 
     AbstractDumper(MovableDumperContext context) {
@@ -25,7 +27,6 @@ abstract class AbstractDumper implements Dumper {
 
     @Override
     public Dumper endBlockComment() {
-
         if (context.inBlockComment == BlockCommentState.Not) {
             throw new IllegalStateException("Attempt to end block comment when not in one.");
         }
@@ -67,5 +68,19 @@ abstract class AbstractDumper implements Dumper {
         context.pendingCR = false;
         context.atStart = false;
         return this;
+    }
+
+    @Override
+    public int getCurrentLine() {
+        return context.currentLine;
+    }
+
+    @Override
+    public int getIndentLevel() {
+        return context.indent;
+    }
+
+    @Override
+    public void informBytecodeLoc(HasByteCodeLoc loc) {
     }
 }

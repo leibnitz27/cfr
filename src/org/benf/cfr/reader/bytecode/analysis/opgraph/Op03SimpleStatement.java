@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.CompareByIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
@@ -20,6 +21,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentAndAliasCondenser;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimpleRW;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -29,13 +32,16 @@ import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.collections.UniqueSeenQueue;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -92,7 +98,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.containedInBlocks.addAll(containedIn);
         statement.setContainer(this);
     }
-
 
     @Override
     public List<Op03SimpleStatement> getSources() {
@@ -286,6 +291,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (this.firstStatementInThisBlock == null) this.firstStatementInThisBlock = other3.firstStatementInThisBlock;
     }
 
+    @Override
+    public void copyBytecodeInformationFrom(StatementContainer<Statement> other) {
+        Op03SimpleStatement other3 = (Op03SimpleStatement) other;
+        this.getStatement().addLoc(other3.getStatement());
+
+    }
+
     // Not just a nop, but a nop we've determined we want to remove.
     public boolean isAgreedNop() {
         return isNop;
@@ -409,7 +421,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (pullOutJump) {
                     Set<BlockIdentifier> backJumpContainedIn = SetFactory.newSet(containedInBlocks);
                     backJumpContainedIn.remove(blockIdentifier);
-                    Op03SimpleStatement backJump = new Op03SimpleStatement(backJumpContainedIn, new GotoStatement(), blockEnd.index.justBefore());
+                    Op03SimpleStatement backJump = new Op03SimpleStatement(backJumpContainedIn, new GotoStatement(BytecodeLoc.NONE), blockEnd.index.justBefore());
                     whileEndTarget.replaceSource(this, backJump);
                     replaceTarget(whileEndTarget, backJump);
                     backJump.addSource(this);
@@ -427,7 +439,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 break;
             }
             case UNCONDITIONALDOLOOP: {
-                containedStatement.getContainer().replaceStatement(new WhileStatement(null, blockIdentifier));
+                containedStatement.getContainer().replaceStatement(new WhileStatement(BytecodeLoc.TODO,null, blockIdentifier));
                 break;
             }
             case DOLOOP: {
@@ -444,7 +456,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public void markFirstStatementInBlock(BlockIdentifier blockIdentifier) {
-        if (this.firstStatementInThisBlock != null && this.firstStatementInThisBlock != blockIdentifier) {
+        if (this.firstStatementInThisBlock != null && this.firstStatementInThisBlock != blockIdentifier
+                && blockIdentifier != null) {
             throw new ConfusedCFRException("Statement already marked as first in another block");
         }
         this.firstStatementInThisBlock = blockIdentifier;
@@ -583,6 +596,89 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.ssaIdentifiers = newIdentifiers;
     }
 
+    public static void noteInterestingLifetimes(List<Op03SimpleStatement> statements) {
+
+        List<Op03SimpleStatement> wantsHint = ListFactory.newList();
+
+        Set<LValue> wanted = SetFactory.newSet();
+        for (Op03SimpleStatement stm : statements) {
+            Set<LValue> hints = stm.getStatement().wantsLifetimeHint();
+            if (hints == null) continue;
+            wantsHint.add(stm);
+            wanted.addAll(hints);
+        }
+        if (wanted.isEmpty()) return;
+
+        class RemoveState {
+            private Set<LValue> write;
+            private Set<LValue> read;
+        }
+
+        Map<Op03SimpleStatement, RemoveState> state = MapFactory.newIdentityMap();
+
+        for (Op03SimpleStatement stm : statements) {
+            LValueUsageCollectorSimpleRW rw = new LValueUsageCollectorSimpleRW();
+            stm.getStatement().collectLValueUsage(rw);
+            // we don't collect in enough detail to know if the read occurred before or after the write, but that's
+            // ok.
+            // i.e. a=a+b vs b = (a=b)+a
+            // If there's a write without a read, we can propagate that information back to the last points lvalue was
+            // read. (by removing SSA ident information altogether from that block.)
+            // we can only do this if we are able to remove it for all children.
+            Set<LValue> writes = rw.getWritten();
+            Set<LValue> reads = rw.getRead();
+            writes.retainAll(wanted);
+            reads.retainAll(wanted);
+            writes.removeAll(reads);
+
+            RemoveState r = new RemoveState();
+            r.write = writes;
+            r.read = reads;
+
+            state.put(stm, r);
+        }
+
+        List<Op03SimpleStatement> endpoints = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return in.getTargets().isEmpty();
+            }
+        });
+        UniqueSeenQueue<Op03SimpleStatement> toProcess = new UniqueSeenQueue<Op03SimpleStatement>(endpoints);
+
+        while (!toProcess.isEmpty()) {
+            Op03SimpleStatement node = toProcess.removeFirst();
+            RemoveState r = state.get(node);
+            Set<LValue> tmp = SetFactory.newSet();
+            // Strictly speaking, all exception handlers that can see this are 'targets'.
+            // However, this doesn't break any current usages ;)
+            for (Op03SimpleStatement target : node.targets) {
+                // if we (unambiguously) wrote it here, we don't need to take read from child.
+                tmp.addAll(state.get(target).read);
+            }
+            tmp.removeAll(r.write);
+            boolean changed = r.read.addAll(tmp);
+            boolean addOnlyIfUnseen = !changed;
+            // This changed, so we need to reprocess sources.
+            for (Op03SimpleStatement source : node.sources) {
+                toProcess.add(source, addOnlyIfUnseen);
+            }
+        }
+
+        for (Op03SimpleStatement hint : wantsHint) {
+            Set<LValue> lvs = hint.getStatement().wantsLifetimeHint();
+            for (LValue lv : lvs) {
+                boolean usedInChildren = false;
+                for (Op03SimpleStatement target : hint.getTargets()) {
+                    if (state.get(target).read.contains(lv)) {
+                        usedInChildren = true;
+                        break;
+                    }
+                }
+                hint.getStatement().setLifetimeHint(lv, usedInChildren);
+            }
+        }
+    }
 
     /*
      * FIXME - the problem here is that LValues COULD be mutable.  FieldValue /is/ mutable.
@@ -606,10 +702,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         Op03SimpleStatement entry = statements.get(0);
 
-        LinkedList<Op03SimpleStatement> toProcess = ListFactory.newLinkedList();
-        toProcess.addAll(statements);
+        UniqueSeenQueue<Op03SimpleStatement> toProcess = new UniqueSeenQueue<Op03SimpleStatement>(statements);
         while (!toProcess.isEmpty()) {
-            Op03SimpleStatement statement = toProcess.remove();
+            Op03SimpleStatement statement = toProcess.removeFirst();
             SSAIdentifiers<LValue> ssaIdentifiers = statement.ssaIdentifiers;
             boolean changed = false;
             if (statement == entry) {
@@ -679,6 +774,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                             tgt.nopOut();
                             return;
                         }
+                        if (afterTgt.getStatement() instanceof Nop) {
+                            Op03SimpleStatement aat = afterTgt.targets.get(0);
+                            if (!aat.containedInBlocks.contains(switchBlock)) {
+                                tgt.nopOut();
+                                afterTgt.getBlockIdentifiers().retainAll(tgt.getBlockIdentifiers());
+                                return;
+                            }
+                        }
                         // If the default contains a single statement which is a
                         // break to the succeeding one, we can also remove it.
                         if (afterTgt.getStatement().getClass() != GotoStatement.class
@@ -710,11 +813,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public String toString() {
+        BytecodeLoc loc = getStatement().getCombinedLoc();
+
         Set<Integer> blockIds = SetFactory.newSet();
         for (BlockIdentifier b : containedInBlocks) {
             blockIds.add(b.getIndex());
         }
-        return "" + blockIds + " " + index + " : " + containedStatement;
+        return "@" + loc + ", blocks:" + blockIds + " " + index + " : " + containedStatement;
     }
 
 }

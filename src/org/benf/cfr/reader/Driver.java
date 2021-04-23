@@ -12,6 +12,7 @@ import org.benf.cfr.reader.state.TypeUsageCollectingDumper;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -65,7 +66,8 @@ class Driver {
             dumperFactory.getProgressDumper().analysingType(c.getClassType());
 
             // This may seem odd, but we want to make sure we're analysing the version
-            // from the cache.  Because we might have been fed a random filename
+            // from the cache, in case that's loaded and tweaked.
+            // ClassPathRelocator handles ensuring we don't reload the wrong file.
             try {
                 c = dcCommonState.getClassFile(c.getClassType());
             } catch (CannotLoadClassException ignore) {
@@ -85,6 +87,9 @@ class Driver {
 
             d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, typeUsageInformation, illegalIdentifierDump);
             d = dcCommonState.getObfuscationMapping().wrap(d);
+            if (options.getOption(OptionsImpl.TRACK_BYTECODE_LOC)) {
+                d = dumperFactory.wrapLineNoDumper(d);
+            }
 
             String methname = options.getOption(OptionsImpl.METHODNAME);
             if (methname == null) {
@@ -117,7 +122,7 @@ class Driver {
             ProgressDumper progressDumper = dumperFactory.getProgressDumper();
             summaryDumper = dumperFactory.getSummaryDumper();
             summaryDumper.notify("Summary for " + path);
-            summaryDumper.notify(MiscConstants.CFR_HEADER_BRA + " " + MiscConstants.CFR_VERSION);
+            summaryDumper.notify(MiscConstants.CFR_HEADER_BRA + " " + CfrVersionInfo.VERSION_INFO);
             progressDumper.analysingPath(path);
             Map<Integer, List<JavaTypeInstance>> clstypes = dcCommonState.explicitlyLoadJar(path, analysisType);
             Set<JavaTypeInstance> versionCollisions = getVersionCollisions(clstypes);

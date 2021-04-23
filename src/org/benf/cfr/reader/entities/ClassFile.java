@@ -101,6 +101,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private Map<String, Map<JavaTypeInstance, ClassFileField>> fieldsByName; // Lazily populated if interrogated.
 
     private final List<Method> methods;
+    private FakeMethods fakeMethods;
     private Map<String, List<Method>> methodsByName; // Lazily populated if interrogated.
     private final boolean isInnerClass;
     private final Map<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
@@ -144,7 +145,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         // Members
         int minorVer = data.getU2At(OFFSET_OF_MINOR);
         int majorVer = data.getU2At(OFFSET_OF_MAJOR);
-        ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
+        ClassFileVersion forced = options.getOption(OptionsImpl.FORCE_CLASSFILEVER);
+        ClassFileVersion classFileVersion = forced != null ? forced : new ClassFileVersion(majorVer, minorVer);
         this.classFileVersion = classFileVersion;
         final ClassFileVersion cfv = classFileVersion;
         int constantPoolCount = data.getU2At(OFFSET_OF_CONSTANT_POOL_COUNT);
@@ -430,6 +432,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return decompilerComments;
     }
 
+    public FakeMethod addFakeMethod(Object key, String nameHint, UnaryFunction<String, FakeMethod> methodFactory) {
+        if (fakeMethods == null) fakeMethods = new FakeMethods();
+        return fakeMethods.add(key, nameHint, methodFactory);
+    }
+
     public List<JavaTypeInstance> getAllClassTypes() {
         List<JavaTypeInstance> res = ListFactory.newList();
         getAllClassTypes(res);
@@ -448,6 +455,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             collector.collectFrom(field.getInitialValue());
         }
         collector.collectFrom(methods);
+        if (fakeMethods != null) collector.collectFrom(fakeMethods);;
         // Collect the types of all inner classes, then process recursively.
         for (Map.Entry<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassByTypeInfo : innerClassesByTypeInfo.entrySet()) {
             collector.collect(innerClassByTypeInfo.getKey());
@@ -455,8 +463,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             innerClassFile.collectTypeUsages(collector);
         }
         collector.collectFrom(dumpHelper);
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
     }
 
     private void getAllClassTypes(List<JavaTypeInstance> tgt) {
@@ -815,7 +823,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         String name = nameAndType.getName().getValue();
         VariableNamer fakeNamer = new VariableNamerDefault();
 
-        MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(state,null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer);
+        MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(state,null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer, descriptor.getValue());
 
         try {
             Method m = containingClassFile.getMethodByPrototype(basePrototype);
@@ -1087,9 +1095,18 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                                         List<ConstantPoolEntryClass> rawInterfaces) {
         AttributeSignature signatureAttribute = attributes.getByName(AttributeSignature.ATTRIBUTE_NAME);
 
-        if (signatureAttribute != null) {
+        sigAgree : if (signatureAttribute != null) {
             try {
-                return ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
+                ClassSignature fromAttr = ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
+                if (rawSuperClass != null) {
+                    JavaTypeInstance rawSuperType = rawSuperClass.getTypeInstance();
+                    JavaTypeInstance fromAttrType = fromAttr.getSuperClass().getDeGenerifiedType();
+                    if (!fromAttrType.equals(rawSuperType)) {
+                        addComment("Signature claims super is " + fromAttr.getSuperClass().getRawName() + ", not " + rawSuperType.getRawName() + " - discarding signature.");
+                        break sigAgree;
+                    }
+                }
+                return fromAttr;
             } catch (Exception ignore) {
                 // Corrupt?
             }
@@ -1389,5 +1406,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     public AttributeMap getAttributes() {
         return attributes;
+    }
+
+    public List<FakeMethod> getMethodFakes() {
+        return (fakeMethods == null) ? null : fakeMethods.getMethods();
     }
 }

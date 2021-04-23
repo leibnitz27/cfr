@@ -96,10 +96,10 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
 
     private void dumpPackageInfo(ClassFile classFile, Dumper d) {
         dumpTopHeader(classFile, d, false);
-        dumpImports(d, classFile);
-        dumpComments(classFile, d);
         dumpAnnotations(classFile, d);
         d.packageName(classFile.getRefClassType());
+        dumpImports(d, classFile);
+        dumpComments(classFile, d);
     }
 
     @Override

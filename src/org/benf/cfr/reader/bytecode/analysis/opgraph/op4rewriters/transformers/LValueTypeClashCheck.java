@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionVisitor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -52,29 +53,29 @@ public class LValueTypeClashCheck implements LValueScopeDiscoverer, StructuredSt
 
     @Override
     public void collect(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-        collect(lValue, value);
+        collectExpression(lValue, value);
     }
 
     @Override
     public void collectMultiUse(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-        collect(lValue, value);
+        collectExpression(lValue, value);
     }
 
     @Override
     public void collectMutatedLValue(LValue lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-        collect(lValue, value);
+        collectExpression(lValue, value);
     }
 
     @Override
     public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-        collect(localVariable, value);
+        collectExpression(localVariable, value);
     }
 
-    public void collect(LValue lValue) {
-        collect(lValue, null);
+    public void collect(LValue lValue, ReadWrite rw) {
+        collectExpression(lValue, null);
     }
 
-    public void collect(LValue lValue, Expression value) {
+    public void collectExpression(LValue lValue, Expression value) {
         lValue.collectLValueUsage(this);
         if (!(lValue instanceof LocalVariable)) {
             return;

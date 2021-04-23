@@ -73,7 +73,7 @@ class PrePostchangeAssignmentRewriter {
                     } else {
                         assignIdents.setKnownIdentifierOnEntry(mutatedLValue, preChangeIdents.getSSAIdentOnEntry(mutatedLValue));
                     }
-                    current.replaceStatement(new AssignmentSimple(tgt, back ? mutation.getPostMutation() : mutation.getPreMutation()));
+                    current.replaceStatement(new AssignmentSimple(innerStatement.getLoc(), tgt, back ? mutation.getPostMutation() : mutation.getPreMutation()));
                     preChange.nopOut();
                     return true;
                 }
@@ -151,7 +151,7 @@ class PrePostchangeAssignmentRewriter {
         // Create an assignment prechange with the mutation
         AbstractMutatingAssignmentExpression mutationOperation = arithmeticOperation.getMutationOf(lValue);
 
-        AssignmentPreMutation res = new AssignmentPreMutation(lValue, mutationOperation);
+        AssignmentPreMutation res = new AssignmentPreMutation(assignmentSimple.getLoc(), lValue, mutationOperation);
         statement.replaceStatement(res);
         return true;
     }
@@ -182,7 +182,7 @@ class PrePostchangeAssignmentRewriter {
         if (!assignmentSimplePrior.getRValue().equals(new LValueExpression(postIncLValue))) return;
 
         StackSSALabel tmpStackVar = (StackSSALabel) tmp;
-        Expression stackValue = new StackValue(tmpStackVar);
+        Expression stackValue = new StackValue(assignmentSimplePrior.getLoc(), tmpStackVar);
         Expression incrRValue = assignmentSimple.getRValue();
 
         if (!(incrRValue instanceof ArithmeticOperation)) return;
@@ -201,9 +201,9 @@ class PrePostchangeAssignmentRewriter {
             return;
         }
 
-        ArithmeticPostMutationOperation postMutationOperation = new ArithmeticPostMutationOperation(postIncLValue, op);
+        ArithmeticPostMutationOperation postMutationOperation = new ArithmeticPostMutationOperation(assignmentSimple.getLoc(), postIncLValue, op);
         prior.nopOut();
-        statement.replaceStatement(new AssignmentSimple(tmp, postMutationOperation));
+        statement.replaceStatement(new AssignmentSimple(assignmentSimple.getLoc(), tmp, postMutationOperation));
     }
 
     static void replacePrePostChangeAssignments(List<Op03SimpleStatement> statements) {

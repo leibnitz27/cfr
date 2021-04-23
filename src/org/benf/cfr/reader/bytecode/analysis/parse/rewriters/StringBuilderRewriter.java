@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -65,7 +66,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         List<Expression> tmp = ListFactory.newList(args);
         Collections.reverse(tmp);
         for (int x=0;x<tmp.size();++x) {
-            tmp.set(x, tryRemoveCast(tmp.get(x)));
+            tmp.set(x, CastExpression.tryRemoveCast(tmp.get(x)));
         }
         Expression res = genStringConcat(tmp);
         if (res == null) return staticFunctionInvokation;
@@ -103,7 +104,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                     // We've illegally run out of arguments.  Can't handle this.
                     return null;
                 }
-                Expression arg = tryRemoveCast(args.get(argIdx++));
+                Expression arg = CastExpression.tryRemoveCast(args.get(argIdx++));
                 toks.add(arg);
             } else {
                 toks.add(new Literal(TypedLiteral.getString(QuotingUtils.addQuotes(tok, false))));
@@ -148,7 +149,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                         memberFunctionInvokation.getArgs().size() == 1) {
                     lhs = memberFunctionInvokation.getObject();
                     Expression e = memberFunctionInvokation.getAppropriatelyCastArgument(0);
-                    e = tryRemoveCast(e);
+                    e = CastExpression.tryRemoveCast(e);
                     reverseAppendChain.add(e);
                 } else {
                     return null;
@@ -168,7 +169,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                             String typeName = e.getInferredJavaType().getJavaTypeInstance().getRawName();
                             if (typeName.equals(TypeConstants.stringName)) {
                                 // Could also do it for type sequences, but .....
-                                e = tryRemoveCast(e);
+                                e = CastExpression.tryRemoveCast(e);
                                 reverseAppendChain.add(e);
                             } else {
                                 return null;
@@ -186,16 +187,6 @@ public class StringBuilderRewriter implements ExpressionRewriter {
             }
         } while (lhs != null);
         return null;
-    }
-
-    private Expression tryRemoveCast(Expression e) {
-        if (e instanceof CastExpression) {
-            Expression ce = ((CastExpression) e).getChild();
-            if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
-                e = ce;
-            }
-        }
-        return e;
     }
 
     private Expression genStringConcat(List<Expression> revList) {
@@ -227,7 +218,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         InferredJavaType inferredJavaType = new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.STRING_TRANSFORM, true);
         for (--x; x >= 0; --x) {
             Expression appendee = revList.get(x);
-            head = new ArithmeticOperation(inferredJavaType, head, appendee, ArithOp.PLUS);
+            head = new ArithmeticOperation(BytecodeLoc.TODO, inferredJavaType, head, appendee, ArithOp.PLUS);
         }
         return head;
     }

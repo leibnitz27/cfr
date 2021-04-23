@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
@@ -35,7 +36,7 @@ public class BadNarrowingArgRewriter extends AbstractExpressionRewriter {
                     switch (tgtType.getRawType()) {
                         case BYTE:
                         case SHORT:
-                            return new CastExpression(tgtType, possibleLiteral, true);
+                            return new CastExpression(BytecodeLoc.NONE, tgtType, possibleLiteral, true);
                     }
                 }
             }

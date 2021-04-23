@@ -22,9 +22,11 @@ public class BytecodeMeta {
         USES_INVOKEDYNAMIC,
         LIVENESS_CLASH,
         ITERATED_TYPE_HINTS,
+        SWITCHES,
         // Kotlin uses string switches, even though it marks class files as java6.
         STRING_SWITCHES,
-        INSTANCE_OF_MATHCES
+        INSTANCE_OF_MATCHES,
+        MALFORMED_SWITCH
     }
 
     private final EnumSet<CodeInfoFlag> flags = EnumSet.noneOf(CodeInfoFlag.class);
@@ -45,6 +47,10 @@ public class BytecodeMeta {
                     break;
                 case INVOKEDYNAMIC:
                     flags.add(CodeInfoFlag.USES_INVOKEDYNAMIC);
+                    break;
+                case TABLESWITCH:
+                case LOOKUPSWITCH:
+                    flags.add(CodeInfoFlag.SWITCHES);
                     break;
             }
             // Don't bother processing any longer if we've found all the flags!

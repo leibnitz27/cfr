@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -15,9 +16,14 @@ import java.util.List;
 public class StructuredSynchronized extends AbstractStructuredBlockStatement {
     private Expression monitor;
 
-    StructuredSynchronized(Expression monitor, Op04StructuredStatement body) {
-        super(body);
+    StructuredSynchronized(BytecodeLoc loc, Expression monitor, Op04StructuredStatement body) {
+        super(loc, body);
         this.monitor = monitor;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, monitor);
     }
 
     @Override

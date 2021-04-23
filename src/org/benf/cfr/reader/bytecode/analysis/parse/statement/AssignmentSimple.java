@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -10,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpressi
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
@@ -18,6 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollect
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -31,7 +34,8 @@ public class AssignmentSimple extends AbstractAssignment {
     private LValue lvalue;
     private Expression rvalue;
 
-    public AssignmentSimple(LValue lvalue, Expression rvalue) {
+    public AssignmentSimple(BytecodeLoc loc, LValue lvalue, Expression rvalue) {
+        super(loc);
         this.lvalue = lvalue;
         this.rvalue = lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType()).performCastAction(rvalue, lvalue.getInferredJavaType());
     }
@@ -39,6 +43,16 @@ public class AssignmentSimple extends AbstractAssignment {
     @Override
     public Dumper dump(Dumper d) {
         return d.dump(lvalue).operator(" = ").dump(rvalue).endCodeln();
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, rvalue);
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new AssignmentSimple(getLoc(), cloneHelper.replaceOrClone(lvalue), cloneHelper.replaceOrClone(rvalue));
     }
 
     @Override
@@ -53,7 +67,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
-        lvalue.collectLValueUsage(lValueUsageCollector);
+        lValueUsageCollector.collect(lvalue, ReadWrite.WRITE);
         rvalue.collectUsedLValues(lValueUsageCollector);
     }
 
@@ -130,7 +144,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public AbstractAssignmentExpression getInliningExpression() {
-        return new AssignmentExpression(getCreatedLValue(), getRValue());
+        return new AssignmentExpression(getLoc(), getCreatedLValue(), getRValue());
     }
 
     @Override
@@ -155,7 +169,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredAssignment(lvalue, rvalue);
+        return new StructuredAssignment(getLoc(), lvalue, rvalue);
     }
 
     @Override

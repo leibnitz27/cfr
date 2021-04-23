@@ -32,6 +32,13 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.owningClass = fieldRef.getClassEntry().getTypeInstance();
     }
 
+    AbstractFieldVariable(ClassFileField field, JavaTypeInstance owningClass) {
+        super(new InferredJavaType(field.getField().getJavaTypeInstance(), InferredJavaType.Source.UNKNOWN));
+        this.classFileField = field;
+        this.failureName = field.getFieldName();
+        this.owningClass = owningClass;
+    }
+
     AbstractFieldVariable(AbstractFieldVariable other) {
         super(other.getInferredJavaType());
         this.classFileField = other.classFileField;

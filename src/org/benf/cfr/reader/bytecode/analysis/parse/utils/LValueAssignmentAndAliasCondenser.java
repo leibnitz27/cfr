@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -152,6 +153,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         // This is only valid if res has a single possible value in ssaIdentifiers, and it's the same as in replacementIdentifiers.
         Expression res = pair.expression;
 
+        Set<LValue> changes = null;
         if (replacementIdentifiers != null) {
             if (!this.keepConstant.isEmpty()) {
                 for (LValue l : this.keepConstant) {
@@ -194,7 +196,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
              * changed value at its new level.
              * (otherwise we might move a ++ past a subsequent usage).
              */
-            Set<LValue> changes = (statementContainer instanceof Op03SimpleStatement) ? replacementIdentifiers.getChanges() : null;
+            changes = (statementContainer instanceof Op03SimpleStatement) ? replacementIdentifiers.getChanges() : null;
             if (changes != null && !changes.isEmpty()) {
                 Op03SimpleStatement container = (Op03SimpleStatement)statementContainer;
                 for (Op03SimpleStatement target : container.getTargets()) {
@@ -208,20 +210,25 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     }
                 }
             }
-
-            /*
-             * We've decided we're going to make the substitution - now changes need to be applied to the target identifiers.
-             */
-            if (changes != null && !changes.isEmpty()) {
-                SSAIdentifiers tgtIdents = lvSc.getSSAIdentifiers();
-                for (LValue change : changes) {
-                    // The change is now being applied inside lvsc.
-                    tgtIdents.setKnownIdentifierOnEntry(change, replacementIdentifiers.getSSAIdentOnEntry(change));
-                }
-            }
         }
 
         if (statementContainer != null) {
+            if (!statementContainer.getBlockIdentifiers().equals(lvSc.getBlockIdentifiers())) {
+                Op03SimpleStatement lv03 = (Op03SimpleStatement) lvSc;
+                Op03SimpleStatement lvprev = lv03.getLinearlyPrevious();
+                // We don't want to copy propagate out of a try block.
+                // BUT - we will tolerate it if the linearly previous entry is in the block,
+                // because it's a known pattern.
+                for (BlockIdentifier left : SetUtil.differenceAtakeBtoList(
+                        statementContainer.getBlockIdentifiers(),
+                        lvSc.getBlockIdentifiers())) {
+                    if (left.getBlockType() == BlockType.TRYBLOCK) {
+                        if (lvprev == null || !lvprev.getBlockIdentifiers().contains(left)) {
+                            return null;
+                        }
+                    }
+                }
+            }
             /*
              * Try a simple rewind, but if we jump OVER any method calls, this is illegal.
              */
@@ -229,8 +236,21 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 return null;
             }
             lvSc.copyBlockInformationFrom(statementContainer);
+            lvSc.copyBytecodeInformationFrom(statementContainer);
             statementContainer.nopOut();
         }
+
+        /*
+         * We've decided we're going to make the substitution - now changes need to be applied to the target identifiers.
+         */
+        if (changes != null && !changes.isEmpty()) {
+            SSAIdentifiers tgtIdents = lvSc.getSSAIdentifiers();
+            for (LValue change : changes) {
+                // The change is now being applied inside lvsc.
+                tgtIdents.setKnownIdentifierOnEntry(change, replacementIdentifiers.getSSAIdentOnEntry(change));
+            }
+        }
+
         stackSSALabel.getStackEntry().decrementUsage();
         if (aliasReplacements.containsKey(stackSSALabel)) {
             found.put(stackSSALabel, new ExpressionStatementPair(aliasReplacements.get(stackSSALabel), null));
@@ -252,7 +272,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             res = res.replaceSingleUsageLValues(this, ssaIdentifiers, lvSc);
         }
 
-        cache.put(new StackValue(stackSSALabel), prev);
+        cache.put(new StackValue(BytecodeLoc.NONE, stackSSALabel), prev);
 
         return prev;
     }
@@ -449,7 +469,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 if (verifyStatement.getStatement().doesBlackListLValueReplacement(stackSSALabel, target.expression)) return null;
                 for (LValue checkThis : checkThese) {
                     if (guessStatement == verifyStatement) continue;
-                    //noinspection unchecked
                     if (!verifyStatement.getSSAIdentifiers().isValidReplacement(checkThis, guessStatement.getSSAIdentifiers())) {
                         return null;
                     }
@@ -627,7 +646,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     StatementContainer<Statement> replacement = replaceWith.statementContainer;
                     if (replacement == statementContainer) return null;
 
-                    //noinspection unchecked
                     SSAIdentifiers<LValue> previousIdents = replacement.getSSAIdentifiers();
                     Set fixedPrevious = previousIdents.getFixedHere();
                     if (SetUtil.hasIntersection(this.fixed, fixedPrevious)) {
@@ -644,7 +662,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);
                     replacement.nopOut();
-                    //noinspection unchecked
                     currentIdents.setKnownIdentifierOnEntry(lValue, previousIdents.getSSAIdentOnEntry(lValue));
                     currentIdents.fixHere(previousIdents.getFixedHere());
                     return replaceWith.expression;

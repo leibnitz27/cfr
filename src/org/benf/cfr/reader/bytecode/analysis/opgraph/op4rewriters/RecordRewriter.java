@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -33,6 +34,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperRecord;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -165,7 +167,7 @@ public class RecordRewriter {
         if (method == null) return;
 
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement stm = new StructuredReturn(new CastExpression(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TEST),
+        StructuredStatement stm = new StructuredReturn(BytecodeLoc.NONE, new CastExpression(BytecodeLoc.NONE, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TEST),
                 wcm.getStaticFunction("func", TypeConstants.OBJECTMETHODS, TypeConstants.OBJECT, "bootstrap",
                         new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(MiscConstants.EQUALS))),
                         wcm.getExpressionWildCard("array"),
@@ -180,7 +182,7 @@ public class RecordRewriter {
         if (method == null) return;
 
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement stm = new StructuredReturn(
+        StructuredStatement stm = new StructuredReturn(BytecodeLoc.NONE,
                 wcm.getStaticFunction("func", TypeConstants.OBJECTMETHODS, TypeConstants.OBJECT, "bootstrap",
                         new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(MiscConstants.TOSTRING))),
                         wcm.getExpressionWildCard("array"),
@@ -194,7 +196,7 @@ public class RecordRewriter {
         if (method == null) return;
 
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement stm = new StructuredReturn(new CastExpression(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST),
+        StructuredStatement stm = new StructuredReturn(BytecodeLoc.NONE, new CastExpression(BytecodeLoc.NONE, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST),
                 wcm.getStaticFunction("func", TypeConstants.OBJECTMETHODS, TypeConstants.OBJECT, "bootstrap",
                         new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(MiscConstants.HASHCODE))),
                         wcm.getExpressionWildCard("array"),
@@ -207,7 +209,7 @@ public class RecordRewriter {
         StructuredStatement item = getSingleCodeLine(method);
         if (!stm.equals(item)) return;
         if (!cmpArgsEq(wcm.getExpressionWildCard("array").getMatch(), thisType, fields)) return;
-        if (!isThis(wcm.getExpressionWildCard("this").getMatch(), thisType)) return;
+        if (!MiscUtils.isThis(wcm.getExpressionWildCard("this").getMatch(), thisType)) return;
         method.hideDead();
     }
 
@@ -288,7 +290,7 @@ public class RecordRewriter {
         StructuredStatement item = getSingleCodeLine(method);
         if (item == null) return;
         WildcardMatch wcm = new WildcardMatch();
-        StructuredStatement s = new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("var")), classFileField.getField().getJavaTypeInstance());
+        StructuredStatement s = new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm.getLValueWildCard("var")), classFileField.getField().getJavaTypeInstance());
         if (!s.equals(item)) return;
         ClassFileField cff = getCFF(wcm.getLValueWildCard("var").getMatch(), thisType);
         if (cff != classFileField) return;
@@ -339,20 +341,10 @@ public class RecordRewriter {
         }
     }
 
-    private static boolean isThis(Expression obj, JavaTypeInstance thisType) {
-        if (!(obj instanceof LValueExpression)) return false;
-        LValue thisExp = ((LValueExpression) obj).getLValue();
-        if (!(thisExp instanceof LocalVariable)) return false;
-        LocalVariable lv = (LocalVariable)thisExp;
-        if (!(lv.getIdx() == 0 && MiscConstants.THIS.equals(lv.getName().getStringName()))) return false;
-        if (!thisType.equals(lv.getInferredJavaType().getJavaTypeInstance())) return false;
-        return true;
-    }
-
     private static ClassFileField getCFF(LValue lhs, JavaRefTypeInstance thisType) {
         if (!(lhs instanceof FieldVariable)) return null;
         Expression obj = ((FieldVariable) lhs).getObject();
-        if (!isThis(obj, thisType)) return null;
+        if (!MiscUtils.isThis(obj, thisType)) return null;
         return ((FieldVariable) lhs).getClassFileField();
     }
 

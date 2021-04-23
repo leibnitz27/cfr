@@ -3,7 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
-public class AbstractMatchResultIterator implements MatchResultCollector {
+public abstract class AbstractMatchResultIterator implements MatchResultCollector {
     @Override
     public void clear() {
 

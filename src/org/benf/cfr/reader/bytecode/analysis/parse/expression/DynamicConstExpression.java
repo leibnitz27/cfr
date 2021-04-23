@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -19,9 +20,14 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class DynamicConstExpression extends AbstractExpression {
     private Expression content;
 
-    public DynamicConstExpression(Expression content) {
-        super(content.getInferredJavaType());
+    public DynamicConstExpression(BytecodeLoc loc, Expression content) {
+        super(loc, content.getInferredJavaType());
         this.content = content;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, content);
     }
 
     @Override
@@ -53,14 +59,14 @@ public class DynamicConstExpression extends AbstractExpression {
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         Expression newContent = content.applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
         if (newContent == content) return this;
-        return new DynamicConstExpression(newContent);
+        return new DynamicConstExpression(getLoc(), newContent);
     }
 
     @Override
     public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         Expression newContent = content.applyReverseExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
         if (newContent == content) return this;
-        return new DynamicConstExpression(newContent);
+        return new DynamicConstExpression(getLoc(), newContent);
     }
 
     @Override
@@ -78,6 +84,6 @@ public class DynamicConstExpression extends AbstractExpression {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new DynamicConstExpression(content.deepClone(cloneHelper));
+        return new DynamicConstExpression(getLoc(), content.deepClone(cloneHelper));
     }
 }

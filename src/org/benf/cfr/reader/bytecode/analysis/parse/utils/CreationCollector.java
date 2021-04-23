@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -143,6 +144,7 @@ public class CreationCollector {
                  * class), vs ones which are being bound without being passed in.
                  */
                 ConstructorInvokationAnonymousInner constructorInvokationAnonymousInner = new ConstructorInvokationAnonymousInner(
+                        BytecodeLoc.NONE, // Embedded in the invokation.
                         memberFunctionInvokation,
                         inferredJavaType,
                         memberFunctionInvokation.getArgs(),
@@ -193,6 +195,7 @@ public class CreationCollector {
                 }
 
                 ConstructorInvokationSimple cis = new ConstructorInvokationSimple(
+                        BytecodeLoc.NONE, // in the invokation
                         memberFunctionInvokation,
                         inferredJavaType,
                         constructionType,
@@ -216,7 +219,7 @@ public class CreationCollector {
             if (lValue == null) {
                 replacement = new ExpressionStatement(constructorInvokation);
             } else {
-                replacement = new AssignmentSimple(lValue, constructorInvokation);
+                replacement = new AssignmentSimple(constructorInvokation.getLoc(), lValue, constructorInvokation);
 
                 if (lValue instanceof StackSSALabel) {
                     StackSSALabel stackSSALabel = (StackSSALabel) lValue;

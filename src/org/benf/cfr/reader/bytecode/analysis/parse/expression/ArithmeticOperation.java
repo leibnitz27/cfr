@@ -1,17 +1,22 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.LiteralFolding;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -22,23 +27,30 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
+
 public class ArithmeticOperation extends AbstractExpression implements BoxingProcessor {
     private Expression lhs;
     private Expression rhs;
     private final ArithOp op;
 
-    public ArithmeticOperation(Expression lhs, Expression rhs, ArithOp op) {
-        super(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType(), op));
+    public ArithmeticOperation(BytecodeLoc loc, Expression lhs, Expression rhs, ArithOp op) {
+        super(loc, inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType(), op));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
     }
 
-    public ArithmeticOperation(InferredJavaType knownType, Expression lhs, Expression rhs, ArithOp op) {
-        super(knownType);
+    public ArithmeticOperation(BytecodeLoc loc, InferredJavaType knownType, Expression lhs, Expression rhs, ArithOp op) {
+        super(loc, knownType);
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, lhs, rhs);
     }
 
     @Override
@@ -49,7 +61,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArithmeticOperation(cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
+        return new ArithmeticOperation(getLoc(), cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
     }
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b, ArithOp op) {
@@ -84,6 +96,16 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         return d;
     }
 
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType)) return null;
+        Literal l = lhs.getComputedLiteral(display);
+        if (l == null) return null;
+        Literal r = rhs.getComputedLiteral(display);
+        if (r == null) return null;
+        return LiteralFolding.foldArithmetic((RawJavaType)getInferredJavaType().getJavaTypeInstance(), l, r, op);
+    }
+
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
         LValue contained = expression.getLValue();
         return (lValue.equals(contained));
@@ -107,7 +129,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     }
 
     public Expression getReplacementXorM1() {
-        return new ArithmeticMonOperation(lhs, ArithOp.NEG);
+        return new ArithmeticMonOperation(getLoc(), lhs, ArithOp.NEG);
     }
 
     public boolean isMutationOf(LValue lValue) {
@@ -126,10 +148,10 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
             switch (op) {
                 case PLUS:
                 case MINUS:
-                    return new ArithmeticPreMutationOperation(lValue, op);
+                    return new ArithmeticPreMutationOperation(getLoc(), lValue, op);
             }
         }
-        return new ArithmeticMutationOperation(lValue, rhs, op);
+        return new ArithmeticMutationOperation(getLoc(), lValue, rhs, op);
     }
 
     @Override
@@ -371,10 +393,10 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
          */
         compOp = rewriteXCMPCompOp(compOp, litVal);
         if (acceptsNaN) {
-            ConditionalExpression comp = new ComparisonOperation(this.lhs, this.rhs, compOp.getInverted(), false);
-            comp = new NotOperation(comp);
+            ConditionalExpression comp = new ComparisonOperation(getLoc(), this.lhs, this.rhs, compOp.getInverted(), false);
+            comp = new NotOperation(getLoc(), comp);
             return comp;
         }
-        return new ComparisonOperation(this.lhs, this.rhs, compOp, canNegate);
+        return new ComparisonOperation(getLoc(), this.lhs, this.rhs, compOp, canNegate);
     }
 }

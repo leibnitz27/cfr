@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -55,7 +56,7 @@ public class LValueCondense {
 
         if ((l1 instanceof StackSSALabel) && !(l2 instanceof StackSSALabel)) {
             stm1.replaceStatement(a2);
-            stm2.replaceStatement(new AssignmentSimple(l1, new LValueExpression(l2)));
+            stm2.replaceStatement(new AssignmentSimple(BytecodeLoc.TODO, l1, new LValueExpression(l2)));
         }
     }
 
@@ -94,7 +95,7 @@ public class LValueCondense {
             newRhs = me;
         }
 
-        if (newRhs == null) newRhs = new AssignmentExpression(l1, r1);
+        if (newRhs == null) newRhs = new AssignmentExpression(BytecodeLoc.TODO, l1, r1);
         /*
          * But only if we have enough type information to know this is ok.
          */
@@ -102,7 +103,7 @@ public class LValueCondense {
             return;
         }
 
-        stm2.replaceStatement(new AssignmentSimple(l2, newRhs));
+        stm2.replaceStatement(new AssignmentSimple(BytecodeLoc.TODO, l2, newRhs));
         stm1.nopOut();
     }
 

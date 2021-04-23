@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -90,18 +91,18 @@ public class InstanceOfAssignRewriter {
         objWildcard = wcm.getLValueWildCard("obj");
         tmpWildcard = wcm.getLValueWildCard("tmp");
         LValueExpression obj = new LValueExpression(objWildcard);
-        CastExpression castObj = new CastExpression(ijtTarget, obj);
+        CastExpression castObj = new CastExpression(BytecodeLoc.TODO, ijtTarget, obj);
 
         // Simple conditional tests.
         // a instanceof Foo && (x = (Foo)a) == a
         // --> a instanceof Foo x
         tests = ListFactory.newList();
-        ConditionalExpression cPos1 = new BooleanOperation(
-                new BooleanExpression(new InstanceOfExpression(ijtBool, obj, target)),
-                new ComparisonOperation(new AssignmentExpression(scopedEntity, castObj), castObj, CompOp.EQ),
+        ConditionalExpression cPos1 = new BooleanOperation(BytecodeLoc.NONE,
+                new BooleanExpression(new InstanceOfExpression(BytecodeLoc.NONE, ijtBool, obj, target)),
+                new ComparisonOperation(BytecodeLoc.NONE, new AssignmentExpression(BytecodeLoc.NONE, scopedEntity, castObj), castObj, CompOp.EQ),
                 BoolOp.AND
         );
-        ConditionalExpression cPos2 = new NotOperation(cPos1.getDemorganApplied(true));
+        ConditionalExpression cPos2 = new NotOperation(BytecodeLoc.NONE, cPos1.getDemorganApplied(true));
         tests.add(new ConditionTest(cPos1, true, MatchType.SIMPLE));
         tests.add(new ConditionTest(cPos2, true, MatchType.SIMPLE));
         tests.add(new ConditionTest(cPos1.getNegated(), false, MatchType.SIMPLE));
@@ -112,14 +113,14 @@ public class InstanceOfAssignRewriter {
         // --> (a = y) instanceof Foo x
         // The inline assignment is ALMOST CERTAINLY pointless, but unless we can prove it's not used
         // anywhere, we need to retain it. (the existence of 'a' is an annoying JDK artifact).
-        CastExpression castTmp = new CastExpression(ijtTarget, new LValueExpression(tmpWildcard));
+        CastExpression castTmp = new CastExpression(BytecodeLoc.NONE, ijtTarget, new LValueExpression(tmpWildcard));
 
-        ConditionalExpression dPos1 = new BooleanOperation(
-                new BooleanExpression(new InstanceOfExpression(ijtBool, new AssignmentExpression(tmpWildcard, obj), target)),
-                new ComparisonOperation(new AssignmentExpression(scopedEntity, castTmp), castTmp, CompOp.EQ),
+        ConditionalExpression dPos1 = new BooleanOperation(BytecodeLoc.NONE,
+                new BooleanExpression(new InstanceOfExpression(BytecodeLoc.NONE, ijtBool, new AssignmentExpression(BytecodeLoc.NONE, tmpWildcard, obj), target)),
+                new ComparisonOperation(BytecodeLoc.NONE, new AssignmentExpression(BytecodeLoc.NONE, scopedEntity, castTmp), castTmp, CompOp.EQ),
                 BoolOp.AND
         );
-        ConditionalExpression dPos2 = new NotOperation(cPos1.getDemorganApplied(true));
+        ConditionalExpression dPos2 = new NotOperation(BytecodeLoc.NONE, cPos1.getDemorganApplied(true));
         tests.add(new ConditionTest(dPos1, true, MatchType.ASSIGN_SIMPLE));
         tests.add(new ConditionTest(dPos2, true, MatchType.ASSIGN_SIMPLE));
         tests.add(new ConditionTest(dPos1.getNegated(), false, MatchType.ASSIGN_SIMPLE));
@@ -182,7 +183,7 @@ public class InstanceOfAssignRewriter {
         if (ct.matchType == MatchType.SIMPLE) {
             LValue obj = objWildcard.getMatch();
 
-            ce = new BooleanExpression(new InstanceOfExpressionDefining(
+            ce = new BooleanExpression(new InstanceOfExpressionDefining(BytecodeLoc.TODO,
                     new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION),
                     new LValueExpression(obj),
                     scopedEntity.getInferredJavaType().getJavaTypeInstance(),
@@ -192,9 +193,9 @@ public class InstanceOfAssignRewriter {
             LValue obj = objWildcard.getMatch();
             LValue tmp = tmpWildcard.getMatch();
 
-            ce = new BooleanExpression(new InstanceOfExpressionDefining(
+            ce = new BooleanExpression(new InstanceOfExpressionDefining(BytecodeLoc.TODO,
                     new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION),
-                    new AssignmentExpression(tmp, new LValueExpression(obj)),
+                    new AssignmentExpression(BytecodeLoc.TODO,tmp, new LValueExpression(BytecodeLoc.TODO,obj)),
                     scopedEntity.getInferredJavaType().getJavaTypeInstance(),
                     scopedEntity
             ));

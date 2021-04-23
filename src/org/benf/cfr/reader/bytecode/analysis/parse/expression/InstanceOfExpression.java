@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -21,17 +22,22 @@ public class InstanceOfExpression extends AbstractExpression {
     private Expression lhs;
     private JavaTypeInstance typeInstance;
 
-    public InstanceOfExpression(Expression lhs, ConstantPoolEntry cpe) {
-        super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
+    public InstanceOfExpression(BytecodeLoc loc, Expression lhs, ConstantPoolEntry cpe) {
+        super(loc, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
         this.lhs = lhs;
         ConstantPoolEntryClass cpec = (ConstantPoolEntryClass) cpe;
         this.typeInstance = cpec.getTypeInstance();
     }
 
-    public InstanceOfExpression(InferredJavaType inferredJavaType, Expression lhs, JavaTypeInstance typeInstance) {
-        super(inferredJavaType);
+    public InstanceOfExpression(BytecodeLoc loc, InferredJavaType inferredJavaType, Expression lhs, JavaTypeInstance typeInstance) {
+        super(loc, inferredJavaType);
         this.lhs = lhs;
         this.typeInstance = typeInstance;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, lhs);
     }
 
     @Override
@@ -42,7 +48,7 @@ public class InstanceOfExpression extends AbstractExpression {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new InstanceOfExpression(getInferredJavaType(), cloneHelper.replaceOrClone(lhs), typeInstance);
+        return new InstanceOfExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(lhs), typeInstance);
     }
 
     @Override

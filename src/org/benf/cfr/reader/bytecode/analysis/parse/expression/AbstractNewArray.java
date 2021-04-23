@@ -1,12 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
 public abstract class AbstractNewArray extends AbstractExpression {
-    AbstractNewArray(InferredJavaType inferredJavaType) {
-        super(inferredJavaType);
+    AbstractNewArray(BytecodeLoc loc, InferredJavaType inferredJavaType) {
+        super(loc, inferredJavaType);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -18,8 +19,8 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
     private LValue mutated;
     private final ArithOp op;
 
-    public ArithmeticPostMutationOperation(LValue mutated, ArithOp op) {
-        super(mutated.getInferredJavaType());
+    public ArithmeticPostMutationOperation(BytecodeLoc loc, LValue mutated, ArithOp op) {
+        super(loc, mutated.getInferredJavaType());
         this.mutated = mutated;
         this.op = op;
     }
@@ -29,8 +30,13 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArithmeticPostMutationOperation(cloneHelper.replaceOrClone(mutated), op);
+        return new ArithmeticPostMutationOperation(getLoc(), cloneHelper.replaceOrClone(mutated), op);
     }
 
     @Override
@@ -82,7 +88,7 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        lValueUsageCollector.collect(mutated);
+        lValueUsageCollector.collect(mutated, ReadWrite.READ_WRITE);
     }
 
     @Override

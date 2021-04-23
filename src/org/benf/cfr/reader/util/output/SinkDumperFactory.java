@@ -5,13 +5,17 @@ import org.benf.cfr.reader.api.SinkReturns;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.attributes.AttributeCode;
+import org.benf.cfr.reader.entities.attributes.AttributeLineNumberTable;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.MethodErrorCollector.SummaryDumperMethodErrorCollector;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.NavigableMap;
 
 public class SinkDumperFactory implements DumperFactory {
     private static final List<OutputSinkFactory.SinkClass> justString = Collections.singletonList(OutputSinkFactory.SinkClass.STRING);
@@ -41,6 +45,62 @@ public class SinkDumperFactory implements DumperFactory {
         List<OutputSinkFactory.SinkClass> supported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.JAVA, Arrays.asList(OutputSinkFactory.SinkClass.DECOMPILED_MULTIVER, OutputSinkFactory.SinkClass.DECOMPILED, OutputSinkFactory.SinkClass.TOKEN_STREAM, OutputSinkFactory.SinkClass.STRING));
         if (supported == null) supported = justString;
         MethodErrorCollector methodErrorCollector = new SummaryDumperMethodErrorCollector(classType, summaryDumper);
+        return getTopLevelDumper2(classType, typeUsageInformation, illegalIdentifierDump, supported, methodErrorCollector);
+    }
+
+    @Override
+    public Dumper wrapLineNoDumper(Dumper dumper) {
+        List<OutputSinkFactory.SinkClass> linesSupported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.LINENUMBER, Collections.singletonList(OutputSinkFactory.SinkClass.LINE_NUMBER_MAPPING));
+        if (linesSupported == null || linesSupported.isEmpty()) {
+            return dumper;
+        }
+
+        for (OutputSinkFactory.SinkClass sinkClass : linesSupported) {
+            switch (sinkClass) {
+                case LINE_NUMBER_MAPPING: {
+
+                    final OutputSinkFactory.Sink<SinkReturns.LineNumberMapping> sink = sinkFactory.getSink(OutputSinkFactory.SinkType.LINENUMBER, OutputSinkFactory.SinkClass.LINE_NUMBER_MAPPING);
+                    BytecodeDumpConsumer d = new BytecodeDumpConsumer() {
+                        @Override
+                        public void accept(Collection<Item> items) {
+                            for (final Item item : items) {
+                                sink.write(new SinkReturns.LineNumberMapping() {
+                                    @Override
+                                    public String methodName() {
+                                        return item.getMethod().getName();
+                                    }
+
+                                    @Override
+                                    public String methodDescriptor() {
+                                        return item.getMethod().getMethodPrototype().getOriginalDescriptor();
+                                    }
+
+                                    @Override
+                                    public NavigableMap<Integer, Integer> getMappings() {
+                                        return item.getBytecodeLocs();
+                                    }
+
+                                    @Override
+                                    public NavigableMap<Integer, Integer> getClassFileMappings() {
+                                        AttributeCode codeAttribute = item.getMethod().getCodeAttribute();
+                                        if (codeAttribute == null) return null;
+                                        AttributeLineNumberTable lineNumberTable = codeAttribute.getAttributes().getByName(AttributeLineNumberTable.ATTRIBUTE_NAME);
+                                        if (lineNumberTable == null) return null;
+
+                                        return lineNumberTable.getEntries();
+                                    }
+                                });
+                            }
+                        }
+                    };
+                    return new BytecodeTrackingDumper(dumper, d);
+                }
+            }
+        }
+        return dumper;
+    }
+
+    private Dumper getTopLevelDumper2(JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump, List<OutputSinkFactory.SinkClass> supported, MethodErrorCollector methodErrorCollector) {
         for (OutputSinkFactory.SinkClass sinkClass : supported) {
             switch (sinkClass) {
                 case DECOMPILED_MULTIVER:

@@ -26,6 +26,8 @@ import org.benf.cfr.reader.util.collections.CollectionUtils;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -140,10 +142,10 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(getJavaTypeInstance());
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
     }
 
     public void dump(Dumper d, String name, ClassFile owner, boolean asRecordField) {
@@ -173,7 +175,13 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         }
 
         if (!asRecordField) {
-            String prefix = CollectionUtils.join(accessFlags, " ");
+            Set<AccessFlag> accessFlagsLocal = accessFlags;
+            if (cp.getDCCommonState().getOptions().getOption(OptionsImpl.ATTRIBUTE_OBF)) {
+                accessFlagsLocal = SetFactory.newSet(accessFlagsLocal);
+                accessFlagsLocal.remove(AccessFlag.ACC_ENUM);
+                accessFlagsLocal.remove(AccessFlag.ACC_SYNTHETIC);
+            }
+            String prefix = CollectionUtils.join(accessFlagsLocal, " ");
             if (!prefix.isEmpty()) {
                 d.keyword(prefix).print(' ');
             }

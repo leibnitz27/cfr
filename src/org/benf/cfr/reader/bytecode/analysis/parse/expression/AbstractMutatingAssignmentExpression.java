@@ -1,13 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 
 public abstract class AbstractMutatingAssignmentExpression extends AbstractAssignmentExpression {
-
-    AbstractMutatingAssignmentExpression(InferredJavaType inferredJavaType) {
-        super(inferredJavaType);
+    AbstractMutatingAssignmentExpression(BytecodeLoc loc, InferredJavaType inferredJavaType) {
+        super(loc, inferredJavaType);
     }
 
     @Override

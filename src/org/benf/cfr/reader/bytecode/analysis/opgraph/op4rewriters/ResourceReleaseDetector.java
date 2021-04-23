@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -53,7 +54,7 @@ public class ResourceReleaseDetector {
 
         return new MatchSequence(
                 new BeginBlock(null),
-                new StructuredIf(new ComparisonOperation(throwableExpression, Literal.NULL, CompOp.NE), null),
+                new StructuredIf(BytecodeLoc.NONE, new ComparisonOperation(BytecodeLoc.NONE, throwableExpression, Literal.NULL, CompOp.NE), null),
                 new BeginBlock(null),
                 new StructuredTry(null, null),
                 new BeginBlock(null),
@@ -61,7 +62,7 @@ public class ResourceReleaseDetector {
                 new EndBlock(null),
                 new StructuredCatch(null, null, wcm.getLValueWildCard("caught"), null),
                 new BeginBlock(null),
-                new StructuredExpressionStatement(wcm.getMemberFunction("addsupp", "addSuppressed", throwableExpression, new LValueExpression(wcm.getLValueWildCard("caught"))), false),
+                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getMemberFunction("addsupp", "addSuppressed", throwableExpression, new LValueExpression(wcm.getLValueWildCard("caught"))), false),
                 new EndBlock(null),
                 new EndBlock(null),
                 new ElseBlock(),
@@ -81,9 +82,9 @@ public class ResourceReleaseDetector {
                 // We shouldn't see this, but might have if we've pulled some gotos up.
                 new MatchOpt(
                         new MatchSequence(
-                                new StructuredIf(new ComparisonOperation(new LValueExpression(autoclose), Literal.NULL, CompOp.EQ), null),
+                                new StructuredIf(BytecodeLoc.NONE, new ComparisonOperation(BytecodeLoc.NONE, new LValueExpression(autoclose), Literal.NULL, CompOp.EQ), null),
                                 new BeginBlock(null),
-                                new StructuredThrow(new LValueExpression(throwableLValue)),
+                                new StructuredThrow(BytecodeLoc.NONE, new LValueExpression(throwableLValue)),
                                 new EndBlock(null)
                         )
                 ),
@@ -91,13 +92,13 @@ public class ResourceReleaseDetector {
                 new BeginBlock(null),
                 closeExpression,
                 // We shouldn't see this, but might have if we've pulled some gotos up.
-                new MatchOpt(new StructuredThrow(new LValueExpression(throwableLValue))),
+                new MatchOpt(new StructuredThrow(BytecodeLoc.NONE, new LValueExpression(throwableLValue))),
                 new EndBlock(null),
                 new StructuredCatch(null, null, wcm.getLValueWildCard("caught"), null),
                 new BeginBlock(null),
-                new StructuredExpressionStatement(wcm.getMemberFunction("addsupp", "addSuppressed", throwableExpression, new LValueExpression(wcm.getLValueWildCard("caught"))), false),
+                new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getMemberFunction("addsupp", "addSuppressed", throwableExpression, new LValueExpression(wcm.getLValueWildCard("caught"))), false),
                 new EndBlock(null),
-                new StructuredThrow(new LValueExpression(throwableLValue))
+                new StructuredThrow(BytecodeLoc.NONE, new LValueExpression(throwableLValue))
         );
 
         return inner;
@@ -108,7 +109,7 @@ public class ResourceReleaseDetector {
         MatchOneOf closeExpression = getCloseExpressionMatch(wcm, autocloseExpression);
 
         Matcher<StructuredStatement> matchsimple = new MatchOneOf(new MatchSequence(
-                new StructuredIf(new ComparisonOperation(new LValueExpression(autoclose), Literal.NULL, CompOp.NE), null),
+                new StructuredIf(BytecodeLoc.NONE, new ComparisonOperation(BytecodeLoc.NONE, new LValueExpression(autoclose), Literal.NULL, CompOp.NE), null),
                 new BeginBlock(null),
                 closeExpression,
                 new EndBlock(null)),
@@ -119,8 +120,8 @@ public class ResourceReleaseDetector {
 
     public static MatchOneOf getCloseExpressionMatch(WildcardMatch wcm, LValueExpression autocloseExpression) {
         return new MatchOneOf(
-                    new StructuredExpressionStatement(wcm.getMemberFunction("m1", "close", autocloseExpression), false),
-                    new StructuredExpressionStatement(wcm.getMemberFunction("m2", "close", wcm.getCastExpressionWildcard("cast", autocloseExpression)), false)
+                    new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getMemberFunction("m1", "close", autocloseExpression), false),
+                    new StructuredExpressionStatement(BytecodeLoc.NONE, wcm.getMemberFunction("m2", "close", wcm.getCastExpressionWildcard("cast", autocloseExpression)), false)
             );
     }
 }

@@ -1,9 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -15,11 +17,10 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class IfExitingStatement extends AbstractStatement {
 
     private ConditionalExpression condition;
-    //    private Expression returnExpression;
-//    private JavaTypeInstance fnReturnType;
     private Statement statement;
 
-    public IfExitingStatement(ConditionalExpression conditionalExpression, Statement statement) {
+    public IfExitingStatement(BytecodeLoc loc, ConditionalExpression conditionalExpression, Statement statement) {
+        super(loc);
         this.condition = conditionalExpression;
         this.statement = statement;
     }
@@ -29,6 +30,16 @@ public class IfExitingStatement extends AbstractStatement {
         dumper.keyword("if ").separator("(").dump(condition).separator(") ");
         statement.dump(dumper);
         return dumper;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new IfExitingStatement(getLoc(), (ConditionalExpression)cloneHelper.replaceOrClone(condition), statement.deepClone(cloneHelper));
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, condition, statement);
     }
 
     @Override
@@ -62,11 +73,7 @@ public class IfExitingStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredIf(condition, new Op04StructuredStatement(Block.getBlockFor(false, statement.getStructuredStatement())));
-    }
-
-    public void optimiseForTypes() {
-        condition = condition.optimiseForType();
+        return new StructuredIf(getLoc(), condition, new Op04StructuredStatement(Block.getBlockFor(false, statement.getStructuredStatement())));
     }
 
     @Override

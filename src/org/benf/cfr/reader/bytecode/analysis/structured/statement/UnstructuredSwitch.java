@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -14,15 +15,23 @@ import java.util.Vector;
 public class UnstructuredSwitch extends AbstractUnStructuredStatement {
     private Expression switchOn;
     private final BlockIdentifier blockIdentifier;
+    private boolean safeExpression;
 
-    public UnstructuredSwitch(Expression switchOn, BlockIdentifier blockIdentifier) {
+    public UnstructuredSwitch(BytecodeLoc loc, Expression switchOn, BlockIdentifier blockIdentifier, boolean safeExpression) {
+        super(loc);
         this.switchOn = switchOn;
         this.blockIdentifier = blockIdentifier;
+        this.safeExpression = safeExpression;
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("** switch (").dump(switchOn).separator(")").newln();
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, switchOn);
     }
 
     @Override
@@ -48,6 +57,6 @@ public class UnstructuredSwitch extends AbstractUnStructuredStatement {
                 last.replaceStatement(caseStatement.getEmptyStructuredCase());
             }
         }
-        return new StructuredSwitch(switchOn, innerBlock, blockIdentifier);
+        return new StructuredSwitch(getLoc(), switchOn, innerBlock, blockIdentifier, safeExpression);
     }
 }

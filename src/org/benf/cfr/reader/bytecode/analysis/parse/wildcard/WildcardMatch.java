@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.wildcard;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -317,12 +319,12 @@ public class WildcardMatch {
         }
     }
 
-    public class LValueWildcard extends DebugDumpable implements LValue, Wildcard<LValue> {
+    public static class LValueWildcard extends DebugDumpable implements LValue, Wildcard<LValue> {
         private final Predicate<LValue> test;
         private transient LValue matchedValue;
 
 
-        private LValueWildcard(Predicate<LValue> test) {
+        public LValueWildcard(Predicate<LValue> test) {
             this.test = test;
         }
 
@@ -455,10 +457,10 @@ public class WildcardMatch {
         }
     }
 
-    public class StackLabelWildCard extends StackSSALabel implements Wildcard<StackSSALabel> {
+    public static class StackLabelWildCard extends StackSSALabel implements Wildcard<StackSSALabel> {
         private transient StackSSALabel matchedValue;
 
-        StackLabelWildCard() {
+        public StackLabelWildCard() {
             super(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST));
         }
 
@@ -486,6 +488,20 @@ public class WildcardMatch {
     }
 
     private static abstract class AbstractBaseExpressionWildcard extends DebugDumpable implements Expression {
+
+        @Override
+        public BytecodeLoc getCombinedLoc() {
+            throw new ConfusedCFRException("Should not be getting loc of wildcard");
+        }
+
+        @Override
+        public BytecodeLoc getLoc() {
+            throw new ConfusedCFRException("Should not be getting loc of wildcard");
+        }
+
+        @Override
+        public void addLoc(HasByteCodeLoc loc) {
+        }
 
         @Override
         public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
@@ -577,10 +593,10 @@ public class WildcardMatch {
         }
     }
 
-    public class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
+    public static class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
         private transient Expression matchedValue;
 
-        ExpressionWildcard() {
+        public ExpressionWildcard() {
         }
 
         @Override
@@ -671,14 +687,14 @@ public class WildcardMatch {
 
     }
 
-    public class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<MemberFunctionInvokation> {
+    public static class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<MemberFunctionInvokation> {
         private final String name;
         private final boolean isInitMethod;
         private final Expression object;
         private final List<Expression> args;
         private transient MemberFunctionInvokation matchedValue;
 
-        MemberFunctionInvokationWildcard(String name, boolean isInitMethod, Expression object, List<Expression> args) {
+        public MemberFunctionInvokationWildcard(String name, boolean isInitMethod, Expression object, List<Expression> args) {
             this.name = name;
             this.isInitMethod = isInitMethod;
             this.object = object;
@@ -798,7 +814,7 @@ public class WildcardMatch {
             if (returnType != null) {
                 if (!returnType.equals(other.getInferredJavaType().getJavaTypeInstance())) return false;
             }
-            if (!clazz.equals(other.getClazz())) return false;
+            if (clazz != null && !clazz.equals(other.getClazz())) return false;
             List<Expression> otherArgs = other.getArgs();
             if (args != null) {
                 if (args.size() != otherArgs.size()) return false;

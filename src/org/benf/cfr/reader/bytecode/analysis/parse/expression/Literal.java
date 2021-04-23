@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -10,7 +11,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
@@ -44,8 +49,37 @@ public class Literal extends AbstractExpression {
     protected final TypedLiteral value;
 
     public Literal(TypedLiteral value) {
-        super(value.getInferredJavaType());
+        super(BytecodeLoc.NONE, value.getInferredJavaType());
         this.value = value;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        // Not strictly right, but we don't want every 'true' to be distinct!!
+        return BytecodeLoc.NONE;
+    }
+
+    public static Expression getLiteralOrNull(RawJavaType rawCastType, InferredJavaType inferredCastType, int intValue) {
+        switch (rawCastType) {
+            case BOOLEAN:
+                if (intValue == 0) return FALSE;
+                if (intValue == 1) return TRUE;
+                return null;
+            case BYTE:
+            case CHAR:
+            case SHORT:
+                return new CastExpression(BytecodeLoc.NONE, inferredCastType, new Literal(TypedLiteral.getInt(intValue)));
+            case INT:
+                return new Literal(TypedLiteral.getInt(intValue));
+            case LONG:
+                return new Literal(TypedLiteral.getLong(intValue));
+            case FLOAT:
+                return new Literal(TypedLiteral.getFloat(intValue));
+            case DOUBLE:
+                return new Literal(TypedLiteral.getDouble(intValue));
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -102,7 +136,7 @@ public class Literal extends AbstractExpression {
                 InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
 
                 if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
-                    lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType));
+                    lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType), ReadWrite.READ);
                 }
             }
         }
@@ -114,7 +148,7 @@ public class Literal extends AbstractExpression {
         if (type.getStackType() != StackType.INT) return this;
         if (type == RawJavaType.SHORT ||
             type == RawJavaType.BYTE ||
-            type == RawJavaType.CHAR) return new CastExpression(expected, this);
+            type == RawJavaType.CHAR) return new CastExpression(BytecodeLoc.NONE, expected, this);
         return this;
     }
 

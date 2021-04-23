@@ -52,6 +52,8 @@ public interface PermittedOptionProvider {
             StringBuilder sb = new StringBuilder();
             String defaultVal = fn.getDefaultValue();
             String range = fn.getRangeDescription();
+            // but only the first line of range.
+            if (range != null) range = range.split("\n")[0];
             if (range != null && !(range.isEmpty())) sb.append(" (").append(range).append(") ");
             if (defaultVal != null && !(defaultVal.isEmpty()))
                 sb.append(" default: ").append(defaultVal);

@@ -4,6 +4,8 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.getopt.Options;
 
+import java.io.BufferedOutputStream;
+
 public class StringStreamDumper extends StreamDumper {
     private final MethodErrorCollector methodErrorCollector;
     private final StringBuilder stringBuilder;
@@ -35,5 +37,10 @@ public class StringStreamDumper extends StreamDumper {
     @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
         return new TypeOverridingDumper(this, innerclassTypeUsageInformation);
+    }
+
+    @Override
+    public BufferedOutputStream getAdditionalOutputStream(String description) {
+        throw new IllegalStateException();
     }
 }

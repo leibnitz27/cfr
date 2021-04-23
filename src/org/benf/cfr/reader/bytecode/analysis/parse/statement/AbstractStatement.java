@@ -1,9 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactoryImpl;
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -11,14 +15,36 @@ import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractStatement implements Statement {
+    private BytecodeLoc loc;
     private StatementContainer<Statement> container;
+
+    public AbstractStatement(BytecodeLoc loc) {
+        this.loc = loc;
+    }
+
+    @Override
+    public BytecodeLoc getLoc() {
+        return loc;
+    }
+
+    @Override
+    public void addLoc(HasByteCodeLoc loc) {
+        if (loc.getLoc().isEmpty()) return;
+        this.loc = BytecodeLocFactoryImpl.INSTANCE.combine(this, loc);
+    }
 
     @Override
     public void setContainer(StatementContainer<Statement> container) {
         if (container == null) throw new ConfusedCFRException("Trying to setContainer null!");
         this.container = container;
+    }
+
+    @Override
+    public Statement outerDeepClone(CloneHelper cloneHelper) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -86,5 +112,14 @@ public abstract class AbstractStatement implements Statement {
     @Override
     public boolean canThrow(ExceptionCheck caught) {
         return true;
+    }
+
+    @Override
+    public Set<LValue> wantsLifetimeHint() {
+        return null;
+    }
+
+    @Override
+    public void setLifetimeHint(LValue lv, boolean usedInChildren) {
     }
 }

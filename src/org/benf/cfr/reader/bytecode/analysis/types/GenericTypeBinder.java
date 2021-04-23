@@ -187,8 +187,14 @@ public class GenericTypeBinder {
                 return bound;
             }
         } else if (maybeUnbound instanceof JavaGenericBaseInstance) {
-//        } else if (maybeUnbound instanceof JavaGenericRefTypeInstance) {
             return ((JavaGenericBaseInstance) maybeUnbound).getBoundInstance(this);
+        } else if (maybeUnbound instanceof JavaArrayTypeInstance) {
+            JavaArrayTypeInstance ja = (JavaArrayTypeInstance)maybeUnbound;
+            JavaTypeInstance jaStripped = ja.getArrayStrippedType();
+            JavaTypeInstance bindingFor = getBindingFor(jaStripped);
+            if (!jaStripped.equals(bindingFor)) {
+                return new JavaArrayTypeInstance(ja.getNumArrayDimensions(), bindingFor);
+            }
         }
         return maybeUnbound;
     }

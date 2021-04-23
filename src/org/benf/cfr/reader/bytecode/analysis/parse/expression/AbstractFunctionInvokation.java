@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -16,8 +17,8 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private final MethodPrototype methodPrototype;
 
-    AbstractFunctionInvokation(ConstantPoolEntryMethodRef function, InferredJavaType inferredJavaType) {
-        super(inferredJavaType);
+    AbstractFunctionInvokation(BytecodeLoc loc, ConstantPoolEntryMethodRef function, InferredJavaType inferredJavaType) {
+        super(loc, inferredJavaType);
         this.function = function;
         this.methodPrototype = function.getMethodPrototype();
     }

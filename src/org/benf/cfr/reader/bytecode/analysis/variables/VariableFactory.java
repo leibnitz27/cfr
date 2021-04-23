@@ -53,6 +53,11 @@ public class VariableFactory {
     public LValue ignoredVariable(InferredJavaType type) {
         return new LocalVariable("cfr_ignored_" + ignored++, type);
     }
+
+    public LValue tempVariable(InferredJavaType type) {
+        return new LocalVariable("cfr_temp_" + ignored++, type);
+    }
+
     /*
      * NB: idx is slot, i.e. offset.
      */

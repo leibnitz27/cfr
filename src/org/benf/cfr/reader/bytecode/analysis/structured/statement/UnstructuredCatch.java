@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -22,6 +23,7 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
     private final LValue catching;
 
     public UnstructuredCatch(List<ExceptionGroup.Entry> exceptions, BlockIdentifier blockIdentifier, LValue catching) {
+        super(BytecodeLoc.NONE);
         this.exceptions = exceptions;
         this.blockIdentifier = blockIdentifier;
         this.catching = catching;
@@ -31,6 +33,11 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
     public Dumper dump(Dumper dumper) {
         dumper.print("** catch " + exceptions + " { ").newln();
         return dumper;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

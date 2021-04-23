@@ -447,6 +447,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         JavaTypeInstance otherRaw = other.getDeGenerifiedType();
         BindingSuperContainer thisBindingSuper = this.getBindingSupers();
         if (thisBindingSuper == null) {
+            // TODO : If we ever get value types, this won't be valid.
+            if (otherRaw == TypeConstants.OBJECT) return true;
             return false;
         }
         return thisBindingSuper.containsBase(otherRaw);

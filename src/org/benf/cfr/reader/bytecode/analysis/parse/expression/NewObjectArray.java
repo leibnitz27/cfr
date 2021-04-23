@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -22,8 +23,8 @@ public class NewObjectArray extends AbstractNewArray {
     private final JavaTypeInstance resultType;
     private final int numDims;
 
-    public NewObjectArray(List<Expression> dimSizes, JavaTypeInstance resultInstance) {
-        super(new InferredJavaType(resultInstance, InferredJavaType.Source.EXPRESSION, true));
+    public NewObjectArray(BytecodeLoc loc, List<Expression> dimSizes, JavaTypeInstance resultInstance) {
+        super(loc, new InferredJavaType(resultInstance, InferredJavaType.Source.EXPRESSION, true));
         this.dimSizes = dimSizes;
         this.allocatedType = resultInstance.getArrayStrippedType();
         this.resultType = resultInstance;
@@ -33,8 +34,8 @@ public class NewObjectArray extends AbstractNewArray {
         }
     }
 
-    private NewObjectArray(InferredJavaType inferredJavaType, JavaTypeInstance resultType, int numDims, JavaTypeInstance allocatedType, List<Expression> dimSizes) {
-        super(inferredJavaType);
+    private NewObjectArray(BytecodeLoc loc, InferredJavaType inferredJavaType, JavaTypeInstance resultType, int numDims, JavaTypeInstance allocatedType, List<Expression> dimSizes) {
+        super(loc, inferredJavaType);
         this.resultType = resultType;
         this.numDims = numDims;
         this.allocatedType = allocatedType;
@@ -42,8 +43,13 @@ public class NewObjectArray extends AbstractNewArray {
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, dimSizes);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new NewObjectArray(getInferredJavaType(), resultType, numDims, allocatedType, cloneHelper.replaceOrClone(dimSizes));
+        return new NewObjectArray(getLoc(), getInferredJavaType(), resultType, numDims, allocatedType, cloneHelper.replaceOrClone(dimSizes));
     }
 
     @Override

@@ -1,8 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -17,9 +20,20 @@ public class WhileStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
 
-    public WhileStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier) {
+    public WhileStatement(BytecodeLoc loc, ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier) {
+        super(loc);
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, condition);
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new WhileStatement(getLoc(), (ConditionalExpression)cloneHelper.replaceOrClone(condition), blockIdentifier);
     }
 
     private int getBackJumpIndex() {
@@ -43,7 +57,7 @@ public class WhileStatement extends AbstractStatement {
         if (condition == null) {
             throw new UnsupportedOperationException();
         }
-        ForStatement forStatement = new ForStatement(condition, blockIdentifier, initial, assignment);
+        ForStatement forStatement = new ForStatement(getLoc(), condition, blockIdentifier, initial, assignment);
         getContainer().replaceStatement(forStatement);
     }
 
@@ -67,7 +81,7 @@ public class WhileStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredWhile(condition, blockIdentifier, getTargetStatement(getBackJumpIndex()).getContainer().getBlocksEnded());
+        return new UnstructuredWhile(getLoc(), condition, blockIdentifier, getTargetStatement(getBackJumpIndex()).getContainer().getBlocksEnded());
     }
 
     public BlockIdentifier getBlockIdentifier() {

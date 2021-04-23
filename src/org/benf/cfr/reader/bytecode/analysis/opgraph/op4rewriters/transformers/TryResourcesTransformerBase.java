@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -124,8 +125,8 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         Matcher<StructuredStatement> matcher = new MatchSequence(
                 new StructuredCatch(null, null, exceptionWildCard, null),
                 new BeginBlock(null),
-                new StructuredAssignment(tempThrowable, new LValueExpression(exceptionWildCard)),
-                new StructuredThrow( new LValueExpression(exceptionWildCard)),
+                new StructuredAssignment(BytecodeLoc.NONE, tempThrowable, new LValueExpression(exceptionWildCard)),
+                new StructuredThrow(BytecodeLoc.NONE, new LValueExpression(exceptionWildCard)),
                 new EndBlock(null)
         );
 

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -15,6 +16,10 @@ import org.benf.cfr.reader.util.functors.Predicate;
 import java.util.List;
 
 public abstract class AbstractUnStructuredStatement extends AbstractStructuredStatement {
+
+    public AbstractUnStructuredStatement(BytecodeLoc loc) {
+        super(loc);
+    }
 
     @Override
     public final void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {

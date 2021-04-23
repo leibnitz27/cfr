@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -7,6 +10,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumpable;
 
 import java.util.List;
+import java.util.Set;
 
 /*
  * statement =
@@ -17,7 +21,7 @@ import java.util.List;
  *   label
  *   goto label
  */
-public interface Statement extends Dumpable, ComparableUnderEC {
+public interface Statement extends Dumpable, ComparableUnderEC, DeepCloneable<Statement>, HasByteCodeLoc {
     void setContainer(StatementContainer<Statement> container);
 
     void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector);
@@ -53,4 +57,8 @@ public interface Statement extends Dumpable, ComparableUnderEC {
     boolean fallsToNext();
 
     boolean canThrow(ExceptionCheck caught);
+
+    Set<LValue> wantsLifetimeHint();
+
+    void setLifetimeHint(LValue lv, boolean usedInChildren);
 }

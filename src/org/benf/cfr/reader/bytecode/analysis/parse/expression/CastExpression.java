@@ -1,43 +1,47 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.LiteralFolding;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral.LiteralType;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.CastAction;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
+
 public class CastExpression extends AbstractExpression implements BoxingProcessor {
     private Expression child;
     private boolean forced;
 
-    public CastExpression(InferredJavaType knownType, Expression child) {
-        super(knownType);
+    public CastExpression(BytecodeLoc loc, InferredJavaType knownType, Expression child) {
+        super(loc, knownType);
         InferredJavaType childInferredJavaType = child.getInferredJavaType();
         if (knownType.getJavaTypeInstance() == RawJavaType.LONG &&
             childInferredJavaType.getJavaTypeInstance() == RawJavaType.BOOLEAN) {
             childInferredJavaType.forceType(RawJavaType.INT, true);
         }
-        RawJavaType knownTypeRawType = knownType.getRawType();
-        // It's ok to insert Boolean -> XX explicit casts at construction time, as we
-        // don't have booleans early.
-        if (childInferredJavaType.getRawType() == RawJavaType.BOOLEAN && knownTypeRawType != RawJavaType.BOOLEAN && knownTypeRawType.getStackType() == StackType.INT) {
-            child = new TernaryExpression(new BooleanExpression(child), Literal.INT_ONE, Literal.INT_ZERO);
-        }
+        // Used to explicit cast boolean -> non bool with a ternary here, but we could have messed up enough that's not valid!
+        // See BitwiseNarrowingConversionTest3.
         this.child = child;
         this.forced = false;
     }
 
-    public CastExpression(InferredJavaType knownType, Expression child, boolean forced) {
-        super(knownType);
+    public CastExpression(BytecodeLoc loc, InferredJavaType knownType, Expression child, boolean forced) {
+        super(loc, knownType);
         this.child = child;
         this.forced = forced;
     }
@@ -47,9 +51,24 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     }
 
     @Override
-    public Expression deepClone(CloneHelper cloneHelper) {
-        return new CastExpression(getInferredJavaType(), cloneHelper.replaceOrClone(child), forced);
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, child);
     }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new CastExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(child), forced);
+    }
+
+	@Override
+	public Literal getComputedLiteral(Map<LValue, Literal> display) {
+		if (!(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType))
+			return null;
+		Literal computedChild = child.getComputedLiteral(display);
+		if (computedChild == null)
+			return null;
+		return LiteralFolding.foldCast(computedChild, (RawJavaType) getInferredJavaType().getJavaTypeInstance());
+	}
 
     public boolean couldBeImplicit(GenericTypeBinder gtb) {
         if (forced) return false;
@@ -219,4 +238,13 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return e;
     }
 
+    public static Expression tryRemoveCast(Expression e) {
+        if (e instanceof CastExpression) {
+            Expression ce = ((CastExpression) e).getChild();
+            if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
+                e = ce;
+            }
+        }
+        return e;
+    }
 }

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -36,7 +37,7 @@ public class RedundantSuperRewriter implements Op04Rewriter {
 
         WildcardMatch wcm1 = new WildcardMatch();
 
-        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredExpressionStatement(wcm1.getSuperFunction("s1", getSuperArgs(wcm1)), false));
+        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredExpressionStatement(BytecodeLoc.NONE, wcm1.getSuperFunction("s1", getSuperArgs(wcm1)), false));
 
 
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);

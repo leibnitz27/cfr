@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
@@ -17,7 +18,7 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import java.util.List;
 import java.util.Vector;
 
-public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Matcher<StructuredStatement> {
+public interface StructuredStatement extends Dumpable, TypeUsageCollectable, HasByteCodeLoc, Matcher<StructuredStatement> {
 
     Op04StructuredStatement getContainer();
 
@@ -70,6 +71,8 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
     boolean isEffectivelyNOP();
 
     boolean fallsNopToNext();
+
+    boolean canFall();
 
     List<LValue> findCreatedHere();
 

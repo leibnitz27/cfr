@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -10,6 +11,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.collections.SetFactory;
 
+import java.io.BufferedOutputStream;
 import java.util.Set;
 
 public class ToStringDumper extends AbstractDumper {
@@ -117,15 +119,22 @@ public class ToStringDumper extends AbstractDumper {
 
     private void doIndent() {
         if (!context.atStart) return;
-        String indents = "    ";
-        for (int x = 0; x < context.indent; ++x) sb.append(indents);
+        for (int x = 0; x < context.indent; ++x) sb.append(STANDARD_INDENT);
         context.atStart = false;
-        if (context.inBlockComment != BlockCommentState.Not) sb.append(" * ");
+        if (context.inBlockComment != BlockCommentState.Not) {
+            sb.append(" * ");
+        }
     }
 
     @Override
     public void indent(int diff) {
         context.indent += diff;
+    }
+
+    @Override
+    public Dumper explicitIndent() {
+        print(STANDARD_INDENT);
+        return this;
     }
 
     @Override
@@ -186,5 +195,10 @@ public class ToStringDumper extends AbstractDumper {
     @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
         return new TypeOverridingDumper(this, innerclassTypeUsageInformation);
+    }
+
+    @Override
+    public BufferedOutputStream getAdditionalOutputStream(String description) {
+        throw new IllegalStateException();
     }
 }

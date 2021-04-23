@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
@@ -99,11 +100,11 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
 
     @Override
     public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-        collect(localVariable);
+        collect(localVariable, ReadWrite.WRITE);
     }
 
     @Override
-    public void collect(LValue lValue) {
+    public void collect(LValue lValue, ReadWrite rw) {
         Class<?> lValueClass = lValue.getClass();
 
         if (lValueClass == SentinelLocalClassLValue.class) {

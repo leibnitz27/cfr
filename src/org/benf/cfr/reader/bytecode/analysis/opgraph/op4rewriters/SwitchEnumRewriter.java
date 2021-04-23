@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -70,8 +71,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(switchStatements);
 
             Matcher<StructuredStatement> m = new ResetAfterTest(wcm,
-                    new CollectMatch("switch", new StructuredSwitch(
-                            new ArrayIndex(
+                    new CollectMatch("switch", new StructuredSwitch(BytecodeLoc.NONE,
+                            new ArrayIndex(BytecodeLoc.NONE,
                                     wcm.getExpressionWildCard("lut"),
                                     wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
                             null, wcm.getBlockIdentifier("block"))));
@@ -99,7 +100,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         if (!expressionStatements.isEmpty()) {
             Matcher<StructuredStatement> mInline = new ResetAfterTest(wcm,
                     new CollectMatch("bodylessswitch", new StructuredExpressionStatement(
-                            new ArrayIndex(
+                            BytecodeLoc.NONE,
+                            new ArrayIndex(BytecodeLoc.NONE,
                                     wcm.getExpressionWildCard("lut"),
                                     wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
                             true)));
@@ -154,6 +156,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
     private void tryRewriteEclipse(SwitchEnumMatchResultCollector mrc, StaticFunctionInvokation lookupFn, boolean expression) {
         Expression enumObject = mrc.getEnumObject();
+        Literal lv = enumObject.getComputedLiteral(MapFactory.<LValue, Literal>newMap());
+        boolean isNull = Literal.NULL.equals(lv);
 
         if (lookupFn.getClazz() != this.classFile.getClassType()) {
             return;
@@ -188,26 +192,27 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         if (structuredStatements == null) return;
 
         WildcardMatch wcm1 = new WildcardMatch();
+        JavaTypeInstance enumType = isNull ? null : enumObject.getInferredJavaType().getJavaTypeInstance();
         Matcher<StructuredStatement> test =
                 new ResetAfterTest(wcm1,
                         new MatchSequence(
                             new MatchOneOf(
                                 new MatchSequence(
-                                    new StructuredAssignment(wcm1.getLValueWildCard("res"), new LValueExpression(wcm1.getLValueWildCard("static"))),
-                                    new StructuredIf(new ComparisonOperation(new LValueExpression(wcm1.getLValueWildCard("res")), Literal.NULL,CompOp.NE), null),
+                                    new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("res"), new LValueExpression(wcm1.getLValueWildCard("static"))),
+                                    new StructuredIf(BytecodeLoc.NONE, new ComparisonOperation(BytecodeLoc.TODO, new LValueExpression(wcm1.getLValueWildCard("res")), Literal.NULL,CompOp.NE), null),
                                     new BeginBlock(null),
-                                    new StructuredReturn(new LValueExpression(wcm1.getLValueWildCard("res")), null),
+                                    new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm1.getLValueWildCard("res")), null),
                                     new EndBlock(null)
                                 ),
                                 new MatchSequence(
-                                    new StructuredIf(new ComparisonOperation(new LValueExpression(wcm1.getLValueWildCard("static")), Literal.NULL,CompOp.NE), null),
+                                    new StructuredIf(BytecodeLoc.NONE, new ComparisonOperation(BytecodeLoc.TODO, new LValueExpression(wcm1.getLValueWildCard("static")), Literal.NULL,CompOp.NE), null),
                                     new BeginBlock(null),
-                                    new StructuredReturn(new LValueExpression(wcm1.getLValueWildCard("static")), null),
+                                    new StructuredReturn(BytecodeLoc.NONE, new LValueExpression(wcm1.getLValueWildCard("static")), null),
                                     new EndBlock(null)
                                 )
                             ),
-                            new StructuredAssignment(wcm1.getLValueWildCard("lookup"), new NewPrimitiveArray(
-                            new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
+                            new StructuredAssignment(BytecodeLoc.NONE, wcm1.getLValueWildCard("lookup"), new NewPrimitiveArray(BytecodeLoc.TODO,
+                                    new ArrayLength(BytecodeLoc.NONE, wcm1.getStaticFunction("func", enumType, null, "values")),
                             RawJavaType.INT)))
                 );
 
@@ -236,13 +241,18 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             !field.testAccessFlag(AccessFlag.ACC_STATIC)) {
             return;
         }
+        // If we didn't have the enum type, get it here.
+        if (enumType == null) {
+            enumType = assignment.arrayLen.getClazz();
+            enumObject = new CastExpression(BytecodeLoc.NONE, new InferredJavaType(enumType, InferredJavaType.Source.TRANSFORM), enumObject);
+        }
 
         WildcardMatch wcm2 = new WildcardMatch();
         // Now we've figured out what the parts of the enum are, we can do the real match...
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1,
                 new MatchSequence(
-                        new StructuredAssignment(assignment.lookup, new NewPrimitiveArray(
-                                new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
+                        new StructuredAssignment(BytecodeLoc.NONE, assignment.lookup, new NewPrimitiveArray(BytecodeLoc.TODO,
+                                new ArrayLength(BytecodeLoc.NONE, wcm1.getStaticFunction("func", enumType, null, "values")),
                                 RawJavaType.INT)),
                         getEnumSugarKleeneStar(assignment.lookup, enumObject, wcm2)
                 )
@@ -275,10 +285,10 @@ public class SwitchEnumRewriter implements Op04Rewriter {
     private static class EclipseVarResultCollector implements MatchResultCollector {
         LValue lookup;
         LValue field;
+        StaticFunctionInvokation arrayLen;
 
         @Override
         public void clear() {
-
         }
 
         @Override
@@ -290,6 +300,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         public void collectMatches(String name, WildcardMatch wcm) {
             lookup = wcm.getLValueWildCard("lookup").getMatch();
             field = wcm.getLValueWildCard("static").getMatch();
+            arrayLen = wcm.getStaticFunction("func").getMatch();
         }
     }
 
@@ -344,8 +355,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1,
                 new MatchSequence(
-                        new StructuredAssignment(lookupTable, new NewPrimitiveArray(
-                                new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
+                        new StructuredAssignment(BytecodeLoc.NONE, lookupTable, new NewPrimitiveArray(BytecodeLoc.TODO,
+                                new ArrayLength(BytecodeLoc.NONE, wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
                                 RawJavaType.INT)),
                         getEnumSugarKleeneStar(lookupTable, enumObject, wcm2)
                 )
@@ -395,9 +406,9 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             Block block = (Block) switchBlockStatement;
             List<Op04StructuredStatement> caseStatements = block.getBlockStatements();
 
-        /*
-         * If we can match every one of the ordinals, we replace the statement.
-         */
+            /*
+             * If we can match every one of the ordinals, we replace the statement.
+             */
             LinkedList<Op04StructuredStatement> newBlockContent = ListFactory.newLinkedList();
             InferredJavaType inferredJavaType = enumObject.getInferredJavaType();
             for (Op04StructuredStatement caseOuter : caseStatements) {
@@ -419,11 +430,12 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                     }
                     newValues.add(new LValueExpression(enumVal));
                 }
-                StructuredCase replacement = new StructuredCase(newValues, inferredJavaType, caseStmt.getBody(), caseStmt.getBlockIdentifier(), true);
+                StructuredCase replacement = new StructuredCase(BytecodeLoc.TODO, newValues, inferredJavaType, caseStmt.getBody(), caseStmt.getBlockIdentifier(), true);
                 newBlockContent.add(new Op04StructuredStatement(replacement));
             }
             Block replacementBlock = new Block(newBlockContent, block.isIndenting());
             newSwitch = new StructuredSwitch(
+                    BytecodeLoc.TODO,
                     enumObject,
                     new Op04StructuredStatement(replacementBlock),
                     structuredSwitch.getBlockIdentifier());
@@ -432,6 +444,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             LinkedList<Op04StructuredStatement> tmp = new LinkedList<Op04StructuredStatement>();
             tmp.add(new Op04StructuredStatement(new StructuredComment("Empty switch")));
             newSwitch = new StructuredSwitch(
+                    BytecodeLoc.TODO,
                     enumObject,
                     new Op04StructuredStatement(new Block(tmp, true)),
                     blockIdentifierFactory.getNextBlockIdentifier(BlockType.SWITCH));
@@ -448,8 +461,9 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                         new StructuredTry(null, null),
                         new BeginBlock(null),
                         new StructuredAssignment(
+                                BytecodeLoc.NONE,
                                 new ArrayVariable(
-                                        new ArrayIndex(
+                                        new ArrayIndex(BytecodeLoc.NONE,
                                                 new LValueExpression(lookupTable),
                                                 wcm.getMemberFunction("ordinal", "ordinal",
                                                         new LValueExpression(

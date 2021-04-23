@@ -1,6 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -18,11 +21,17 @@ public class CaseStatement extends AbstractStatement {
     private final BlockIdentifier caseBlock;
     private final InferredJavaType caseType;
 
-    public CaseStatement(List<Expression> values, InferredJavaType caseType, BlockIdentifier switchBlock, BlockIdentifier caseBlock) {
+    public CaseStatement(BytecodeLoc loc, List<Expression> values, InferredJavaType caseType, BlockIdentifier switchBlock, BlockIdentifier caseBlock) {
+        super(loc);
         this.values = values;
         this.caseType = caseType;
         this.switchBlock = switchBlock;
         this.caseBlock = caseBlock;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, values);
     }
 
     @Override
@@ -35,6 +44,12 @@ public class CaseStatement extends AbstractStatement {
             }
         }
         return dumper;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        // TODO : When cloning, there's no reason to keep blocks.
+        return new CaseStatement(getLoc(), cloneHelper.replaceOrClone(values), caseType, switchBlock, caseBlock);
     }
 
     @Override
@@ -71,6 +86,10 @@ public class CaseStatement extends AbstractStatement {
 
     public BlockIdentifier getCaseBlock() {
         return caseBlock;
+    }
+
+    public List<Expression> getValues() {
+        return values;
     }
 
     @Override

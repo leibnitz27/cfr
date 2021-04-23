@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -20,6 +21,7 @@ import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Collections;
@@ -71,7 +73,7 @@ public class KotlinSwitchHandler {
     // Everything except the default action should have a set of
     //   if (str.equals("aa")) goto IMPL1;
     // Note that we are dealing with RAW switches here, so have to decode default information manually.
-    private static boolean extractStringSwitch(Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
+    private static boolean extractStringSwitch(final Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
         RawSwitchStatement rawSwitchStatement = (RawSwitchStatement)swatch.getStatement();
         Expression switchOn = rawSwitchStatement.getSwitchOn();
 
@@ -127,18 +129,19 @@ public class KotlinSwitchHandler {
         }
         if (defaultBranchIdx == -1) return false;
         Op03SimpleStatement defaultTarget = targets.get(defaultBranchIdx);
+        Op03SimpleStatement afterDefault = Misc.followNopGotoChain(defaultTarget, false, true);
 
         WildcardMatch.MemberFunctionInvokationWildcard eqFn = wcm.getMemberFunction("equals", "equals", matchObj,
-                new CastExpression(new InferredJavaType(TypeConstants.OBJECT, InferredJavaType.Source.UNKNOWN),
+                new CastExpression(BytecodeLoc.NONE, new InferredJavaType(TypeConstants.OBJECT, InferredJavaType.Source.UNKNOWN),
                         wcm.getExpressionWildCard("value"))
         );
-        IfStatement testIf = new IfStatement(new ComparisonOperation(eqFn, Literal.FALSE, CompOp.EQ));
-        IfStatement testNotIf = new IfStatement(new ComparisonOperation(eqFn, Literal.FALSE, CompOp.NE));
-        final Map<Op03SimpleStatement, Op03SimpleStatement> reTargetSet = MapFactory.newIdentityMap();
+        IfStatement testIf = new IfStatement(BytecodeLoc.NONE,new ComparisonOperation(BytecodeLoc.NONE, eqFn, Literal.FALSE, CompOp.EQ));
+        IfStatement testNotIf = new IfStatement(BytecodeLoc.NONE,new ComparisonOperation(BytecodeLoc.NONE, eqFn, Literal.FALSE, CompOp.NE));
+        final Set<Op03SimpleStatement> reTargetSet = SetFactory.newIdentitySet();
         final Map<Op03SimpleStatement, DistinctSwitchTarget> reTargets = MapFactory.newIdentityLazyMap(new UnaryFunction<Op03SimpleStatement, DistinctSwitchTarget>() {
             @Override
             public DistinctSwitchTarget invoke(Op03SimpleStatement arg) {
-                reTargetSet.put(arg, arg);
+                reTargetSet.add(arg);
                 return new DistinctSwitchTarget(reTargetSet.size());
             }
         });
@@ -219,7 +222,7 @@ public class KotlinSwitchHandler {
                                 } else if (nextTest.getStatement().getClass() == GotoStatement.class) {
                                     Op03SimpleStatement nextTarget = Misc.followNopGotoChainUntil(nextTest, defaultTarget, true, false);
                                     // It's only valid to follow a chain if it ends up in the default.
-                                    if (nextTarget == defaultTarget) {
+                                    if (nextTarget == defaultTarget || nextTarget == afterDefault) {
                                         transitiveDefaultSources.add(Pair.make(nextTest, nextTest.getTargets().get(0)));
                                         nextCaseLoc = nextTarget;
                                     } else {
@@ -231,7 +234,7 @@ public class KotlinSwitchHandler {
                     }
                 }
 
-                if (nextCaseLoc == defaultTarget) {
+                if (nextCaseLoc == defaultTarget || nextCaseLoc == afterDefault) {
                     break;
                 }
                 if (nextCaseLoc == null) {
@@ -241,6 +244,44 @@ public class KotlinSwitchHandler {
             } while (true);
             matchesFound.add(found);
         }
+
+        /*
+         * Check we haven't actually encountered a java switch that's been explicitly stated.
+         * (in a way we'd successfully recover it later).
+         */
+        LValue foundValue = null;
+        for (Op03SimpleStatement retarget : reTargetSet) {
+            // Find one of these that is an assign, and ca
+            Statement reStatement = retarget.getStatement();
+            if (reStatement instanceof AssignmentSimple) {
+                foundValue = reStatement.getCreatedLValue();
+                break;
+            }
+        }
+        if (foundValue != null) {
+            Op03SimpleStatement defaultTran = Misc.followNopGotoChain(defaultTarget, true, false);
+            Statement defaultStm = defaultTran.getStatement();
+            if (defaultStm instanceof RawSwitchStatement) {
+                Expression switchOn2 = ((RawSwitchStatement) defaultStm).getSwitchOn();
+                if (switchOn2 != null && switchOn2.equals(new LValueExpression(foundValue))) {
+                    return false;
+                }
+            }
+        }
+
+        List<Op03SimpleStatement> secondSwitchTargets = ListFactory.newList(reTargets.keySet());
+        Collections.sort(secondSwitchTargets, new CompareByIndex());
+        List<Op03SimpleStatement> fwds = Functional.filter(secondSwitchTargets, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return in.getIndex().isBackJumpTo(swatch);
+            }
+        });
+        if (fwds.isEmpty()) {
+            // No forward targets?  Have to introduce a synthetic one?!
+            return false;
+        }
+        Op03SimpleStatement firstCase2 = fwds.get(0);
 
         /*
          * FORM2
@@ -283,7 +324,7 @@ public class KotlinSwitchHandler {
                     // x
                     Op03SimpleStatement stringTgt = ifTest.getTargets().get(1);
                     Op03SimpleStatement fallThrough = ifTest.getTargets().get(0);
-                    Op03SimpleStatement newFallThrough = new Op03SimpleStatement(fallThrough.getBlockIdentifiers(), new GotoStatement(), ifTest.getIndex().justAfter());
+                    Op03SimpleStatement newFallThrough = new Op03SimpleStatement(fallThrough.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), ifTest.getIndex().justAfter());
                     in.add( newFallThrough);
                     stringTgt.replaceSource(ifTest, newFallThrough);
                     newFallThrough.addTarget(stringTgt);
@@ -356,10 +397,6 @@ public class KotlinSwitchHandler {
         LValue lValue = new LocalVariable("tmp", new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.UNKNOWN));
         Expression lValueExpr = new LValueExpression(lValue);
 
-        List<Op03SimpleStatement> secondSwitchTargets = ListFactory.newList(reTargets.keySet());
-        Collections.sort(secondSwitchTargets, new CompareByIndex());
-        Op03SimpleStatement firstCase2 = secondSwitchTargets.get(0);
-
         /*
          * Build a new switch entry for each of the remapped one.
          */
@@ -390,7 +427,7 @@ public class KotlinSwitchHandler {
         defaultSecondary.add(null);
         switchTargets.add(new DecodedSwitchEntry(defaultSecondary, -1));
         DecodedSwitch info = new FakeSwitch(switchTargets);
-        RawSwitchStatement secondarySwitch = new RawSwitchStatement(lValueExpr, info);
+        RawSwitchStatement secondarySwitch = new RawSwitchStatement(BytecodeLoc.TODO, lValueExpr, info);
         Op03SimpleStatement secondarySwitchStm = new Op03SimpleStatement(firstCase2.getBlockIdentifiers(), secondarySwitch, firstCase2.getIndex().justBefore());
         /*
          * We need to remove the target from each of the discovered
@@ -415,9 +452,9 @@ public class KotlinSwitchHandler {
             DistinctSwitchTarget distinctSwitchTarget = reTargets.get(target);
             for (OriginalSwitchLookupInfo originalSwitchLookupInfo : distinctSwitchTarget.entries) {
                 Op03SimpleStatement from = originalSwitchLookupInfo.stringMatchJump;
-                AssignmentSimple assign = new AssignmentSimple(lValue, new Literal(TypedLiteral.getInt(distinctSwitchTarget.idx)));
+                AssignmentSimple assign = new AssignmentSimple(BytecodeLoc.TODO, lValue, new Literal(TypedLiteral.getInt(distinctSwitchTarget.idx)));
                 from.replaceStatement(assign);
-                Op03SimpleStatement newJmp = new Op03SimpleStatement(from.getBlockIdentifiers(), new GotoStatement(), from.getIndex().justAfter());
+                Op03SimpleStatement newJmp = new Op03SimpleStatement(from.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), from.getIndex().justAfter());
                 from.addTarget(newJmp);
                 newJmp.addSource(from);
                 newJmp.addTarget(nopHolder);
@@ -436,7 +473,7 @@ public class KotlinSwitchHandler {
         /*
          * And initialise the intermediate var to -1 at the start.
          */
-        Op03SimpleStatement init = new Op03SimpleStatement(swatch.getBlockIdentifiers(), new AssignmentSimple(lValue, new Literal(TypedLiteral.getInt(-1))), swatch.getIndex().justBefore());
+        Op03SimpleStatement init = new Op03SimpleStatement(swatch.getBlockIdentifiers(), new AssignmentSimple(BytecodeLoc.TODO, lValue, new Literal(TypedLiteral.getInt(-1))), swatch.getIndex().justBefore());
         List<Op03SimpleStatement> swatchFrom = swatch.getSources();
         for (Op03SimpleStatement from : swatchFrom) {
             from.replaceTarget(swatch, init);

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -11,7 +12,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -30,12 +33,12 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     private final boolean canNegate;
 
 
-    public ComparisonOperation(Expression lhs, Expression rhs, CompOp op) {
-        this(lhs, rhs, op, true);
+    public ComparisonOperation(BytecodeLoc loc, Expression lhs, Expression rhs, CompOp op) {
+        this(loc, lhs, rhs, op, true);
     }
 
-    public ComparisonOperation(Expression lhs, Expression rhs, CompOp op, boolean canNegate) {
-        super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
+    public ComparisonOperation(BytecodeLoc loc, Expression lhs, Expression rhs, CompOp op, boolean canNegate) {
+        super(loc, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
         this.canNegate = canNegate;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -75,7 +78,12 @@ public class ComparisonOperation extends AbstractExpression implements Condition
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ComparisonOperation(cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op, canNegate);
+        return new ComparisonOperation(getLoc(), cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op, canNegate);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, lhs, rhs);
     }
 
     @Override
@@ -143,9 +151,9 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     @Override
     public ConditionalExpression getNegated() {
         if (!canNegate) {
-            return new NotOperation(this);
+            return new NotOperation(getLoc(), this);
         }
-        return new ComparisonOperation(lhs, rhs, op.getInverted());
+        return new ComparisonOperation(getLoc(), lhs, rhs, op.getInverted());
     }
 
     public CompOp getOp() {
@@ -325,6 +333,26 @@ public class ComparisonOperation extends AbstractExpression implements Condition
             case NE:
                 return l.equals(r) ? Literal.FALSE : Literal.TRUE;
             default:
+                JavaTypeInstance type = l.getInferredJavaType().getJavaTypeInstance();
+                if (!type.equals(r.getInferredJavaType().getJavaTypeInstance())) {
+                    return null;
+                }
+                // TODO : If we need to explicitly perform this sort of thing much,
+                // should split it out.
+                if (type.getStackType() == StackType.INT) {
+                    int lv = l.getIntValue();
+                    int rv = r.getIntValue();
+                    switch (op) {
+                        case LT:
+                            return lv < rv ? Literal.TRUE : Literal.FALSE;
+                        case LTE:
+                            return lv <= rv ? Literal.TRUE : Literal.FALSE;
+                        case GT:
+                            return lv > rv ? Literal.TRUE : Literal.FALSE;
+                        case GTE:
+                            return lv >= rv ? Literal.TRUE : Literal.FALSE;
+                    }
+                }
                 // Can't handle yet.
                 return null;
         }

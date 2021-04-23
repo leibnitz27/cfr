@@ -23,6 +23,7 @@ import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +37,23 @@ public class Misc {
             }
         }
         statements.addAll(newStatements);
+    }
+
+    public static Op03SimpleStatement getLastInRangeByIndex(Set<Op03SimpleStatement> stms) {
+        List<Op03SimpleStatement> lst = ListFactory.newList(stms);
+        Collections.sort(lst, new CompareByIndex(false));
+        return lst.get(0);
+    }
+
+    public static Op03SimpleStatement skipComments(Op03SimpleStatement stm) {
+        while (stm.getStatement() instanceof CommentStatement) {
+            List<Op03SimpleStatement> targets = stm.getTargets();
+            if (targets.size() != 1) {
+                return stm;
+            }
+            stm = targets.get(0);
+        }
+        return stm;
     }
 
     public static class IsForwardJumpTo implements Predicate<Op03SimpleStatement> {
@@ -236,7 +254,7 @@ public class Misc {
     }
 
     static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue, Set<Expression> poison) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
+        AssignmentExpression needle = new AssignmentExpression(statement.getLoc(), lValue, rValue);
         NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle, poison);
 
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
@@ -244,7 +262,7 @@ public class Misc {
     }
 
     static void replaceHiddenIter(Statement statement, LValue lValue, Expression rValue) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
+        AssignmentExpression needle = new AssignmentExpression(statement.getLoc(), lValue, rValue);
         ExpressionReplacingRewriter finder = new ExpressionReplacingRewriter(needle, new LValueExpression(lValue));
 
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());

@@ -10,7 +10,7 @@ public class LValueUsageCollectorSimple implements LValueUsageCollector {
     private final Set<LValue> used = SetFactory.newSet();
 
     @Override
-    public void collect(LValue lValue) {
+    public void collect(LValue lValue, ReadWrite rw) {
         used.add(lValue);
     }
 

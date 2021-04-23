@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -48,10 +49,15 @@ public class SwitchExpression extends AbstractExpression {
 
     }
 
-    public SwitchExpression(InferredJavaType inferredJavaType, Expression value, List<Branch> cases) {
-        super(inferredJavaType);
+    public SwitchExpression(BytecodeLoc loc, InferredJavaType inferredJavaType, Expression value, List<Branch> cases) {
+        super(loc, inferredJavaType);
         this.value = value;
         this.cases = cases;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, value);
     }
 
     @Override
@@ -120,7 +126,7 @@ public class SwitchExpression extends AbstractExpression {
             }
         }
         if (changed) {
-            return new SwitchExpression(getInferredJavaType(), newValue, out);
+            return new SwitchExpression(getLoc(), getInferredJavaType(), newValue, out);
         }
         return this;
     }
@@ -161,6 +167,6 @@ public class SwitchExpression extends AbstractExpression {
         for (Branch case1 : cases) {
             res.add(new Branch(cloneHelper.replaceOrClone(case1.cases), cloneHelper.replaceOrClone(case1.value)));
         }
-        return new SwitchExpression(getInferredJavaType(), cloneHelper.replaceOrClone(value), res);
+        return new SwitchExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(value), res);
     }
 }

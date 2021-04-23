@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -14,7 +15,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
 
-public interface Expression extends DumpableWithPrecedence, DeepCloneable<Expression>, ComparableUnderEC, TypeUsageCollectable {
+public interface Expression extends DumpableWithPrecedence, DeepCloneable<Expression>, ComparableUnderEC, TypeUsageCollectable, HasByteCodeLoc {
     // Can /PROBABLY/ replace LValueRewriter with expression rewriter.
     Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
 

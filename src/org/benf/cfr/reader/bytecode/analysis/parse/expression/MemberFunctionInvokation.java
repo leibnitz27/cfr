@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -18,27 +19,27 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
     private final boolean special;
     private final boolean isInitMethod;
 
-    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, JavaTypeInstance bestType, boolean special, List<Expression> args, List<Boolean> nulls) {
-        super(cp, function, object, bestType, args, nulls);
+    public MemberFunctionInvokation(BytecodeLoc loc, ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, JavaTypeInstance bestType, boolean special, List<Expression> args, List<Boolean> nulls) {
+        super(loc, cp, function, object, bestType, args, nulls);
         // Most of the time a member function invokation for a constructor will
         // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
         this.isInitMethod = function.isInitMethod();
         this.special = special;
     }
 
-    private MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, boolean special, List<Expression> args, List<Boolean> nulls) {
-        super(cp, function, object, args, nulls);
+    private MemberFunctionInvokation(BytecodeLoc loc, ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, boolean special, List<Expression> args, List<Boolean> nulls) {
+        super(loc, cp, function, object, args, nulls);
         this.isInitMethod = function.isInitMethod();
         this.special = special;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new MemberFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()), getNulls());
+        return new MemberFunctionInvokation(getLoc(), getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()), getNulls());
     }
 
     public MemberFunctionInvokation withReplacedObject(Expression object) {
-        return new MemberFunctionInvokation(getCp(), getFunction(), object, special, getArgs(), getNulls());
+        return new MemberFunctionInvokation(getLoc(), getCp(), getFunction(), object, special, getArgs(), getNulls());
     }
 
     @Override

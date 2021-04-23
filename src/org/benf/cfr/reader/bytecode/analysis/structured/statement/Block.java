@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
@@ -34,9 +35,8 @@ public class Block extends AbstractStructuredStatement {
     private boolean indenting;
     private BlockIdentifier blockIdentifier;
 
-    private final static LinkedList<Op04StructuredStatement> emptyBlockStatements = ListFactory.newLinkedList();
-
     public Block(Op04StructuredStatement statement) {
+        super(BytecodeLoc.NONE);
         LinkedList<Op04StructuredStatement> stm = new LinkedList<Op04StructuredStatement>();
         stm.add(statement);
         this.containedStatements = stm;
@@ -49,9 +49,15 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public Block(LinkedList<Op04StructuredStatement> containedStatements, boolean indenting, BlockIdentifier blockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.containedStatements = containedStatements;
         this.indenting = indenting;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     public void flattenOthersIn() {
@@ -74,14 +80,11 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public void addStatement(Op04StructuredStatement stm) {
-        if (containedStatements == emptyBlockStatements) {
-            containedStatements = new LinkedList<Op04StructuredStatement>();
-        }
         containedStatements.add(stm);
     }
 
     static Block getEmptyBlock(boolean indenting) {
-        return new Block(emptyBlockStatements, indenting);
+        return new Block(new LinkedList<Op04StructuredStatement>(), indenting);
     }
 
     public static Block getBlockFor(boolean indenting, StructuredStatement... statements) {
@@ -145,16 +148,6 @@ public class Block extends AbstractStructuredStatement {
         return null;
     }
 
-    public void removeLastGoto(Op04StructuredStatement toHere) {
-        StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
-        if (structuredStatement instanceof UnstructuredGoto) {
-            Op04StructuredStatement oldGoto = containedStatements.getLast();
-            if (oldGoto.getTargets().get(0) == toHere) {
-                oldGoto.replaceStatementWithNOP("");
-            }
-        }
-    }
-
     public UnstructuredWhile removeLastEndWhile() {
         StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof UnstructuredWhile) {
@@ -180,6 +173,16 @@ public class Block extends AbstractStructuredStatement {
             }
         }
         return Pair.make(res==null, res);
+    }
+
+    public List<Op04StructuredStatement> getFilteredBlockStatements() {
+        List<Op04StructuredStatement> res = ListFactory.newList();
+        for (Op04StructuredStatement statement : containedStatements) {
+            if (!(statement.getStatement() instanceof StructuredComment)) {
+                res.add(statement);
+            }
+        }
+        return res;
     }
 
     public Optional<Op04StructuredStatement> getMaybeJustOneStatement() {
@@ -373,7 +376,6 @@ public class Block extends AbstractStructuredStatement {
                     StructuredStatement nextStatement = next.getStatement();
                     if (nextStatement instanceof StructuredComment) {
                         next.nopOut(); // pointless.
-                        // Nothing.
                     } else if (nextStatement instanceof StructuredCatch) {
                         Set<BlockIdentifier> blocks = ((StructuredCatch) nextStatement).getPossibleTryBlocks();
                         if (!blocks.contains(tryBlockIdent)) {
@@ -381,25 +383,19 @@ public class Block extends AbstractStructuredStatement {
                             break;
                         }
                         structuredTry.addCatch(next.nopThisAndReplace());
-                        if (x < size) {
-                            next = containedStatements.get(x);
-                        } else {
-                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = null;
-                            finished = true;
-                        }
                     } else if (next.getStatement() instanceof StructuredFinally) {
                         structuredTry.setFinally(next.nopThisAndReplace());
-                        if (x < size) {
-                            next = containedStatements.get(x);
-                        } else {
-                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = null;
-                            finished = true;
-                        }
                     } else {
                         --x;
                         break;
+                    }
+
+                    if (x < size) {
+                        next = containedStatements.get(x);
+                    } else {
+                        // We'll have to find some other way of getting the next statement, probably need a DFS :(
+                        next = null;
+                        finished = true;
                     }
                 }
                 --x;
@@ -477,6 +473,11 @@ public class Block extends AbstractStructuredStatement {
 
     public List<Op04StructuredStatement> getBlockStatements() {
         return containedStatements;
+    }
+
+    public void replaceBlockStatements(Collection<Op04StructuredStatement> statements) {
+        containedStatements.clear();
+        containedStatements.addAll(statements);
     }
 
     @Override

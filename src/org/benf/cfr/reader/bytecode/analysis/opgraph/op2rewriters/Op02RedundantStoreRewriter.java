@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.collections.SetUtil;
 
 import java.util.HashSet;
@@ -50,7 +51,7 @@ public class Op02RedundantStoreRewriter {
        bipush 8
        istore 5
      */
-    private void rewriteInstrs(List<Op02WithProcessedDataAndRefs> instrs, int maxLocals) {
+    private void removeOverwrittenStores(List<Op02WithProcessedDataAndRefs> instrs, int maxLocals) {
 //        if (instrs.size() < 1000) return;
         int laststore[] = new int[maxLocals];
         int lastload[] = new int[maxLocals];
@@ -98,7 +99,7 @@ public class Op02RedundantStoreRewriter {
                             nopCount+=2;
                         } else if (lastloadidx == laststoreidx+2) {
                             instrs.get(laststoreidx).nop();
-                            instrs.get(lastloadidx).swap();
+                            instrs.get(lastloadidx).replaceInstr(JVMInstr.SWAP);
                             nopCount++;
                         }
                     } else if (loadsSinceStore[storeidx] == 0) {
@@ -165,7 +166,34 @@ public class Op02RedundantStoreRewriter {
         }
     }
 
+    /*
+     * This is very rarely useful - but occasionally a store is used instead of a pop repeatedly in an exception handler
+     * such that the value is NEVER read.
+     *
+     * If we *never* _load0, then _store0 is never useful.
+     */
+    private void removeUnreadStores(List<Op02WithProcessedDataAndRefs> instrs) {
+        Set<Integer> retrieves = SetFactory.newSet();
+        for (Op02WithProcessedDataAndRefs op : instrs) {
+            Integer idx = op.getRetrieveIdx();
+            if (idx == null) continue;
+            retrieves.add(idx);
+        }
+        for (Op02WithProcessedDataAndRefs op : instrs) {
+            Integer idx = op.getStoreIdx();
+            if (idx == null) continue;
+            if (retrieves.contains(idx)) continue;
+            int category = op.getStorageType().getFirst().getStackType().getComputationCategory();
+            if (category == 2) {
+                op.replaceInstr(JVMInstr.POP2);
+            } else {
+                op.replaceInstr(JVMInstr.POP);
+            }
+        }
+    }
+
     public static void rewrite(List<Op02WithProcessedDataAndRefs> instrs, int maxLocals) {
-        INSTANCE.rewriteInstrs(instrs, maxLocals);
+        INSTANCE.removeUnreadStores(instrs);
+        INSTANCE.removeOverwrittenStores(instrs, maxLocals);
     }
 }

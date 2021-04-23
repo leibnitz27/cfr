@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -23,8 +24,13 @@ public class BooleanExpression extends AbstractExpression implements Conditional
     public static final ConditionalExpression FALSE = new BooleanExpression(Literal.FALSE);
 
     public BooleanExpression(Expression inner) {
-        super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
+        super(BytecodeLoc.NONE, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
         this.inner = inner;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return inner.getCombinedLoc();
     }
 
     @Override
@@ -78,7 +84,7 @@ public class BooleanExpression extends AbstractExpression implements Conditional
 
     @Override
     public ConditionalExpression getNegated() {
-        return new NotOperation(this);
+        return new NotOperation(BytecodeLoc.NONE, this);
     }
 
     @Override

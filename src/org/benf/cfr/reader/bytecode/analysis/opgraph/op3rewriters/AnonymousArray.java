@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -31,7 +32,7 @@ public class AnonymousArray {
         AssignmentSimple assignmentSimple = (AssignmentSimple) newArray.getStatement();
         WildcardMatch start = new WildcardMatch();
         if (!start.match(
-                new AssignmentSimple(start.getLValueWildCard("array"), start.getNewArrayWildCard("def")),
+                new AssignmentSimple(stm.getLoc(), start.getLValueWildCard("array"), start.getNewArrayWildCard("def")),
                 assignmentSimple
         )) {
             throw new ConfusedCFRException("Expecting new array");
@@ -50,13 +51,16 @@ public class AnonymousArray {
         Literal lit = (Literal) dimSize0;
         if (lit.getValue().getType() != TypedLiteral.LiteralType.Integer) return false;
         int bound = (Integer) lit.getValue().getValue();
+        // Don't attempt to resugar invalid arrays.
+        // (we'll still resugar empty ones, as it reads a little nicer.)
+        if (bound < 0) return false;
 
         Op03SimpleStatement next = newArray;
         List<Expression> anon = ListFactory.newList();
         List<Op03SimpleStatement> anonAssigns = ListFactory.newList();
         Expression arrayExpression;
         if (array instanceof StackSSALabel) {
-            arrayExpression = new StackValue((StackSSALabel) array);
+            arrayExpression = new StackValue(stm.getCombinedLoc(), (StackSSALabel) array);
         } else {
             arrayExpression = new LValueExpression(array);
         }
@@ -68,8 +72,8 @@ public class AnonymousArray {
             WildcardMatch testAnon = new WildcardMatch();
             Literal idx = new Literal(TypedLiteral.getInt(x));
             if (!testAnon.match(
-                    new AssignmentSimple(
-                            new ArrayVariable(new ArrayIndex(arrayExpression, idx)),
+                    new AssignmentSimple(BytecodeLoc.NONE,
+                            new ArrayVariable(new ArrayIndex(stm.getLoc(), arrayExpression, idx)),
                             testAnon.getExpressionWildCard("val")),
                     next.getStatement())) {
                 return false;
@@ -77,7 +81,7 @@ public class AnonymousArray {
             anon.add(testAnon.getExpressionWildCard("val").getMatch());
             anonAssigns.add(next);
         }
-        AssignmentSimple replacement = new AssignmentSimple(assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
+        AssignmentSimple replacement = new AssignmentSimple(stm.getLoc(), assignmentSimple.getCreatedLValue(), new NewAnonymousArray(stm.getLoc(), arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
         newArray.replaceStatement(replacement);
         if (array instanceof StackSSALabel) {
             StackEntry arrayStackEntry = ((StackSSALabel) array).getStackEntry();
@@ -120,7 +124,7 @@ public class AnonymousArray {
                     AssignmentSimple assignmentSimple = (AssignmentSimple) in.getStatement();
                     WildcardMatch wildcardMatch = new WildcardMatch();
                     return (wildcardMatch.match(
-                            new AssignmentSimple(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1, null)),
+                            new AssignmentSimple(BytecodeLoc.TODO, wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1, null)),
                             assignmentSimple
                     ));
                 }

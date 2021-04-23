@@ -9,8 +9,16 @@ public interface TypeConstants {
     String stringBufferName = "java.lang.StringBuffer";
     String className = "java.lang.Class";
     String objectName = "java.lang.Object";
+
+    String methodHandleName = "java.lang.invoke.MethodHandle";
+    String methodHandlesName = "java.lang.invoke.MethodHandles";
+    String methodHandlesLookupName = "java.lang.invoke.MethodHandles$Lookup";
+    String methodTypeName = "java.lang.invoke.MethodType";
+    String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
+    String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
     
     JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
+    JavaRefTypeInstance OBJECTS = JavaRefTypeInstance.createTypeConstant(objectsName);
     JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Enum");
     JavaRefTypeInstance ASSERTION_ERROR = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.AssertionError");
     JavaRefTypeInstance CHAR_SEQUENCE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(charSequenceName);
@@ -24,12 +32,19 @@ public interface TypeConstants {
     JavaRefTypeInstance SUPPLIER = JavaRefTypeInstance.createTypeConstant("java.util.function.Supplier");
     JavaRefTypeInstance SCALA_SIGNATURE = JavaRefTypeInstance.createTypeConstant("scala.reflect.ScalaSignature");
     JavaRefTypeInstance NOCLASSDEFFOUND_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.NoClassDefFoundError");
+    JavaRefTypeInstance NOSUCHMETHOD_EXCEPTION = JavaRefTypeInstance.createTypeConstant("java.lang.NoSuchMethodException");
+    JavaRefTypeInstance ILLEGALACCESS_EXCEPTION = JavaRefTypeInstance.createTypeConstant("java.lang.IllegalAccessException");
+    JavaRefTypeInstance ILLEGALARGUMENT_EXCEPTION = JavaRefTypeInstance.createTypeConstant("java.lang.IllegalArgumentException");
     JavaRefTypeInstance COMPARABLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Comparable");
     JavaRefTypeInstance MATH = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Math");
     JavaRefTypeInstance OVERRIDE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Override");
     JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record");
     JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods");
-
+    JavaRefTypeInstance METHOD_HANDLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandleName);
+    JavaRefTypeInstance METHOD_HANDLES = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesName);
+    JavaRefTypeInstance METHOD_HANDLES$LOOKUP = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesLookupName);
+    JavaRefTypeInstance METHOD_TYPE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodTypeName);
+    
     String boxingNameBoolean = "java.lang.Boolean";
     String boxingNameByte = "java.lang.Byte";
     String boxingNameShort = "java.lang.Short";
@@ -42,15 +57,14 @@ public interface TypeConstants {
 
     JavaRefTypeInstance NUMBER = JavaRefTypeInstance.createTypeConstant(boxingNameNumber, OBJECT, SERIALIZABLE);
     JavaRefTypeInstance INTEGER = JavaRefTypeInstance.createTypeConstant(boxingNameInt, NUMBER, COMPARABLE);
+    JavaRefTypeInstance SHORT = JavaRefTypeInstance.createTypeConstant(boxingNameShort, NUMBER, COMPARABLE);
     JavaRefTypeInstance LONG = JavaRefTypeInstance.createTypeConstant(boxingNameLong, NUMBER, COMPARABLE);
     JavaRefTypeInstance DOUBLE = JavaRefTypeInstance.createTypeConstant(boxingNameDouble, NUMBER, COMPARABLE);
     JavaRefTypeInstance FLOAT = JavaRefTypeInstance.createTypeConstant(boxingNameFloat, NUMBER, COMPARABLE);
 
-    String methodHandlesName = "java.lang.invoke.MethodHandles";
-    String methodHandlesLookupName = "java.lang.invoke.MethodHandles$Lookup";
-    String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
-    String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
-
     // Path, because we actually want to load the class - could we get away with a hardcoded ref type as above?
     String runtimeExceptionPath = "java/lang/RuntimeException.class";
+
+    // Handy constants for dealing with method handles and descriptor lookups.
+    String fromMethodDescriptorString = "fromMethodDescriptorString";
 }

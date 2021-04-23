@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -65,7 +66,7 @@ class ConditionalSimplifier {
         if (b2) {
             c = c.getNegated().simplify();
         }
-        Statement ret = new ReturnValueStatement(c, RawJavaType.BOOLEAN);
+        Statement ret = new ReturnValueStatement(BytecodeLoc.TODO, c, RawJavaType.BOOLEAN);
         statement.replaceStatement(ret);
         tgt1.nopOut();
         tgt2.nopOut();

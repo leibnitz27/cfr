@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -21,14 +22,24 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class LambdaExpressionNewArray extends AbstractExpression implements LambdaExpressionCommon {
     private final InferredJavaType constrType;
 
-    public LambdaExpressionNewArray(InferredJavaType resType, InferredJavaType constrType) {
-        super(resType);
+    public LambdaExpressionNewArray(BytecodeLoc loc, InferredJavaType resType, InferredJavaType constrType) {
+        super(loc, resType);
         this.constrType = constrType;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
     public Dumper dumpInner(Dumper d) {
         return d.dump(constrType.getJavaTypeInstance()).print("::").methodName(MiscConstants.NEW, null,true, false);
+    }
+
+    @Override
+    public boolean childCastForced() {
+        return false;
     }
 
     @Override

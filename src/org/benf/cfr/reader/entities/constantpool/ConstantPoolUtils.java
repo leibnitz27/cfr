@@ -291,7 +291,7 @@ public class ConstantPoolUtils {
         return Pair.make(curridx, formalTypeParameters);
     }
 
-    public static MethodPrototype parseJavaMethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, boolean synthetic, VariableNamer variableNamer) {
+    public static MethodPrototype parseJavaMethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, boolean synthetic, VariableNamer variableNamer, String originalDescriptor) {
         String proto = prototype.getValue();
         try {
             int curridx = 0;
@@ -336,7 +336,7 @@ public class ConstantPoolUtils {
                     curridx = processTypeEntry(cp, proto, curridx, ftpMap, exceptions);
                 }
             }
-            return new MethodPrototype(state, classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, exceptions, varargs, variableNamer, synthetic);
+            return new MethodPrototype(state, classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, exceptions, varargs, variableNamer, synthetic, originalDescriptor);
         } catch (StringIndexOutOfBoundsException e) {
             throw new MalformedPrototypeException(proto, e);
         }

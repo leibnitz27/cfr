@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -109,7 +110,7 @@ public class PrimitiveBoxingRewriter implements ExpressionRewriter {
         if (!possibleMethods.callsCorrectMethod(res, argIdx, gtb)) {
             if (outerCastType != null) {
                 if (res.getInferredJavaType().getJavaTypeInstance().impreciseCanCastTo(outerCastType.getJavaTypeInstance(), gtb)) {
-                    res = new CastExpression(outerCastType, res);
+                    res = new CastExpression(BytecodeLoc.NONE, outerCastType, res);
                     if (possibleMethods.callsCorrectMethod(res, argIdx, gtb)) {
                         return res;
                     }
@@ -193,7 +194,7 @@ public class PrimitiveBoxingRewriter implements ExpressionRewriter {
                 if (cast.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType) {
                     if (res.getInferredJavaType().getJavaTypeInstance() instanceof JavaRefTypeInstance) {
                         // hmm - we've stripped this cast.
-                        res = new CastExpression(cast.getInferredJavaType(), res);
+                        res = new CastExpression(BytecodeLoc.NONE, cast.getInferredJavaType(), res);
                     }
                 }
             }

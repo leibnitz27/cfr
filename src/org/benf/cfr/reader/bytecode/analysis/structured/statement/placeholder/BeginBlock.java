@@ -12,6 +12,10 @@ public class BeginBlock extends AbstractPlaceholder {
         this.block = block;
     }
 
+    public Block getBlock() {
+        return block;
+    }
+
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement current = matchIterator.getCurrent();

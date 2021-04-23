@@ -1,7 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -17,7 +20,8 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class ConstructorStatement extends AbstractStatement {
     private MemberFunctionInvokation invokation;
 
-    public ConstructorStatement(MemberFunctionInvokation construction) {
+    public ConstructorStatement(BytecodeLoc loc, MemberFunctionInvokation construction) {
+        super(loc);
         this.invokation = construction;
         Expression object = invokation.getObject();
         object.getInferredJavaType().chain(invokation.getInferredJavaType());
@@ -26,6 +30,16 @@ public class ConstructorStatement extends AbstractStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print(MiscConstants.INIT_METHOD).dump(invokation).endCodeln();
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new ConstructorStatement(getLoc(), (MemberFunctionInvokation)cloneHelper.replaceOrClone(invokation));
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, invokation);
     }
 
     @Override
@@ -52,7 +66,7 @@ public class ConstructorStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredExpressionStatement(invokation, false);
+        return new StructuredExpressionStatement(getLoc(), invokation, false);
     }
 
     @Override

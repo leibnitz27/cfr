@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.ExpressionRewriterTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -24,8 +25,13 @@ public class StructuredStatementExpression extends AbstractExpression {
     private StructuredStatement content;
 
     public StructuredStatementExpression(InferredJavaType inferredJavaType, StructuredStatement content) {
-        super(inferredJavaType);
+        super(BytecodeLoc.TODO, inferredJavaType);
         this.content = content;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.TODO;
     }
 
     /*

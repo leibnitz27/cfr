@@ -20,6 +20,7 @@ public class VisibilityHelper {
 
     public static boolean isVisibleTo(JavaRefTypeInstance maybeCaller, ClassFile classFile, boolean accPublic, boolean accPrivate, boolean accProtected) {
         if (accPublic) return true;
+        if (maybeCaller == null) return false;
         if (maybeCaller.equals(classFile.getClassType())) return true;
         if (accPrivate) {
             return isInnerVisibleTo(maybeCaller, classFile);

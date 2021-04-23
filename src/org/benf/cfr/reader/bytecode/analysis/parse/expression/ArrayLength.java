@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
@@ -18,8 +19,8 @@ public class ArrayLength extends AbstractExpression {
     private Expression array;
     private JavaTypeInstance constructionType;
 
-    public ArrayLength(Expression array) {
-        super(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.INSTRUCTION));
+    public ArrayLength(BytecodeLoc loc, Expression array) {
+        super(loc, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.INSTRUCTION));
         this.array = array;
         // We keep track of construction type, because if this array participates
         // in type clash resolution we'll lose it, which will lead to a bad cast.
@@ -27,8 +28,13 @@ public class ArrayLength extends AbstractExpression {
     }
 
     @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, array);
+    }
+
+    @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArrayLength(cloneHelper.replaceOrClone(array));
+        return new ArrayLength(getLoc(), cloneHelper.replaceOrClone(array));
     }
 
     @Override
@@ -47,7 +53,7 @@ public class ArrayLength extends AbstractExpression {
         // stage transform, which I just dont think is worth the cost right now.
         Expression expr = array;
         if (expr.getInferredJavaType().getJavaTypeInstance().getNumArrayDimensions() == 0) {
-            expr = new CastExpression(new InferredJavaType(constructionType, InferredJavaType.Source.UNKNOWN), expr);
+            expr = new CastExpression(BytecodeLoc.NONE, new InferredJavaType(constructionType, InferredJavaType.Source.UNKNOWN), expr);
         }
         expr.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d.print(".length");

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -39,8 +40,8 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     private Expression object;
     private final List<Boolean> nulls;
 
-    AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, JavaTypeInstance bestType, List<Expression> args, List<Boolean> nulls) {
-        super(function,
+    AbstractMemberFunctionInvokation(BytecodeLoc loc, ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, JavaTypeInstance bestType, List<Expression> args, List<Boolean> nulls) {
+        super(loc, function,
                 new InferredJavaType(
                 function.getMethodPrototype().getReturnType(
                         bestType, args
@@ -52,8 +53,13 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         this.cp = cp;
     }
 
-    AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls) {
-        this(cp, function, object, object.getInferredJavaType().getJavaTypeInstance(), args, nulls);
+    AbstractMemberFunctionInvokation(BytecodeLoc loc, ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls) {
+        this(loc, cp, function, object, object.getInferredJavaType().getJavaTypeInstance(), args, nulls);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, args);
     }
 
     @Override
@@ -196,7 +202,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
                      arg instanceof LambdaExpressionFallback;
         }
         if (!ignore) {
-            return new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+            return new CastExpression(BytecodeLoc.NONE, new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
         }
         return arg;
     }

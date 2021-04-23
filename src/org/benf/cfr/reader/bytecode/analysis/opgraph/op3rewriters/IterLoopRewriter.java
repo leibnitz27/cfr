@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -64,7 +65,7 @@ public class IterLoopRewriter {
         WildcardMatch wildcardMatch = new WildcardMatch();
 
         if (!wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
+                new AssignmentSimple(BytecodeLoc.TODO, wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
                 forStatement.getInitial())) return;
 
         LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
@@ -84,7 +85,7 @@ public class IterLoopRewriter {
         Pair<ConditionalExpression, ConditionalExpression> condpr = getSplitAnd(condition);
 
         if (!wildcardMatch.match(
-                new ComparisonOperation(
+                new ComparisonOperation(BytecodeLoc.TODO,
                         new LValueExpression(originalLoopVariable),
                         new LValueExpression(wildcardMatch.getLValueWildCard("bound")),
                         CompOp.LT), condpr.getFirst())) {
@@ -96,7 +97,7 @@ public class IterLoopRewriter {
         // Bound should have been constructed RECENTLY, and should be an array length.
         // TODO: Let's just check the single backref from the for loop test.
         if (!wildcardMatch.match(
-                new AssignmentSimple(originalLoopBound, new ArrayLength(new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
+                new AssignmentSimple(BytecodeLoc.TODO, originalLoopBound, new ArrayLength(BytecodeLoc.TODO, new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
                 preceeding.getStatement())) return;
 
         LValue originalArray = wildcardMatch.getLValueWildCard("array").getMatch();
@@ -108,7 +109,7 @@ public class IterLoopRewriter {
          */
         if (preceeding.getSources().size() == 1) {
             if (wildcardMatch.match(
-                    new AssignmentSimple(originalArray, wildcardMatch.getExpressionWildCard("value")),
+                    new AssignmentSimple(BytecodeLoc.NONE, originalArray, wildcardMatch.getExpressionWildCard("value")),
                     preceeding.getSources().get(0).getStatement())) {
                 prepreceeding = preceeding.getSources().get(0);
                 arrayStatement = wildcardMatch.getExpressionWildCard("value").getMatch();
@@ -126,7 +127,7 @@ public class IterLoopRewriter {
              * of the conjunction is doing the work of the loop start.
              * (we'll need to move it into the loop if we actually use this loop!)
              */
-            IfStatement fakeLoopStm = new IfStatement(condpr.getSecond().getNegated());
+            IfStatement fakeLoopStm = new IfStatement(BytecodeLoc.TODO, condpr.getSecond().getNegated());
             fakeLoopStm.setJumpType(JumpType.BREAK);
             loopStart = new Op03SimpleStatement(loopStart.getBlockIdentifiers(), fakeLoopStm, loopStart.getIndex().justBefore());
         }
@@ -134,10 +135,10 @@ public class IterLoopRewriter {
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
         WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
-        Expression arrIndex = new ArrayIndex(new LValueExpression(originalArray), new LValueExpression(originalLoopVariable));
+        Expression arrIndex = new ArrayIndex(BytecodeLoc.TODO, new LValueExpression(originalArray), new LValueExpression(originalLoopVariable));
         boolean hiddenIter = false;
         if (!wildcardMatch.match(
-                new AssignmentSimple(sugariterWC, arrIndex),
+                new AssignmentSimple(BytecodeLoc.TODO, sugariterWC, arrIndex),
                 loopStart.getStatement())) {
             // If the assignment's been pushed down into a conditional, we could have
             // if ((i = a[x]) > 3).  This is why we've avoided pushing that down. :(
@@ -222,7 +223,7 @@ public class IterLoopRewriter {
             return;
         }
 
-        loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement, originalArray));
+        loop.replaceStatement(new ForIterStatement(forStatement.getCombinedLoc(), forBlock, sugarIter, arrayStatement, originalArray));
         if (loopStart != realLoopStart) {
             if (hiddenIter) {
                 /*
@@ -314,7 +315,7 @@ public class IterLoopRewriter {
              * of the conjunction is doing the work of the loop start.
              * (we'll need to move it into the loop if we actually use this loop!)
              */
-            IfStatement fakeLoopStm = new IfStatement(condpr.getSecond().getNegated());
+            IfStatement fakeLoopStm = new IfStatement(BytecodeLoc.TODO, condpr.getSecond().getNegated());
             fakeLoopStm.setJumpType(JumpType.BREAK);
             loopStart = new Op03SimpleStatement(loopStart.getBlockIdentifiers(), fakeLoopStm, loopStart.getIndex().justBefore());
         }
@@ -324,15 +325,15 @@ public class IterLoopRewriter {
         WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
         Expression nextCall = wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")));
         if (wildcardMatch.match(
-                new AssignmentSimple(sugariterWC, nextCall),
+                new AssignmentSimple(BytecodeLoc.NONE, sugariterWC, nextCall),
                 loopStart.getStatement())) {
         } else if (wildcardMatch.match(
-                new AssignmentSimple(sugariterWC,
+                new AssignmentSimple(BytecodeLoc.NONE, sugariterWC,
                         wildcardMatch.getCastExpressionWildcard("cast", nextCall)),
                 loopStart.getStatement())) {
             // It's a cast expression - so we know that there's a type we might be able to push back up.
         } else if (iterableContentType != null && BoxingHelper.isBoxedType(iterableContentType) &&
-                wildcardMatch.match(new AssignmentSimple(sugariterWC, wildcardMatch.getMemberFunction("unbox",
+                wildcardMatch.match(new AssignmentSimple(BytecodeLoc.NONE, sugariterWC, wildcardMatch.getMemberFunction("unbox",
                         BoxingHelper.getUnboxingMethodName(iterableContentType), nextCall)),
                         loopStart.getStatement())) {
             // it's unboxing into the iterator. (See BreakTest4)
@@ -349,7 +350,7 @@ public class IterLoopRewriter {
 
         if (!sugarIter.validIterator()) return;
         if (!wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("iterable"),
+                new AssignmentSimple(BytecodeLoc.NONE, wildcardMatch.getLValueWildCard("iterable"),
                         wildcardMatch.getMemberFunction("iterator", "iterator", wildcardMatch.getExpressionWildCard("iteratorsource"))),
                 preceeding.getStatement())) return;
 
@@ -432,7 +433,7 @@ public class IterLoopRewriter {
             return;
         }
 
-        loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource, null));
+        loop.replaceStatement(new ForIterStatement(whileStatement.getCombinedLoc(), blockIdentifier, sugarIter, iterSource, null));
         if (loopStart != realLoopStart) {
             if (hiddenIter) {
                 /*

@@ -5,6 +5,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.getopt.Options;
 
+import java.io.BufferedOutputStream;
 import java.util.Set;
 
 public class StdIODumper extends StreamDumper {
@@ -32,5 +33,10 @@ public class StdIODumper extends StreamDumper {
     @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
         return new StdIODumper(innerclassTypeUsageInformation, options, illegalIdentifierDump, context, emitted);
+    }
+
+    @Override
+    public BufferedOutputStream getAdditionalOutputStream(String description) {
+        return new BufferedOutputStream(System.out);
     }
 }

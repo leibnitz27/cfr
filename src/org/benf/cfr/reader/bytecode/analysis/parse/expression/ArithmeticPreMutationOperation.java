@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -15,15 +16,20 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
     private LValue mutated;
     private final ArithOp op;
 
-    public ArithmeticPreMutationOperation(LValue mutated, ArithOp op) {
-        super(mutated.getInferredJavaType());
+    public ArithmeticPreMutationOperation(BytecodeLoc loc, LValue mutated, ArithOp op) {
+        super(loc, mutated.getInferredJavaType());
         this.mutated = mutated;
         this.op = op;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ArithmeticPreMutationOperation(cloneHelper.replaceOrClone(mutated), op);
+        return new ArithmeticPreMutationOperation(getLoc(), cloneHelper.replaceOrClone(mutated), op);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return this.getLoc();
     }
 
     @Override
@@ -64,7 +70,7 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
 
     @Override
     public ArithmeticPostMutationOperation getPostMutation() {
-        return new ArithmeticPostMutationOperation(mutated, op);
+        return new ArithmeticPostMutationOperation(getLoc(), mutated, op);
     }
 
     @Override
@@ -74,7 +80,7 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        lValueUsageCollector.collect(mutated);
+        lValueUsageCollector.collect(mutated, ReadWrite.READ_WRITE);
     }
 
     @Override

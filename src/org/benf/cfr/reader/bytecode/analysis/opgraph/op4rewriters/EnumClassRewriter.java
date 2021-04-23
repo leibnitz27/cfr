@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -228,13 +229,13 @@ public class EnumClassRewriter {
                 new BeginBlock(null),
                 new KleeneStar(
                         new MatchOneOf(
-                                new ResetAfterTest(wcm, new CollectMatch("entry", new StructuredAssignment(wcm.getStaticVariable("e", classType, clazzIJT), wcm.getConstructorSimpleWildcard("c", classType)))),
-                                new ResetAfterTest(wcm, new CollectMatch("entryderived", new StructuredAssignment(wcm.getStaticVariable("e2", classType, clazzIJT, false), wcm.getConstructorAnonymousWildcard("c2", null))))
+                                new ResetAfterTest(wcm, new CollectMatch("entry", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("e", classType, clazzIJT), wcm.getConstructorSimpleWildcard("c", classType)))),
+                                new ResetAfterTest(wcm, new CollectMatch("entryderived", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("e2", classType, clazzIJT, false), wcm.getConstructorAnonymousWildcard("c2", null))))
                         )
                 ),
                 new MatchOneOf(
-                    new ResetAfterTest(wcm, new CollectMatch("values", new StructuredAssignment(wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getNewArrayWildCard("v", 0, 1)))),
-                    new ResetAfterTest(wcm, new CollectMatch("noValues", new StructuredAssignment(wcm.getStaticVariable("v", classType, clazzAIJT), new NewObjectArray(Collections.<Expression>singletonList(Literal.INT_ZERO), arrayType))))
+                    new ResetAfterTest(wcm, new CollectMatch("values", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getNewArrayWildCard("v", 0, 1)))),
+                    new ResetAfterTest(wcm, new CollectMatch("noValues", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("v", classType, clazzAIJT), new NewObjectArray(BytecodeLoc.NONE, Collections.<Expression>singletonList(Literal.INT_ZERO), arrayType))))
                 )
         );
 
@@ -302,7 +303,7 @@ public class EnumClassRewriter {
                     matchedArray = new CollectedEnumData<NewAnonymousArray>(statement.getContainer(), (NewAnonymousArray) abstractNewArray);
                 }
             } else if (name.equals("noValues")) {
-                matchedArray = new CollectedEnumData<NewAnonymousArray>(statement.getContainer(), new NewAnonymousArray(new InferredJavaType(classType, InferredJavaType.Source.TEST),1, Collections.<Expression>emptyList(), true));
+                matchedArray = new CollectedEnumData<NewAnonymousArray>(statement.getContainer(), new NewAnonymousArray(BytecodeLoc.TODO, new InferredJavaType(classType, InferredJavaType.Source.TEST),1, Collections.<Expression>emptyList(), true));
             }
 
         }

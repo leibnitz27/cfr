@@ -18,7 +18,7 @@ import java.util.Map;
 public class ExceptionGroup {
 
     private int bytecodeIndexFrom;        // [ a
-    private int byteCodeIndexTo;          // ) b    st a <= x < b
+    private int bytecodeIndexTo;          // ) b    st a <= x < b
     private int minHandlerStart = Short.MAX_VALUE;
     private List<Entry> entries = ListFactory.newList();
     private final BlockIdentifier tryBlockIdentifier;
@@ -34,7 +34,7 @@ public class ExceptionGroup {
         if (entry.getBytecodeIndexHandler() == entry.getBytecodeIndexFrom()) return;
         if (entry.getBytecodeIndexHandler() < minHandlerStart) minHandlerStart = entry.getBytecodeIndexHandler();
         this.entries.add(new Entry(entry));
-        if (entry.getBytecodeIndexTo() > byteCodeIndexTo) byteCodeIndexTo = entry.getBytecodeIndexTo();
+        if (entry.getBytecodeIndexTo() > bytecodeIndexTo) bytecodeIndexTo = entry.getBytecodeIndexTo();
 //        if (byteCodeIndexTo > minHandlerStart) byteCodeIndexTo = minHandlerStart;
     }
 
@@ -42,16 +42,12 @@ public class ExceptionGroup {
         return entries;
     }
 
-    public void mutateBytecodeIndexFrom(short bytecodeIndexFrom) {
-        this.bytecodeIndexFrom = bytecodeIndexFrom;
-    }
-
     public int getBytecodeIndexFrom() {
         return bytecodeIndexFrom;
     }
 
-    public int getByteCodeIndexTo() {
-        return byteCodeIndexTo;
+    public int getBytecodeIndexTo() {
+        return bytecodeIndexTo;
     }
 
     public BlockIdentifier getTryBlockIdentifier() {
@@ -124,7 +120,7 @@ public class ExceptionGroup {
             bfirst = StringUtils.comma(bfirst, sb);
             sb.append(e.getPriority());
         }
-        sb.append(" : ").append(bytecodeIndexFrom).append("->").append(byteCodeIndexTo).append(")]");
+        sb.append(" : ").append(bytecodeIndexFrom).append("->").append(bytecodeIndexTo).append(")]");
         return sb.toString();
     }
 

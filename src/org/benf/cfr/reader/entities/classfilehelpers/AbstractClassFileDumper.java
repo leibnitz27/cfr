@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.FakeMethod;
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
@@ -13,6 +14,7 @@ import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.DetectedStaticImport;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -51,8 +53,12 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
     void dumpTopHeader(ClassFile classFile, Dumper d, boolean showPackage) {
         if (dcCommonState == null) return;
         Options options = dcCommonState.getOptions();
-        String header = MiscConstants.CFR_HEADER_BRA +
-                (options.getOption(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
+        String header = MiscConstants.CFR_HEADER_BRA;
+        if (options.getOption(OptionsImpl.SHOW_CFR_VERSION)) {
+            header += " " + CfrVersionInfo.VERSION_INFO;
+        }
+        header += '.';
+
         d.beginBlockComment(false);
         d.print(header).newln();
         if (options.getOption(OptionsImpl.DECOMPILER_COMMENTS)) {
@@ -186,6 +192,19 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
                 }
                 first = false;
                 method.dump(d, asClass);
+            }
+        }
+        /*
+         * Any 'additional' methods we've had to create to work around unsynthesisable code.
+         */
+        List<FakeMethod> fakes = classFile.getMethodFakes();
+        if (fakes != null && !fakes.isEmpty()) {
+            for (FakeMethod method : fakes) {
+                if (!first) {
+                    d.newln();
+                }
+                first = false;
+                method.dump(d);
             }
         }
     }

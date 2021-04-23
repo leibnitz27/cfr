@@ -30,4 +30,6 @@ public interface StatementContainer<T> {
     Set<BlockIdentifier> getBlocksEnded();
 
     void copyBlockInformationFrom(StatementContainer<T> other);
+
+    void copyBytecodeInformationFrom(StatementContainer<T> other);
 }

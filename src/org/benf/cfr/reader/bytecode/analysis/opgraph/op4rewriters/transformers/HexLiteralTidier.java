@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -47,7 +48,8 @@ public class HexLiteralTidier extends AbstractExpressionRewriter implements Stru
         if (l == null && r == null) {
             return t;
         }
-        return new ArithmeticOperation(l == null ? t.getLhs() : l,
+        return new ArithmeticOperation(BytecodeLoc.TODO,
+                l == null ? t.getLhs() : l,
                 r == null ? t.getRhs() : r,
                 t.getOp()
                 );
@@ -57,7 +59,8 @@ public class HexLiteralTidier extends AbstractExpressionRewriter implements Stru
         if (!bitOp(t.getOp())) return t;
         Expression r = convertLiteral(t.getMutation());
         if (r == null) return t;
-        return new ArithmeticMutationOperation(t.getUpdatedLValue(), r, t.getOp());
+        return new ArithmeticMutationOperation(BytecodeLoc.TODO,
+                t.getUpdatedLValue(), r, t.getOp());
     }
 
     private static Expression convertLiteral(Expression e) {

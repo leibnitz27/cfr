@@ -1,8 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -161,6 +164,7 @@ public class LoopIdentifier {
              * add a 'while true' (or block to that effect).
              */
             Op03SimpleStatement oldEnd = lastForBlock.get(extendThis);
+            if (oldEnd == null) continue;
 
             int start = statements.indexOf(oldEnd);
             int end = statements.indexOf(extendTo);
@@ -181,7 +185,7 @@ public class LoopIdentifier {
             WhileStatement whileStatement = (WhileStatement) statement;
             ConditionalExpression condition = whileStatement.getCondition();
             if (oldEnd.getTargets().size() == 2) {
-                IfStatement repl = new IfStatement(condition);
+                IfStatement repl = new IfStatement(BytecodeLoc.TODO, condition);
                 repl.setKnownBlocks(loopBlock, null);
                 repl.setJumpType(JumpType.CONTINUE);
                 oldEnd.replaceStatement(repl);
@@ -189,7 +193,7 @@ public class LoopIdentifier {
                     oldEnd.clearThisComparisonBlock();
                 }
             } else if (oldEnd.getTargets().size() == 1 && condition == null) {
-                GotoStatement repl = new GotoStatement();
+                GotoStatement repl = new GotoStatement(BytecodeLoc.TODO);
                 repl.setJumpType(JumpType.CONTINUE);
                 oldEnd.replaceStatement(repl);
                 if (oldEnd.getThisComparisonBlock() == loopBlock) {
@@ -206,7 +210,7 @@ public class LoopIdentifier {
     private static void considerAsPathologicalLoop(final Op03SimpleStatement start, List<Op03SimpleStatement> statements) {
         if (start.getStatement().getClass() != GotoStatement.class) return;
         if (start.getTargets().get(0) != start) return;
-        Op03SimpleStatement next = new Op03SimpleStatement(start.getBlockIdentifiers(), new GotoStatement(), start.getIndex().justAfter());
+        Op03SimpleStatement next = new Op03SimpleStatement(start.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), start.getIndex().justAfter());
         start.replaceStatement(new CommentStatement("Infinite loop"));
         start.replaceTarget(start, next);
         start.replaceSource(start, next);
@@ -256,6 +260,15 @@ public class LoopIdentifier {
                     conditional = false;
                     break;
                 }
+                if (prevJumpStatement instanceof IfStatement) {
+                    IfStatement backJumpIf = (IfStatement)prevJumpStatement;
+                    Expression prevCond = ifStatement.getCondition();
+                    Expression thisCond = backJumpIf.getCondition();
+                    if (!prevCond.equals(thisCond)) {
+                        conditional = false;
+                        break;
+                    }
+                }
             }
         }
 //        if (!conditional) return false;
@@ -267,6 +280,14 @@ public class LoopIdentifier {
 
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(conditional ? BlockType.DOLOOP : BlockType.UNCONDITIONALDOLOOP);
 
+        if (!start.getBlockIdentifiers().equals(lastJump.getBlockIdentifiers())) {
+            /* bit of a hack - but the only time this really causes problems is duff.
+             * This could definitely be rewritten to be more thorough, given failing examples.
+             *
+             * See Duff test.
+             */
+            if (start.getStatement() instanceof CaseStatement) return null;
+        }
         /* Given that the potential statements inside this block are idxConditional+1 -> idxAfterEnd-1, [a->b]
         * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
         * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
@@ -281,7 +302,7 @@ public class LoopIdentifier {
 
         // Add a 'do' statement infront of the block (which does not belong to the block)
         // transform the test to a 'POST_WHILE' statement.
-        Op03SimpleStatement doStatement = new Op03SimpleStatement(start.getBlockIdentifiers(), new DoStatement(blockIdentifier), start.getIndex().justBefore());
+        Op03SimpleStatement doStatement = new Op03SimpleStatement(start.getBlockIdentifiers(), new DoStatement(BytecodeLoc.TODO, blockIdentifier), start.getIndex().justBefore());
         doStatement.getBlockIdentifiers().remove(blockIdentifier);
         // we need to link the do statement in between all the sources of start WHICH
         // are NOT in blockIdentifier.
@@ -291,6 +312,22 @@ public class LoopIdentifier {
                 source.replaceTarget(start, doStatement);
                 start.removeSource(source);
                 doStatement.addSource(source);
+            }
+        }
+        // If all the jumps to the start of the loop occurred inside the loop, we'll lose this
+        // when we remove dead code.
+        // find a jump into the loop from OUTSIDE
+        // (this only occurs in obfuscated code, it seems).
+        if (doStatement.getSources().isEmpty()) {
+            Op03SimpleStatement source = getCloseFwdJumpInto(start, blockIdentifier, statements, startIdx, endIdx + 1);
+            if (source != null) {
+                if (source.getStatement().getClass() == GotoStatement.class) {
+                    source.replaceStatement(new IfStatement(BytecodeLoc.NONE, BooleanExpression.TRUE));
+                    source.getTargets().add(0, doStatement);
+                    doStatement.addSource(source);
+                } else {
+                    // Have to add a node.
+                }
             }
         }
         doStatement.addTarget(start);
@@ -312,7 +349,7 @@ public class LoopIdentifier {
                 Op03SimpleStatement oldFallthrough = lastJump.getTargets().get(0);
                 Op03SimpleStatement oldTaken = lastJump.getTargets().get(1);
                 // Now, lastJump EXPLICTLY has to jump to tgt1 (was fallthrough), and falls through to GOTO tgt2 (was jumps to tgt2).
-                Op03SimpleStatement newBackJump = new Op03SimpleStatement(lastJump.getBlockIdentifiers(), new GotoStatement(), lastJump.getIndex().justAfter());
+                Op03SimpleStatement newBackJump = new Op03SimpleStatement(lastJump.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), lastJump.getIndex().justAfter());
                 // ULGY - need primitive operator!
                 lastJump.getTargets().set(0, newBackJump);
                 lastJump.getTargets().set(1, oldFallthrough);
@@ -326,7 +363,7 @@ public class LoopIdentifier {
             int newIdx = statements.indexOf(lastJump) + 1;
 
             if (newIdx >= statements.size()) {
-                postBlock = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new ReturnNothingStatement(), lastJump.getIndex().justAfter());
+                postBlock = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new ReturnNothingStatement(BytecodeLoc.TODO), lastJump.getIndex().justAfter());
                 statements.add(postBlock);
 
 //                return false;
@@ -409,14 +446,14 @@ public class LoopIdentifier {
                     // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
                     // We can insert a BACK jump to lastJump's target
                     //
-                    newBackJump = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new GotoStatement(), beforeNewJump.getIndex().justAfter());
+                    newBackJump = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new GotoStatement(BytecodeLoc.TODO), beforeNewJump.getIndex().justAfter());
                 } else {
                     afterNewJump = statements.get(lastPostBlock);
                     // Find after statement.  Insert a jump forward (out) here, and then insert
                     // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
                     // We can insert a BACK jump to lastJump's target
                     //
-                    newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(), afterNewJump.getIndex().justBefore());
+                    newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), afterNewJump.getIndex().justBefore());
                 }
 
                 newBackJump.addTarget(start);
@@ -429,7 +466,7 @@ public class LoopIdentifier {
                  */
                 Op03SimpleStatement preNewJump = statements.get(lastPostBlock - 1);
                 if (afterNewJump != null && afterNewJump.getSources().contains(preNewJump)) {
-                    Op03SimpleStatement interstit = new Op03SimpleStatement(preNewJump.getBlockIdentifiers(), new GotoStatement(), newBackJump.getIndex().justBefore());
+                    Op03SimpleStatement interstit = new Op03SimpleStatement(preNewJump.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), newBackJump.getIndex().justBefore());
                     preNewJump.replaceTarget(afterNewJump, interstit);
                     afterNewJump.replaceSource(preNewJump, interstit);
                     interstit.addSource(preNewJump);
@@ -458,6 +495,33 @@ public class LoopIdentifier {
         postBlockCache.put(blockIdentifier, postBlock);
 
         return blockIdentifier;
+    }
+
+    static Op03SimpleStatement getCloseFwdJumpInto(Op03SimpleStatement start, BlockIdentifier blockIdentifier, List<Op03SimpleStatement> statements, int startIdx, int lastIdx) {
+        Op03SimpleStatement linearlyPrevious = start.getLinearlyPrevious();
+        if (containsTargetInBlock(linearlyPrevious, blockIdentifier)) {
+            return linearlyPrevious;
+        }
+        Op03SimpleStatement earliest = null;
+        for (int x=startIdx;x<lastIdx;++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            if (!stm.getBlockIdentifiers().contains(blockIdentifier)) continue;
+            for (Op03SimpleStatement source : stm.getSources()) {
+                if (source.getIndex().isBackJumpFrom(start) && !source.getBlockIdentifiers().contains(blockIdentifier)) {
+                    if (earliest == null || earliest.getIndex().isBackJumpFrom(source)) {
+                        earliest = source;
+                    }
+                }
+            }
+        }
+        return earliest;
+    }
+
+    static boolean containsTargetInBlock(Op03SimpleStatement stm, BlockIdentifier block) {
+        for (Op03SimpleStatement tgt : stm.getTargets()) {
+            if (tgt.getBlockIdentifiers().contains(block)) return true;
+        }
+        return false;
     }
 
     /* Is the first conditional jump NOT one of the sources of start?
@@ -521,7 +585,7 @@ public class LoopIdentifier {
             IfStatement ifStatement = (IfStatement)stm;
             ifStatement.negateCondition();
 
-            Op03SimpleStatement backJump = new Op03SimpleStatement(conditional.getBlockIdentifiers(), new GotoStatement(), conditional.getIndex().justAfter());
+            Op03SimpleStatement backJump = new Op03SimpleStatement(conditional.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), conditional.getIndex().justAfter());
             Op03SimpleStatement notTaken = conditional.getTargets().get(0);
             conditional.replaceTarget(notTaken, backJump);
             conditional.replaceSource(conditional, backJump);
@@ -608,7 +672,7 @@ public class LoopIdentifier {
         postBlockCache.put(blockIdentifier, blockEnd);
 
         if (lastInBlock.getStatement().fallsToNext() && lastInBlock.getTargets().size() == 1) {
-            Op03SimpleStatement afterFallThrough = new Op03SimpleStatement(lastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
+            Op03SimpleStatement afterFallThrough = new Op03SimpleStatement(lastInBlock.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), lastInBlock.getIndex().justAfter());
             // Fixme - could do this in a seperate pass, but at that point we'd have to do it all the time.
             // Refector introduction of new loop end?
             SwitchUtils.checkFixNewCase(afterFallThrough, lastInBlock);
@@ -627,7 +691,7 @@ public class LoopIdentifier {
         Op03SimpleStatement afterLastInBlock = (lastIdx + 1) < statements.size() ? statements.get(lastIdx + 1) : null;
         loopBreak = conditional.getTargets().get(1);
         if (afterLastInBlock != null && afterLastInBlock != loopBreak) {
-            Op03SimpleStatement newAfterLast = new Op03SimpleStatement(afterLastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
+            Op03SimpleStatement newAfterLast = new Op03SimpleStatement(afterLastInBlock.getBlockIdentifiers(), new GotoStatement(BytecodeLoc.TODO), lastInBlock.getIndex().justAfter());
             conditional.replaceTarget(loopBreak, newAfterLast);
             newAfterLast.addSource(conditional);
             loopBreak.replaceSource(conditional, newAfterLast);
@@ -680,28 +744,48 @@ public class LoopIdentifier {
                        type == BlockType.SWITCH;
             }
         }));
+        Set<BlockIdentifier> originalCatches = SetFactory.newSet(catches);
         int newlast = last;
-        while (!catches.isEmpty()) {
-            /*
-             * Need to find the rest of these catch blocks, and add them to the range.
-             */
-            Op03SimpleStatement stm = statements.get(newlast);
-            catches.retainAll(stm.getBlockIdentifiers());
-            if (catches.isEmpty()) {
-                break;
+        do {
+            while (!catches.isEmpty()) {
+                /*
+                 * Need to find the rest of these catch blocks, and add them to the range.
+                 */
+                Op03SimpleStatement stm = statements.get(newlast);
+                catches.retainAll(stm.getBlockIdentifiers());
+                if (catches.isEmpty()) {
+                    break;
+                }
+                last = newlast;
+                if (newlast < statements.size() - 1) {
+                    newlast++;
+                } else {
+                    break;
+                }
             }
-            last = newlast;
-            if (newlast < statements.size() - 1) {
-                newlast++;
-            } else {
-                break;
+            for (int x = idxTestStart; x <= last; ++x) {
+                statements.get(x).markBlock(blockIdentifier);
             }
-        }
+
+            // If newlast (relying here on contiguity, which could be defeated, but should be recovered with a basic block sort )
+            // is the start of a new catch block, which is a peer of one of originalcatches, then we should add to catches
+            // and continue.
+            Op03SimpleStatement newlastStm = statements.get(newlast);
+            if (newlastStm.getStatement() instanceof CatchStatement) {
+                BlockIdentifier catchBlockIdent = ((CatchStatement) newlastStm.getStatement()).getCatchBlockIdent();
+                if (!originalCatches.contains(catchBlockIdent)) {
+                    for (Op03SimpleStatement source : newlastStm.getSources()) {
+                        if (!source.getBlockIdentifiers().contains(blockIdentifier)) return last;
+                    }
+                    originalCatches.add(catchBlockIdent);
+                    catches.add(catchBlockIdent);
+                    idxTestStart = last;
+                    newlast++;
+                }
+            }
+        } while (!catches.isEmpty() && newlast < statements.size() - 1);
 
 
-        for (int x = idxTestStart; x <= last; ++x) {
-            statements.get(x).markBlock(blockIdentifier);
-        }
         return last;
     }
 

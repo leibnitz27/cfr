@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -28,14 +29,21 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
     private Expression value;
     private final JavaTypeInstance fnReturnType;
 
-    public StructuredReturn() {
+    public StructuredReturn(BytecodeLoc loc) {
+        super(loc);
         this.value = null;
         this.fnReturnType = null;
     }
 
-    public StructuredReturn(Expression value, JavaTypeInstance fnReturnType) {
+    public StructuredReturn(BytecodeLoc loc, Expression value, JavaTypeInstance fnReturnType) {
+        super(loc);
         this.value = value;
         this.fnReturnType = fnReturnType;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, value);
     }
 
     @Override
@@ -110,6 +118,11 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
             if (!fnReturnType.equals(other.fnReturnType)) return false;
         }
         return true;
+    }
+
+    @Override
+    public boolean canFall() {
+        return false;
     }
 
     @Override

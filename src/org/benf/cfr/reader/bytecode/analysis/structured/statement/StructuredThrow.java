@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -16,8 +17,18 @@ import java.util.List;
 public class StructuredThrow extends AbstractStructuredStatement {
     private Expression value;
 
-    public StructuredThrow(Expression value) {
+    public StructuredThrow(BytecodeLoc loc, Expression value) {
+        super(loc);
         this.value = value;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, value);
+    }
+
+    public Expression getValue() {
+        return value;
     }
 
     @Override
@@ -58,6 +69,11 @@ public class StructuredThrow extends AbstractStructuredStatement {
 
         matchIterator.advance();
         return true;
+    }
+
+    @Override
+    public boolean canFall() {
+        return false;
     }
 
     @Override

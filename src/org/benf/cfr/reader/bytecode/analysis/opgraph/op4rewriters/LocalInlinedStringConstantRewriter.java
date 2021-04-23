@@ -14,11 +14,14 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import java.util.List;
 import java.util.Map;
 
-public class InlinedConstantRewriter extends AbstractExpressionRewriter implements Op04Rewriter {
+// Well, this is pretty specific!
+// LOCAL inlined constants don't have a nice hint about the type they belong to, so we only use strings,
+// and assume they indeed come from here.
+public class LocalInlinedStringConstantRewriter extends AbstractExpressionRewriter implements Op04Rewriter {
 
     private final Map<String, Expression> rewrites;
 
-    public InlinedConstantRewriter(Map<String, Expression> rewrites) {
+    public LocalInlinedStringConstantRewriter(Map<String, Expression> rewrites) {
         this.rewrites = rewrites;
     }
 

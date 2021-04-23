@@ -1,19 +1,40 @@
 package org.benf.cfr.reader.util;
 
+import org.benf.cfr.reader.util.collections.MapFactory;
+
+import java.util.Map;
+
 @SuppressWarnings("unused")
 public class ClassFileVersion {
     private final int major;
     private final int minor;
     private final String name;
+    private final static Map<String, ClassFileVersion> byName = MapFactory.newOrderedMap();
 
     public ClassFileVersion(int major, int minor) {
         this(major, minor, null);
     }
 
-    public ClassFileVersion(int major, int minor, String name) {
+    private ClassFileVersion(int major, int minor, String name) {
         this.major = major;
         this.minor = minor;
         this.name = name;
+        if (name != null) {
+            byName.put("j" + name + (minor == 65535 ? "pre" : ""), this);
+        }
+    }
+
+    public static ClassFileVersion parse(String arg) {
+        ClassFileVersion named = byName.get(arg);
+        if (named != null) return named;
+        String[] parts = arg.split("\\.",2);
+        try {
+            int major = Integer.parseInt(parts[0]);
+            int minor = parts.length == 2 ? Integer.parseInt(parts[1]) : 0;
+            return new ClassFileVersion(major, minor);
+        } catch (Exception e) {
+            throw new ConfusedCFRException("Can't parse classfile version " + arg);
+        }
     }
 
     public boolean equalOrLater(ClassFileVersion other) {
@@ -35,9 +56,13 @@ public class ClassFileVersion {
         return !equalOrLater(other);
     }
 
+    public static Map<String, ClassFileVersion> getByName() {
+        return byName;
+    }
+
     @Override
     public String toString() {
-        return "" + major + "." + minor + (name == null ? "" : (" (Java " + name + ")"));
+        return "" + major + "." + minor + (name == null ? "" : (" (Java " + name + ")")) + (minor == 65535 ? " preview" : "");
     }
 
     public static ClassFileVersion JAVA_1_0 = new ClassFileVersion(45, 3, "1.0");
@@ -56,4 +81,5 @@ public class ClassFileVersion {
     public static ClassFileVersion JAVA_13 = new ClassFileVersion(57, 0, "13");
     public static ClassFileVersion JAVA_14 = new ClassFileVersion(58, 0, "14");
     public static ClassFileVersion JAVA_14_Experimental = new ClassFileVersion(58, 65535, "14");
+    public static ClassFileVersion JAVA_15 = new ClassFileVersion(59, 0, "15");
 }

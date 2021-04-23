@@ -1,6 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -13,12 +16,18 @@ public class ExpressionStatement extends AbstractStatement {
     private Expression expression;
 
     public ExpressionStatement(Expression expression) {
+        super(expression.getLoc());
         this.expression = expression;
     }
 
     @Override
     public Dumper dump(Dumper d) {
         return expression.dump(d).endCodeln();
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, expression);
     }
 
     @Override
@@ -32,6 +41,11 @@ public class ExpressionStatement extends AbstractStatement {
     }
 
     @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new ExpressionStatement(cloneHelper.replaceOrClone(expression));
+    }
+
+    @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
         expression.collectUsedLValues(lValueUsageCollector);
     }
@@ -42,7 +56,7 @@ public class ExpressionStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredExpressionStatement(expression, false);
+        return new StructuredExpressionStatement(getLoc(), expression, false);
     }
 
     @Override

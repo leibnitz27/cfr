@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -9,8 +12,14 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class DoStatement extends AbstractStatement {
     private final BlockIdentifier blockIdentifier;
 
-    public DoStatement(BlockIdentifier blockIdentifier) {
+    public DoStatement(BytecodeLoc loc, BlockIdentifier blockIdentifier) {
+        super(loc);
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -20,6 +29,11 @@ public class DoStatement extends AbstractStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new DoStatement(getLoc(), blockIdentifier);
     }
 
     @Override

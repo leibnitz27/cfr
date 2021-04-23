@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -15,7 +16,8 @@ public class UnstructuredIter extends AbstractUnStructuredStatement {
     private LValue iterator;
     private Expression list;
 
-    public UnstructuredIter(BlockIdentifier blockIdentifier, LValue iterator, Expression list) {
+    public UnstructuredIter(BytecodeLoc loc, BlockIdentifier blockIdentifier, LValue iterator, Expression list) {
+        super(loc);
         this.blockIdentifier = blockIdentifier;
         this.iterator = iterator;
         this.list = list;
@@ -24,6 +26,11 @@ public class UnstructuredIter extends AbstractUnStructuredStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("** for (").dump(iterator).print(" : ").dump(list).separator(")").newln();
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, list);
     }
 
     @Override
@@ -38,7 +45,7 @@ public class UnstructuredIter extends AbstractUnStructuredStatement {
             throw new RuntimeException("ForIter statement claiming wrong block");
         }
         innerBlock.removeLastContinue(blockIdentifier);
-        return new StructuredIter(blockIdentifier, iterator, list, innerBlock);
+        return new StructuredIter(getLoc(), blockIdentifier, iterator, list, innerBlock);
     }
 
 

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -18,8 +19,14 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
 
     private final BlockIdentifier continueTgt;
 
-    public UnstructuredContinue(BlockIdentifier continueTgt) {
+    public UnstructuredContinue(BytecodeLoc loc, BlockIdentifier continueTgt) {
+        super(loc);
         this.continueTgt = continueTgt;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -49,7 +56,7 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
         } else {
             continueTgt.addForeignRef();
         }
-        return new StructuredContinue(continueTgt, localBreak);
+        return new StructuredContinue(getLoc(), continueTgt, localBreak);
     }
 
     @Override

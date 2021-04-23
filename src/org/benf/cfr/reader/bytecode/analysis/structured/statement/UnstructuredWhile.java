@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -17,7 +18,8 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
     private Set<BlockIdentifier> blocksEndedAfter;
 
-    public UnstructuredWhile(ConditionalExpression condition, BlockIdentifier blockIdentifier, Set<BlockIdentifier> blocksEndedAfter) {
+    public UnstructuredWhile(BytecodeLoc loc, ConditionalExpression condition, BlockIdentifier blockIdentifier, Set<BlockIdentifier> blocksEndedAfter) {
+        super(loc);
         this.condition = condition;
         this.blockIdentifier = blockIdentifier;
         // We have to be careful here - if this while statement jumps out PAST an outer block when it
@@ -34,6 +36,11 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
             dumper.dump(condition);
         }
         return dumper.separator(")").newln();
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, condition);
     }
 
     @Override
@@ -55,13 +62,13 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
             // We think we're ending a block, but we're inside something else?  This must have been a backjump
             // on an unterminated loop.  We need to convert this into a continue statement.
             // (and the loop will get turned into a  ..... break; }  while (true) when it is finished. )
-            StructuredStatement res = new UnstructuredContinue(blockIdentifier);
+            StructuredStatement res = new UnstructuredContinue(BytecodeLoc.TODO, blockIdentifier);
             StructuredStatement resInform = res.informBlockHeirachy(blockIdentifiers);
             if (resInform != null) res = resInform;
 
             if (condition == null) return res;
             // Else we need to make up an if block as well!!
-            StructuredIf fakeIf = new StructuredIf(condition, new Op04StructuredStatement(res));
+            StructuredIf fakeIf = new StructuredIf(BytecodeLoc.TODO, condition, new Op04StructuredStatement(res));
             return fakeIf;
         }
         return null;
@@ -86,7 +93,7 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
         /* We have subsumed a break to an outer loop. :P */
         LinkedList<Op04StructuredStatement> lst = ListFactory.newLinkedList();
         lst.add(new Op04StructuredStatement(whileLoop));
-        lst.add(new Op04StructuredStatement(new StructuredBreak(externalBreak, false)));
+        lst.add(new Op04StructuredStatement(new StructuredBreak(BytecodeLoc.TODO, externalBreak, false)));
         return new Block(
                 lst, false
         );

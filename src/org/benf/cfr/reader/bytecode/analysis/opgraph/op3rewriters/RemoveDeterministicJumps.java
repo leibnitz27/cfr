@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -118,7 +119,7 @@ public class RemoveDeterministicJumps {
 
             /* Everything rewritable on the adjust list can be replaced with a return */
             if (cls == ReturnNothingStatement.class) {
-                replace(original, adjustedOrig, new ReturnNothingStatement());
+                replace(original, adjustedOrig, new ReturnNothingStatement(currentStatement.getLoc()));
             } else if (cls == ReturnValueStatement.class) {
                 ReturnValueStatement returnValueStatement = (ReturnValueStatement) current.getStatement();
 
@@ -133,7 +134,7 @@ public class RemoveDeterministicJumps {
                 Expression lit = res.getComputedLiteral(display);
                 if (lit != null) res = lit;
 
-                replace(original, adjustedOrig, new ReturnValueStatement(res, returnValueStatement.getFnReturnType()));
+                replace(original, adjustedOrig, new ReturnValueStatement(currentStatement.getLoc(), res, returnValueStatement.getFnReturnType()));
             } else {
                 return false;
             }
@@ -164,7 +165,7 @@ public class RemoveDeterministicJumps {
     private static void replaceConditionalReturn(Op03SimpleStatement conditional, ReturnStatement returnStatement) {
         Op03SimpleStatement originalConditionalTarget = conditional.getTargets().get(1);
         IfStatement ifStatement = (IfStatement)conditional.getStatement();
-        conditional.replaceStatement(new IfExitingStatement(ifStatement.getCondition(), returnStatement));
+        conditional.replaceStatement(new IfExitingStatement(ifStatement.getLoc(), ifStatement.getCondition(), returnStatement));
         conditional.removeTarget(originalConditionalTarget);
         originalConditionalTarget.removeSource(conditional);
     }
@@ -258,7 +259,7 @@ public class RemoveDeterministicJumps {
          */
         if (cls == ReturnNothingStatement.class) {
             if (!(originalRValue instanceof Literal)) return false;
-            original.replaceStatement(new ReturnNothingStatement());
+            original.replaceStatement(new ReturnNothingStatement(BytecodeLoc.TODO));
             orignext.removeSource(original);
             original.removeTarget(orignext);
             return true;
@@ -275,14 +276,14 @@ public class RemoveDeterministicJumps {
             if (originalRValue instanceof Literal) {
                 Expression e = returnValueStatement.getReturnValue().getComputedLiteral(display);
                 if (e == null) return false;
-                original.replaceStatement(new ReturnValueStatement(e, returnValueStatement.getFnReturnType()));
+                original.replaceStatement(new ReturnValueStatement(BytecodeLoc.TODO, e, returnValueStatement.getFnReturnType()));
             } else {
                 Expression ret = returnValueStatement.getReturnValue();
                 if (!(ret instanceof LValueExpression)) return false;
                 LValue retLValue = ((LValueExpression) ret).getLValue();
                 if (!retLValue.equals(originalLValue)) return false;
                 // NB : we don't have to clone rValue, as we're replacing the statement it came from.
-                original.replaceStatement(new ReturnValueStatement(originalRValue, returnValueStatement.getFnReturnType()));
+                original.replaceStatement(new ReturnValueStatement(BytecodeLoc.TODO, originalRValue, returnValueStatement.getFnReturnType()));
             }
             orignext.removeSource(original);
             original.removeTarget(orignext);

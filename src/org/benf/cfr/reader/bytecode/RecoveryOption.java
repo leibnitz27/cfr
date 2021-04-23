@@ -75,6 +75,27 @@ public abstract class RecoveryOption<T> {
         }
     }
 
+    public static class IntRO extends RecoveryOption<Integer> {
+        IntRO(PermittedOptionProvider.Argument<Integer> arg, int value) {
+            super(arg, value, null, null);
+        }
+
+        public IntRO(PermittedOptionProvider.Argument<Integer> arg, int value, DecompilerComment comment) {
+            super(arg, value, null, comment);
+        }
+
+        IntRO(PermittedOptionProvider.Argument<Integer> arg, int value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
+            super(arg, value, canHelp, comment);
+        }
+
+        @Override
+        public boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList, BytecodeMeta bytecodeMeta) {
+            if (canhelp != null && !canhelp.invoke(bytecodeMeta)) return false;
+            if (mutableOptions.optionIsSet(arg)) return false;
+            return applyComment(mutableOptions.override(arg, value), commentList);
+        }
+    }
+
     public static class ConditionalRO<X, T> extends RecoveryOption<T> {
         private final RecoveryOption<T> delegate;
         private final PermittedOptionProvider.ArgumentParam<X, ?> test;

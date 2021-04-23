@@ -6,9 +6,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.getopt.Options;
 
@@ -188,5 +191,32 @@ public class Op03Rewriters {
 
     public static void nopIsolatedStackValues(List<Op03SimpleStatement> op03SimpleParseNodes) {
         IsolatedStackValue.nopIsolatedStackValues(op03SimpleParseNodes);
+    }
+
+    public static void rewriteBadCompares(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes) {
+        new BadCompareRewriter(vf).rewrite(op03SimpleParseNodes);
+    }
+
+    /*
+     * Neither of these (cloneCodeFromLoop/moveJumpsIntoDo) are 'nice' transforms - they mess with the original code.
+     */
+    public static void cloneCodeFromLoop(List<Op03SimpleStatement> op03SimpleParseNodes, Options options, DecompilerComments comments) {
+        new JumpsIntoLoopCloneRewriter(options).rewrite(op03SimpleParseNodes, comments);
+    }
+
+    public static void moveJumpsIntoDo(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes, Options options, DecompilerComments comments) {
+        new JumpsIntoDoRewriter(vf).rewrite(op03SimpleParseNodes, comments);
+    }
+
+    public static List<Op03SimpleStatement> removeDeadConditionals(List<Op03SimpleStatement> op03SimpleParseNodes) {
+        return DeadConditionalRemover.INSTANCE.rewrite(op03SimpleParseNodes);
+    }
+
+    public static void condenseStaticInstances(List<Op03SimpleStatement> op03SimpleParseNodes) {
+        StaticInstanceCondenser.INSTANCE.rewrite(op03SimpleParseNodes);
+    }
+
+    public static void relinkInstanceConstants(JavaRefTypeInstance thisType, List<Op03SimpleStatement> op03SimpleParseNodes, DCCommonState dcCommonState) {
+        InstanceConstants.INSTANCE.rewrite(thisType, op03SimpleParseNodes, dcCommonState);
     }
 }

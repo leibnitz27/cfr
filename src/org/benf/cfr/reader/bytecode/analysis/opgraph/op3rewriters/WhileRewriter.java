@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -21,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class WhileRewriter {
+class WhileRewriter {
 
     private static void rewriteDoWhileTruePredAsWhile(Op03SimpleStatement end, List<Op03SimpleStatement> statements) {
         WhileStatement whileStatement = (WhileStatement) end.getStatement();
@@ -64,8 +65,8 @@ public class WhileRewriter {
             IfExitingStatement ifExitingStatement = (IfExitingStatement) loopBodyStartStatement;
             Statement exitStatement = ifExitingStatement.getExitStatement();
             ConditionalExpression conditionalExpression = ifExitingStatement.getCondition();
-            WhileStatement replacementWhile = new WhileStatement(conditionalExpression.getNegated(), whileBlockIdentifier);
-            GotoStatement endGoto = new GotoStatement();
+            WhileStatement replacementWhile = new WhileStatement(BytecodeLoc.TODO, conditionalExpression.getNegated(), whileBlockIdentifier);
+            GotoStatement endGoto = new GotoStatement(BytecodeLoc.TODO);
             endGoto.setJumpType(JumpType.CONTINUE);
             end.replaceStatement(endGoto);
             Op03SimpleStatement after = new Op03SimpleStatement(doStart.getBlockIdentifiers(), exitStatement, end.getIndex().justAfter());
@@ -108,7 +109,7 @@ public class WhileRewriter {
         }
     }
 
-    public static void rewriteDoWhileTruePredAsWhile(List<Op03SimpleStatement> statements) {
+    static void rewriteDoWhileTruePredAsWhile(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> doWhileEnds = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
             @Override
             public boolean test(Op03SimpleStatement in) {
@@ -137,7 +138,11 @@ public class WhileRewriter {
             if (current.getStatement() instanceof AbstractAssignment) {
                 AbstractAssignment assignment = (AbstractAssignment) current.getStatement();
                 if (assignment.isSelfMutatingOperation()) {
-                    res.add(assignment.getCreatedLValue());
+                    LValue lValue = assignment.getCreatedLValue();
+                    SSAIdent after = current.getSSAIdentifiers().getSSAIdentOnExit(lValue);
+                    SSAIdent expected = start.getSSAIdentifiers().getSSAIdentOnEntry(lValue);
+                    if (!after.equals(expected)) break;
+                    res.add(lValue);
                 }
             }
             if (current.getSources().size() > 1) break;
@@ -344,7 +349,7 @@ public class WhileRewriter {
         return mutations;
     }
 
-    public static void rewriteWhilesAsFors(Options options, List<Op03SimpleStatement> statements) {
+    static void rewriteWhilesAsFors(Options options, List<Op03SimpleStatement> statements) {
         // Find all the while loops beginnings.
         List<Op03SimpleStatement> whileStarts = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
             @Override

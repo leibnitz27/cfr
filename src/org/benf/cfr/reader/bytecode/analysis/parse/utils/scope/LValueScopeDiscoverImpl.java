@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCatch;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -78,7 +79,7 @@ public class LValueScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     }
 
     @Override
-    public void collect(LValue lValue) {
+    public void collect(LValue lValue, ReadWrite rw) {
         Class<?> lValueClass = lValue.getClass();
 
         if (lValueClass == LocalVariable.class) {

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -32,7 +33,7 @@ public class LambdaCleaner extends AbstractExpressionRewriter implements Structu
     }
 
     private static LambdaExpression rebuildLambda(LambdaExpression e, Expression body) {
-        return new LambdaExpression(e.getInferredJavaType(), e.getArgs(), e.explicitArgTypes(), body);
+        return new LambdaExpression(BytecodeLoc.TODO, e.getInferredJavaType(), e.getArgs(), e.explicitArgTypes(), body);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -21,10 +22,11 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
     private final ClassFile classFile;
     private final JavaTypeInstance anonymousTypeInstance;
 
-    public ConstructorInvokationAnonymousInner(MemberFunctionInvokation constructorInvokation,
+    public ConstructorInvokationAnonymousInner(BytecodeLoc loc,
+                                               MemberFunctionInvokation constructorInvokation,
                                                InferredJavaType inferredJavaType, List<Expression> args,
                                                DCCommonState dcCommonState, JavaTypeInstance anonymousTypeInstance) {
-        super((inferredJavaType), constructorInvokation.getFunction(), args);
+        super(loc, (inferredJavaType), constructorInvokation.getFunction(), args);
         this.constructorInvokation = constructorInvokation;
         this.anonymousTypeInstance = anonymousTypeInstance;
         /*
@@ -42,8 +44,13 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         this.classFile = classFile;
     }
 
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return constructorInvokation.getCombinedLoc();
+    }
+
     private ConstructorInvokationAnonymousInner(ConstructorInvokationAnonymousInner other, CloneHelper cloneHelper) {
-        super(other, cloneHelper);
+        super(other.getLoc(), other, cloneHelper);
         this.constructorInvokation = (MemberFunctionInvokation) cloneHelper.replaceOrClone(other.constructorInvokation);
         this.classFile = other.classFile;
         this.anonymousTypeInstance = other.anonymousTypeInstance;

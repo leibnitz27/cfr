@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
@@ -19,11 +20,18 @@ public class StructuredComment extends AbstractStructuredStatement {
     private Expression expression;
 
     public StructuredComment(Expression expression) {
+        super(BytecodeLoc.NONE);
         this.expression = expression;
     }
 
     public StructuredComment(String text) {
+        super(BytecodeLoc.NONE);
         this.expression = new Literal(TypedLiteral.getString(text));
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override

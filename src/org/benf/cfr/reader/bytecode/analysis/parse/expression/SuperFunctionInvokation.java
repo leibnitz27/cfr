@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -18,25 +19,25 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
     private final boolean isOnInterface;
     private final JavaTypeInstance typeName;
 
-    public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls, boolean isOnInterface) {
-        super(cp, function, object, args, nulls);
+    public SuperFunctionInvokation(BytecodeLoc loc, ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls, boolean isOnInterface) {
+        super(loc, cp, function, object, args, nulls);
         this.isOnInterface = isOnInterface;
         this.typeName = null;
     }
 
-    private SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls, boolean isOnInterface, JavaTypeInstance name) {
-        super(cp, function, object, args, nulls);
+    private SuperFunctionInvokation(BytecodeLoc loc, ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls, boolean isOnInterface, JavaTypeInstance name) {
+        super(loc, cp, function, object, args, nulls);
         this.isOnInterface = isOnInterface;
         this.typeName = name;
     }
 
     public SuperFunctionInvokation withCustomName(JavaTypeInstance name) {
-        return new SuperFunctionInvokation(getCp(), getFunction(), getObject(), getArgs(), getNulls(), isOnInterface, name);
+        return new SuperFunctionInvokation(getLoc(), getCp(), getFunction(), getObject(), getArgs(), getNulls(), isOnInterface, name);
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new SuperFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()), getNulls(), isOnInterface, typeName);
+        return new SuperFunctionInvokation(getLoc(), getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()), getNulls(), isOnInterface, typeName);
     }
 
     public boolean isEmptyIgnoringSynthetics() {

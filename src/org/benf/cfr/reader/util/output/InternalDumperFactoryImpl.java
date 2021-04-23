@@ -10,7 +10,13 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class InternalDumperFactoryImpl implements DumperFactory {
@@ -57,6 +63,7 @@ public class InternalDumperFactoryImpl implements DumperFactory {
         return null;
     }
 
+
     public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         Pair<String, Boolean> targetInfo = getPathAndClobber();
 
@@ -69,6 +76,47 @@ public class InternalDumperFactoryImpl implements DumperFactory {
             }
         }
         return res;
+    }
+
+    private static class BytecodeDumpConsumerImpl implements BytecodeDumpConsumer {
+        private final Dumper dumper;
+
+        BytecodeDumpConsumerImpl(Dumper dumper) {
+            this.dumper = dumper;
+        }
+
+        @Override
+        public void accept(Collection<Item> items) {
+            try {
+                BufferedOutputStream stream = dumper.getAdditionalOutputStream("lineNumberTable");
+                OutputStreamWriter sw = new OutputStreamWriter(stream);
+                try {
+                    sw.write("------------------\n");
+                    sw.write("Line number table:\n\n");
+                    for (Item item : items) {
+                        sw.write(item.getMethod().getMethodPrototype().toString());
+                        sw.write("\n----------\n");
+                        for (Map.Entry<Integer, Integer> entry : item.getBytecodeLocs().entrySet()) {
+                            sw.write("Line " + entry.getValue() + "\t: " + entry.getKey() + "\n");
+                        }
+                        sw.write("\n");
+                    }
+                } finally {
+                    sw.close();
+                }
+            } catch (IOException e) {
+                throw new ConfusedCFRException(e);
+            }
+        }
+    }
+
+    @Override
+    public Dumper wrapLineNoDumper(Dumper dumper) {
+        // There's really not a reason to do this, but it's useful for testing.
+        if (options.getOption(OptionsImpl.TRACK_BYTECODE_LOC)) {
+            return new BytecodeTrackingDumper(dumper, new BytecodeDumpConsumerImpl(dumper));
+        }
+        return dumper;
     }
 
     @Override

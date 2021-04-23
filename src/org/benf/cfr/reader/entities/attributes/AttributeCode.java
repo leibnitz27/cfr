@@ -153,4 +153,8 @@ public class AttributeCode extends Attribute {
     public void releaseCode() {
         this.codeAnalyser.releaseCode();
     }
+
+    public AttributeMap getAttributes() {
+        return attributes;
+    }
 }

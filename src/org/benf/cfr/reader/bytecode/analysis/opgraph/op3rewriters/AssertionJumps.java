@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
@@ -11,8 +12,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 
 import java.util.List;
 
-public class AssertionJumps {
-    public static void extractAssertionJumps(List<Op03SimpleStatement> in) {
+class AssertionJumps {
+    static void extractAssertionJumps(List<Op03SimpleStatement> in) {
         /*
          * If we have
          *
@@ -27,7 +28,7 @@ public class AssertionJumps {
          * non-goto-jump XX
          */
         WildcardMatch wcm = new WildcardMatch();
-        Statement assertionError = new ThrowStatement(wcm.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR));
+        Statement assertionError = new ThrowStatement(BytecodeLoc.TODO, wcm.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR));
 
         for (int x=0,len=in.size();x<len;++x) {
             Op03SimpleStatement ostm = in.get(x);
@@ -40,7 +41,7 @@ public class AssertionJumps {
             wcm.reset();
             if (!assertionError.equals(next.getStatement())) continue;
             if (!ostm.getBlockIdentifiers().equals(next.getBlockIdentifiers())) continue;
-            GotoStatement reJumpStm = new GotoStatement();
+            GotoStatement reJumpStm = new GotoStatement(BytecodeLoc.TODO);
             reJumpStm.setJumpType(ifStatement.getJumpType());
             Op03SimpleStatement reJump = new Op03SimpleStatement(ostm.getBlockIdentifiers(), reJumpStm, next.getIndex().justAfter());
             in.add(x+2, reJump);

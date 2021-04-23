@@ -29,14 +29,17 @@ public class BadLoopPrettifier implements StructuredStatementTransformer {
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
         in.transformStructuredChildren(this, scope);
 
-        if (!(in instanceof StructuredDo)) return in;
+        // Either a do or a while with no condition is acceptable.
+        if (!(in instanceof AbstractStructuredConditionalLoopStatement)) {
+            return in;
+        }
+        AbstractStructuredConditionalLoopStatement asl = (AbstractStructuredConditionalLoopStatement)in;
+        if (!asl.isInfinite()) return in;
 
-        StructuredDo structuredDo = (StructuredDo) in;
-        BlockIdentifier blockIdent = structuredDo.getBlock();
+        Op04StructuredStatement body = asl.getBody();
+        BlockIdentifier blockIdent = asl.getBlock();
 
-        if (structuredDo.getCondition() != null) return in;
-
-        List<Op04StructuredStatement> statements = getIfBlock(((StructuredDo) in).getBody());
+        List<Op04StructuredStatement> statements = getIfBlock(body);
         /*
          * If the FIRST statement is a conditional, which is either a break or a return, then we can
          * transform the entire loop into a while (!conditional) instead, which is much nicer.
@@ -73,9 +76,9 @@ public class BadLoopPrettifier implements StructuredStatementTransformer {
         }
 
         statements.remove(0);
-        ConditionalExpression condition = ifStatement.getConditionalExpression().getNegated().simplify();
+        ConditionalExpression newCondition = ifStatement.getConditionalExpression().getNegated().simplify();
 
-        StructuredWhile structuredWhile = new StructuredWhile(condition, structuredDo.getBody(), blockIdent);
+        StructuredWhile structuredWhile = new StructuredWhile(newCondition, body, blockIdent);
         if (!liftTestBody) return structuredWhile;
 
         Block lifted = Block.getBlockFor(false, structuredWhile, structuredExit);

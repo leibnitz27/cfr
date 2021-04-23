@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -10,13 +11,20 @@ import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 public class UnstructuredDo extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
 
     public UnstructuredDo(BlockIdentifier blockIdentifier) {
+        super(BytecodeLoc.NONE);
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return getLoc();
     }
 
     @Override
@@ -36,7 +44,7 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
         UnstructuredWhile lastEndWhile = innerBlock.removeLastEndWhile();
         if (lastEndWhile != null) {
             ConditionalExpression condition = lastEndWhile.getCondition();
-            return new StructuredDo(condition, innerBlock, blockIdentifier);
+            return StructuredDo.create(condition, innerBlock, blockIdentifier);
         }
 
         /*
@@ -76,17 +84,19 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
             } else if (stm instanceof StructuredContinue) {
                 StructuredContinue cnt = (StructuredContinue) stm;
                 if (cnt.getContinueTgt().equals(blockIdentifier)) canRemove = false;
-            } else {
+            } else if (stm.canFall()) {
                 canRemove = false;
             }
             if (canRemove) {
                 return stm;
             }
         }
-        block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
-//        }
-        return new StructuredDo(null, innerBlock, blockIdentifier);
+        Op04StructuredStatement last = block.getLast();
+        if (last != null) {
+            if (last.getStatement().canFall()) {
+                block.addStatement(new Op04StructuredStatement(new StructuredBreak(getLoc(), blockIdentifier, true)));
+            }
+        }
+        return StructuredDo.create(null, innerBlock, blockIdentifier);
     }
-
-
 }

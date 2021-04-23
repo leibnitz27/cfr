@@ -36,14 +36,12 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
     private Map<String, JarSourceEntry> classToPathMap;
     private final Options options;
     private ClassRenamer classRenamer;
+    private ClassFileRelocator classRelocator;
     /*
      * Initialisation info
      */
-    private boolean unexpectedDirectory = false;
-    private String pathPrefix = "";
-    private String classRemovePrefix = "";
     private static final boolean JrtPresent = CheckJrt();
-    private static Map<String, String> packMap = JrtPresent ? getPackageToModuleMap() : new HashMap<String, String>();
+    private static final Map<String, String> packMap = JrtPresent ? getPackageToModuleMap() : new HashMap<String, String>();
 
     private static boolean CheckJrt() {
         try {
@@ -106,17 +104,7 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
             InputStream is;
             long length;
 
-            /*
-             * NB : pathPrefix will be empty the when we load the 'main' class,
-             * and only set if it's not in its 'natural' location.
-             */
-            String usePath = path;
-            if (unexpectedDirectory) {
-                if (usePath.startsWith(classRemovePrefix)) {
-                    usePath = usePath.substring(classRemovePrefix.length());
-                }
-                usePath = pathPrefix + usePath;
-            }
+            String usePath = classRelocator.correctPath(path);
             boolean forceJar = jarEntry != null && explicitJars.contains(jarEntry.getPath());
             File file = forceJar ? null : new File(usePath);
             byte[] content;
@@ -454,61 +442,6 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
 
     @Override
     public void informAnalysisRelativePathDetail(String usePath, String specPath) {
-        if (usePath == null && specPath == null) {
-            unexpectedDirectory = false;
-            pathPrefix = null;
-        } else {
-            new Configurator().configureWith(usePath, specPath);
-        }
+        classRelocator = new ClassFileRelocator.Configurator().configureWith(usePath, specPath);
     }
-
-    private class Configurator {
-
-        private Configurator() {
-        }
-
-        /*
-         * This is hideously inefficient. ;)
-         */
-        private void reverse(String[] in) {
-            List<String> l = Arrays.asList(in);
-            Collections.reverse(l);
-            l.toArray(in);
-        }
-
-        // Note - this will cause a lie if the class file has been renamed.
-        private void getCommonRoot(String filePath, String classPath) {
-            String npath = filePath.replace('\\', '/');
-            String[] fileParts = npath.split("/");
-            String[] classParts = classPath.split("/");
-            reverse(fileParts);
-            reverse(classParts);
-            int min = Math.min(fileParts.length, classParts.length);
-            int diffpt = 0;
-            while (diffpt < min && fileParts[diffpt].equals(classParts[diffpt])) {
-                diffpt++;
-            }
-            fileParts = Arrays.copyOfRange(fileParts, diffpt, fileParts.length);
-            classParts = Arrays.copyOfRange(classParts, diffpt, classParts.length);
-            reverse(fileParts);
-            reverse(classParts);
-            pathPrefix = fileParts.length == 0 ? "" : (StringUtils.join(fileParts, "/") + "/");
-            classRemovePrefix = classParts.length == 0 ? "" : (StringUtils.join(classParts, "/") + "/");
-        }
-
-        void configureWith(String usePath, String specPath) {
-            if (!specPath.equals(usePath)) {
-                unexpectedDirectory = true;
-                if (usePath.endsWith(specPath)) {
-                    pathPrefix = usePath.substring(0, usePath.length() - specPath.length());
-                } else {
-                    // We're loading from the wrong directory.  We need to rebase so that dependencies are sought
-                    // in similar locations.
-                    // TODO : File.separator, rather than hardcoded!
-                    getCommonRoot(usePath, specPath);
-                }
-            }
-        }
-    }
-
 }

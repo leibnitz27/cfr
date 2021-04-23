@@ -6,7 +6,7 @@
 
     <groupId>org.benf</groupId>
     <artifactId>cfr</artifactId>
-    <version>0.150-SNAPSHOT</version>
+    <version>0.152-SNAPSHOT</version>
 
     <name>cfr</name>
     <description>CFR Java decompiler</description>
@@ -31,7 +31,7 @@
         <profile>
             <id>jdk9plus</id>
             <activation>
-                <jdk>[1.9,)</jdk>
+                <jdk>[9,)</jdk>
             </activation>
             <build>
                 <plugins>
@@ -55,6 +55,42 @@
     <build>
         <sourceDirectory>src</sourceDirectory>
         <plugins>
+            <!-- For getting Git revision information -->
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>4.0.0</version>
+                <executions>
+                    <execution>
+                        <id>get-the-git-infos</id>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <!-- Only use local Git repository information -->
+                            <offline>true</offline>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- For inserting build information into Java class -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>templating-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <id>filter-src</id>
+                        <goals>
+                            <goal>filter-sources</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src-templates</sourceDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -73,6 +109,7 @@
                     <archive>
                         <manifest>
                             <mainClass>org.benf.cfr.reader.Main</mainClass>
+                            <!-- Not used by CFR, but maybe useful for other projects depending on CFR -->
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>

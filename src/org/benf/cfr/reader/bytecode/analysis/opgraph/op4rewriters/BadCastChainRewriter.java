@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
@@ -24,15 +25,15 @@ public class BadCastChainRewriter extends AbstractExpressionRewriter {
             JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance().getDeGenerifiedType();
             if (type.isComplexType() && childType.isComplexType()) {
                 if (!childType.correctCanCastTo(type, null)) {
-                    expression = new CastExpression(
-                        expression.getInferredJavaType(),
-                        new CastExpression(new InferredJavaType(TypeConstants.OBJECT, InferredJavaType.Source.UNKNOWN),
+                    expression = new CastExpression(BytecodeLoc.NONE,
+                            expression.getInferredJavaType(),
+                        new CastExpression(BytecodeLoc.NONE, new InferredJavaType(TypeConstants.OBJECT, InferredJavaType.Source.UNKNOWN),
                                 child, true)
                     );
                 }
             } else if (childType == RawJavaType.BOOLEAN && child instanceof ConditionalExpression) {
-                child = new TernaryExpression((ConditionalExpression)child, Literal.INT_ONE, Literal.INT_ZERO);
-                expression = new CastExpression(
+                child = new TernaryExpression(BytecodeLoc.NONE, (ConditionalExpression)child, Literal.INT_ONE, Literal.INT_ZERO);
+                expression = new CastExpression(BytecodeLoc.NONE,
                         expression.getInferredJavaType(), child
                         );
             }

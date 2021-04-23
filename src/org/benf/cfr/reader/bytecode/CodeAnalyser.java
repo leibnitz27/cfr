@@ -1,10 +1,14 @@
 package org.benf.cfr.reader.bytecode;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactory;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactoryImpl;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLocFactoryStub;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03Blocks;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op02obf.Op02Obf;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.GetClassTestInnerConstructor;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.GetClassTestLambda;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02GetClassRewriter;
@@ -110,9 +114,12 @@ public class CodeAnalyser {
 
     private static final RecoveryOptions recoverPre1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
+            new RecoveryOption.TrooleanRO(OptionsImpl.REDUCE_COND_SCOPE, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DUFF, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.TRUE),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.REMOVE_DEAD_CONDITIONALS, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.AGGRESSIVE_EXCEPTION_AGG)
     );
@@ -131,11 +138,27 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
     );
 
-    private static final RecoveryOptions recoverLast = new RecoveryOptions(recover3,
+    private static final RecoveryOptions recover3a = new RecoveryOptions(recover1,
+            new RecoveryOption.IntRO(OptionsImpl.AGGRESSIVE_DO_COPY, 4),
+            new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DO_EXTENSION, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_EXTRA, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG2, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
+    );
+
+    /*
+     * These recoveries allow potential semantic changes, so we want to be very careful and make sure that we don't apply unless we have to,
+     * and warn if we base actions off them.
+     */
+    private static final RecoveryOptions recoverIgnoreExceptions = new RecoveryOptions(recover3,
             new RecoveryOption.BooleanRO(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS, true, BytecodeMeta.checkParam(OptionsImpl.IGNORE_EXCEPTIONS), DecompilerComment.DROP_EXCEPTIONS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recover1, recover2, recoverExAgg, recover3, recoverLast};
+    private static final RecoveryOptions recoverMalformed2a = new RecoveryOptions(recover2,
+            // Don't bother with this recovery pass unless we've detected it will make a difference.
+            new RecoveryOption.TrooleanRO(OptionsImpl.ALLOW_MALFORMED_SWITCH, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.MALFORMED_SWITCH))
+    );
+
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recover1, recover2, recoverExAgg, recover3, recover3a, recoverIgnoreExceptions, recoverMalformed2a};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -183,14 +206,18 @@ public class CodeAnalyser {
                     RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                     if (!applied.valid) continue;
                     AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments, bytecodeMeta);
-                    if (nextRes != null) {
-                        if (res.isFailed() && nextRes.isFailed()) {
-                            // If they both failed, only replace if the later failure is not an exception.
-                            // (or if the earlier one is).
-                            if (res.isThrown() || !nextRes.isThrown()) res = nextRes;
-                        } else {
-                            res = nextRes;
+                    if (res.isFailed() && nextRes.isFailed()) {
+                        if (!nextRes.isThrown()) {
+                            if (res.isThrown()) {
+                                // If they both failed, only replace if the later failure is not an exception, and the earlier one was.
+                                res = nextRes;
+                            } else if (res.getComments().contains(DecompilerComment.UNABLE_TO_STRUCTURE) && !nextRes.getComments().contains(DecompilerComment.UNABLE_TO_STRUCTURE)) {
+                                // Or if we've failed, but managed to structure.
+                                res = nextRes;
+                            }
                         }
+                    } else {
+                        res = nextRes;
                     }
                     if (res.isFailed()) continue;
                     break;
@@ -215,7 +242,7 @@ public class CodeAnalyser {
      * Expensive mechanism for getting a single bytecode instruction.  We should only use this when recovering
      * from illegal instructions.
      */
-    Op01WithProcessedDataAndByteJumps getSingleInstr(ByteData rawCode, int offset) {
+    private Op01WithProcessedDataAndByteJumps getSingleInstr(ByteData rawCode, int offset) {
         OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(offset);
         JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
         return instr.createOperation(bdCode, cp, offset);
@@ -291,10 +318,11 @@ public class CodeAnalyser {
         List<Op01WithProcessedDataAndByteJumps> op1list = ListFactory.newList();
         List<Op02WithProcessedDataAndRefs> op2list = ListFactory.newList();
         // Now walk the indexed ops
+        BytecodeLocFactory locFactory = options.getOption(OptionsImpl.TRACK_BYTECODE_LOC) ? BytecodeLocFactoryImpl.INSTANCE : BytecodeLocFactoryStub.INSTANCE;
         for (int x = 0; x < instrs.size(); ++x) {
             Op01WithProcessedDataAndByteJumps op1 = instrs.get(x);
             op1list.add(op1);
-            Op02WithProcessedDataAndRefs op2 = op1.createOp2(cp, x);
+            Op02WithProcessedDataAndRefs op2 = op1.createOp2(cp, x, locFactory, method);
             op2list.add(op2);
         }
 
@@ -310,7 +338,7 @@ public class CodeAnalyser {
             } catch (UnverifiableJumpException e) {
                 comments.addComment(DecompilerComment.UNVERIFIABLE_BYTECODE_BAD_JUMP);
                 // we can handle this if we fall back and reprocess the bytecode.
-                generateUnverifiable(x, op1list, op2list, lutByIdx, lutByOffset);
+                generateUnverifiable(x, op1list, op2list, lutByIdx, lutByOffset, locFactory);
                 try {
                     targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
                 } catch (UnverifiableJumpException e2) {
@@ -351,11 +379,18 @@ public class CodeAnalyser {
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
              */
-            exceptions.aggressivePruning(lutByOffset, instrs);
+            exceptions.aggressiveRethrowPruning();
+
+            /*
+             * We need to be more paranoid here - this will mess up some finally detection if we over-apply it.
+             */
+            if (options.getOption(OptionsImpl.ANTI_OBF)) {
+                exceptions.aggressiveImpossiblePruning();
+            }
             /*
              * This one's less safe, but...
              */
-            exceptions.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
+            exceptions.removeSynchronisedHandlers(lutByIdx);
         }
 
         /*
@@ -363,6 +398,7 @@ public class CodeAnalyser {
          *
          * We need to nop out relevant instructions ASAP, so as not to introduce pointless
          * temporaries.
+         * (However we don't know enough typing at this stage to remove all).
          */
         if (options.getOption(OptionsImpl.REWRITE_LAMBDAS, classFileVersion) &&
                 bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.USES_INVOKEDYNAMIC)) {
@@ -371,6 +407,11 @@ public class CodeAnalyser {
         Op02GetClassRewriter.removeInvokeGetClass(classFile, op2list, GetClassTestInnerConstructor.INSTANCE);
 
         long codeLength = originalCodeAttribute.getCodeLength();
+        if (options.getOption(OptionsImpl.CONTROL_FLOW_OBF)) {
+            Op02Obf.removeControlFlowExceptions(method, exceptions, op2list, lutByOffset);
+            // Bundled under control flow obfuscation because it can make loops less pleasant.
+            Op02Obf.removeNumericObf(method, op2list);
+        }
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, options);
         // lutByOffset is no longer valid at this point, but we might still need it to determine variable lifetime (i.e what
         // was the instruction BEFORE this one)
@@ -390,7 +431,7 @@ public class CodeAnalyser {
         // consumed / produced.
         // This is the point at which we combine temporaries from merging
         // stacks.
-        Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
+        DecompilerComment o2stackComment = Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
 
         /* Extra fun.  A ret can have a jump back to the instruction immediately following the JSR that called it.
          * So we have to search for RET instructions, then for each of them find any JSRs which could call it, and add
@@ -402,7 +443,10 @@ public class CodeAnalyser {
          */
         if (Op02WithProcessedDataAndRefs.processJSR(op2list)) {
             // Repopulate stack info, as it will have changed, as we might have cloned instructions.
-            Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
+            o2stackComment = Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
+        }
+        if (o2stackComment != null) {
+            comments.addComment(o2stackComment);
         }
 
 
@@ -422,12 +466,13 @@ public class CodeAnalyser {
         TypeHintRecovery typeHintRecovery = options.optionIsSet(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS) ?
                 new TypeHintRecoveryImpl(bytecodeMeta) : TypeHintRecoveryNone.INSTANCE;
 
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery);
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState, comments, typeHintRecovery);
         // Renumber, just in case JSR stage (or something) has left bad labellings.
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Expand any 'multiple' statements (eg from dups)
         Misc.flattenCompoundStatements(op03SimpleParseNodes);
+
         // Before we get complicated, see if there are any values which have been left with null/void types, but have
         // known base information which can improve it.
         Op03Rewriters.rewriteWith(op03SimpleParseNodes, new NullTypedLValueRewriter());
@@ -437,7 +482,11 @@ public class CodeAnalyser {
         // We then see if we can infer information from RHS <- LHS re generics, but make sure that we
         // don't do it over aggressively (see UntypedMapTest);
         GenericInferer.inferGenericObjectInfoFromCalls(op03SimpleParseNodes);
-        
+
+        if (options.getOption(OptionsImpl.RELINK_CONSTANTS)) {
+            Op03Rewriters.relinkInstanceConstants(classFile.getRefClassType(), op03SimpleParseNodes, dcCommonState);
+        }
+
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         if (aggressiveSizeReductions) {
@@ -448,15 +497,24 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.assignSSAIdentifiers(method, op03SimpleParseNodes);
 
+        // Fix static instance usage.
+        Op03Rewriters.condenseStaticInstances(op03SimpleParseNodes);
+
         // Condense pointless assignments
         LValueProp.condenseLValues(op03SimpleParseNodes);
+
+        if (options.getOption(OptionsImpl.REMOVE_DEAD_CONDITIONALS) == Troolean.TRUE) {
+            // This removes impossible conditionals, but could hide real code, so we want
+            // to avoid doing this unless necessary.
+            op03SimpleParseNodes = Op03Rewriters.removeDeadConditionals(op03SimpleParseNodes);
+        }
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Before we expand raw switches, try to spot a particularly nasty pattern that kotlin
         // generates for string switches.
         op03SimpleParseNodes = KotlinSwitchHandler.extractStringSwitches(op03SimpleParseNodes, bytecodeMeta);
         // Expand raw switch statements into more useful ones.
-        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options);
+        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options, comments, bytecodeMeta);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
@@ -475,18 +533,11 @@ public class CodeAnalyser {
 
         //      Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
 
-        // Rewrite new / constructor pairs.
         AnonymousClassUsage anonymousClassUsage = new AnonymousClassUsage();
-        /*
-         * Check for usage of stackValues which don't have SSA data - this means they're used
-         * in an uninitialised context. (see proof_wrong_path).
-         *
-         * If that's the case, they must have been used after new, but before init (which is naughty).
-         *
-         */
 
-
+        // Rewrite new / constructor pairs.
         Op03Rewriters.condenseConstruction(dcCommonState, method, op03SimpleParseNodes, anonymousClassUsage);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
         LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03Rewriters.condenseLValueChain1(op03SimpleParseNodes);
 
@@ -547,7 +598,7 @@ public class CodeAnalyser {
             /*
              * Now we've sorted, we need to rebuild switch blocks.....
              */
-            SwitchReplacer.rebuildSwitches(op03SimpleParseNodes, options);
+            SwitchReplacer.rebuildSwitches(op03SimpleParseNodes, options, comments, bytecodeMeta);
             /*
              * This set of operations is /very/ aggressive.
              */
@@ -562,7 +613,12 @@ public class CodeAnalyser {
                 Op03Rewriters.replaceReturningIfs(op03SimpleParseNodes, true);
             }
         }
-
+        if (options.getOption(OptionsImpl.AGGRESSIVE_DUFF) == Troolean.TRUE) {
+            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.SWITCHES)) {
+                op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
+                op03SimpleParseNodes = SwitchReplacer.rewriteDuff(op03SimpleParseNodes, variableFactory, comments, options);
+            }
+        }
         /*
          * Push constants through conditionals to returns ( move the returns back )- i.e. if the value we're
          * returning is deterministic, return that.
@@ -577,6 +633,8 @@ public class CodeAnalyser {
 
             Op03Rewriters.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options, classFileVersion);
 
+            // We need to resugar early as anonymous arrays will hurt conditional rollup.
+            AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
             // Collapse conditionals into || / &&
             reloop = Op03Rewriters.condenseConditionals(op03SimpleParseNodes);
             // Condense odder conditionals, which may involve inline ternaries which are
@@ -592,7 +650,6 @@ public class CodeAnalyser {
         } while (reloop);
 
         AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
-
         Op03Rewriters.simplifyConditionals(op03SimpleParseNodes, false, method);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
@@ -622,6 +679,8 @@ public class CodeAnalyser {
         // Identify simple while loops.
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
         LoopIdentifier.identifyLoops1(method, op03SimpleParseNodes, blockIdentifierFactory);
+
+        Op03Rewriters.rewriteBadCompares(variableFactory, op03SimpleParseNodes);
 
         // After we've identified loops, try to push any instructions through a goto
         op03SimpleParseNodes = Op03Rewriters.pushThroughGoto(op03SimpleParseNodes);
@@ -660,7 +719,18 @@ public class CodeAnalyser {
 
         // Identify simple (nested) conditionals - note that this also generates ternary expressions,
         // if the conditional is simple enough.
-        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory, options);
+
+        // If we have a conditional JUST before a do statement which jumps in, then see if we can
+        // safely move it inside, and have another go.
+        // After we've done this we need another go at identifyingNonJumpingConditionals, however that happens below.
+        if (options.optionIsSet(OptionsImpl.AGGRESSIVE_DO_COPY)) {
+            Op03Rewriters.cloneCodeFromLoop(op03SimpleParseNodes, options, comments);
+        }
+        if (options.getOption(OptionsImpl.AGGRESSIVE_DO_EXTENSION) == Troolean.TRUE) {
+            Op03Rewriters.moveJumpsIntoDo(variableFactory, op03SimpleParseNodes, options, comments);
+        }
+
         // Condense again, now we've simplified conditionals, ternaries, etc.
         LValueProp.condenseLValues(op03SimpleParseNodes);
         if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
@@ -679,7 +749,6 @@ public class CodeAnalyser {
         // which jumps to immediately after the catch block.
         //
         // While it seems perverse to have another pass at this here, it seems to yield the best results.
-        //
         Op03Rewriters.classifyGotos(op03SimpleParseNodes);
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
             Op03Rewriters.classifyAnonymousBlockGotos(op03SimpleParseNodes, false);
@@ -688,7 +757,7 @@ public class CodeAnalyser {
         // By this point, we've tried to classify ternaries.  We could try pushing some literals
         // very aggressively. (i.e. a=1, if (a) b=1 else b =0; return b. ) -> return 1;
         //
-        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory, options);
 
         /*
          * Now we've got here, there's no benefit in having spurious inline assignments.  Where possible,
@@ -776,6 +845,8 @@ public class CodeAnalyser {
         Op03Rewriters.rewriteWith(op03SimpleParseNodes, new BadNarrowingArgRewriter());
         Cleaner.reindexInPlace(op03SimpleParseNodes);
 
+        Op03SimpleStatement.noteInterestingLifetimes(op03SimpleParseNodes);
+
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         Op04StructuredStatement.tidyEmptyCatch(block);
@@ -827,7 +898,7 @@ public class CodeAnalyser {
             // We therefore need a SEPARATE pass, post lambda, to ensure that local classes are
             // correctly processed.
             Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory, options, classFileVersion, bytecodeMeta);
-            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATHCES)) {
+            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATCHES)) {
                 Op04StructuredStatement.tidyInstanceMatches(block);
             }
             if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, classFileVersion)) {
@@ -864,7 +935,10 @@ public class CodeAnalyser {
             // Tidy variable names
             Op04StructuredStatement.tidyVariableNames(method, block, bytecodeMeta, comments, cp.getClassCache());
 
+            Op04StructuredStatement.tidyObfuscation(options, block);
+
             Op04StructuredStatement.miscKeyholeTransforms(variableFactory, block);
+
 
             /*
              * Now finally run some extra checks to spot wierdness.
@@ -893,18 +967,18 @@ public class CodeAnalyser {
         return new AnalysisResultSuccessful(comments, block, anonymousClassUsage);
     }
 
-    private void generateUnverifiable(int x, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset) {
+    private void generateUnverifiable(int x, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset, BytecodeLocFactory locFactory) {
         Op01WithProcessedDataAndByteJumps instr = op1list.get(x);
         int thisRaw = instr.getOriginalRawOffset();
         int[] thisTargets = instr.getRawTargetOffsets();
         for (int target : thisTargets) {
             if (null == lutByOffset.get(target + thisRaw)) {
-                generateUnverifiableInstr(target + thisRaw, op1list, op2list, lutByIdx, lutByOffset);
+                generateUnverifiableInstr(target + thisRaw, op1list, op2list, lutByIdx, lutByOffset, locFactory);
             }
         }
     }
 
-    private void generateUnverifiableInstr(int offset, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset) {
+    private void generateUnverifiableInstr(int offset, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset, BytecodeLocFactory locFactory) {
         ByteData rawData = originalCodeAttribute.getRawData();
         int codeLength = originalCodeAttribute.getCodeLength();
         do {
@@ -923,7 +997,7 @@ public class CodeAnalyser {
             op1list.add(op01);
             lutByIdx.put(targetIdx, offset);
             lutByOffset.put(offset, targetIdx);
-            Op02WithProcessedDataAndRefs op02 = op01.createOp2(cp, targetIdx);
+            Op02WithProcessedDataAndRefs op02 = op01.createOp2(cp, targetIdx, locFactory, method);
             op2list.add(op02);
             if (noTargets) return;
             int nextOffset = offset + op01.getInstructionLength();
@@ -937,7 +1011,7 @@ public class CodeAnalyser {
                 rawTargets[0] = nextOffset - fakeOffset;
                 Op01WithProcessedDataAndByteJumps fakeGoto = new Op01WithProcessedDataAndByteJumps(JVMInstr.GOTO, null, rawTargets, fakeOffset);
                 op1list.add(fakeGoto);
-                op2list.add(fakeGoto.createOp2(cp, targetIdx));
+                op2list.add(fakeGoto.createOp2(cp, targetIdx, locFactory, method));
                 return;
             }
             offset = nextOffset;

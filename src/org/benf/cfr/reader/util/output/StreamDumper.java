@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -134,6 +135,7 @@ public abstract class StreamDumper extends AbstractDumper {
     public Dumper newln() {
         if (context.pendingCR) {
             write("\n");
+            context.currentLine++;
             if (context.atStart && context.inBlockComment != BlockCommentState.Not) {
                 doIndent();
             }
@@ -155,10 +157,11 @@ public abstract class StreamDumper extends AbstractDumper {
 
     private void doIndent() {
         if (!context.atStart) return;
-        String indents = "    ";
-        for (int x = 0; x < context.indent; ++x) write(indents);
+        for (int x = 0; x < context.indent; ++x) write(STANDARD_INDENT);
         context.atStart = false;
-        if (context.inBlockComment != BlockCommentState.Not) write (" * ");
+        if (context.inBlockComment != BlockCommentState.Not) {
+            write (" * ");
+        }
     }
 
     private void processPendingCR() {
@@ -166,7 +169,14 @@ public abstract class StreamDumper extends AbstractDumper {
             write("\n");
             context.atStart = true;
             context.pendingCR = false;
+            context.currentLine++;
         }
+    }
+
+    @Override
+    public Dumper explicitIndent() {
+        print(STANDARD_INDENT);
+        return this;
     }
 
     @Override
@@ -202,5 +212,12 @@ public abstract class StreamDumper extends AbstractDumper {
     @Override
     public int getOutputCount() {
         return context.outputCount;
+    }
+
+    @Override
+    public int getCurrentLine() {
+        int res = context.currentLine;
+        if (context.pendingCR) res++;
+        return res;
     }
 }

@@ -1,11 +1,14 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+
+import java.io.BufferedOutputStream;
 
 /*
  * NB: This interface is NOT an externally visible one, and is subject to change.
@@ -52,7 +55,14 @@ public interface Dumper extends MethodErrorCollector {
 
     Dumper endCodeln();
 
+    // Add an explicit indent, which is consistent with the dumper's behaviour,
+    // but don't affect indent state.
+    Dumper explicitIndent();
+
+    // Change per-line indent level by XXX.
     void indent(int diff);
+
+    int getIndentLevel();
 
     void close();
 
@@ -96,4 +106,10 @@ public interface Dumper extends MethodErrorCollector {
 
     Dumper dump(Dumpable d);
 
+    int getCurrentLine();
+
+    void informBytecodeLoc(HasByteCodeLoc loc);
+
+    // TODO : I probably want something more structured here, but this will do for now.
+    BufferedOutputStream getAdditionalOutputStream(String description);
 }

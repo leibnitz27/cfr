@@ -1,14 +1,25 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.BoolOp;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.AbstractStructuredBlockStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDo;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredWhile;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 
 import java.util.List;
@@ -26,16 +37,11 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
 
     public InfiniteAssertRewriter(StaticVariable assertionStatic) {
 
-//        new BooleanOperation(
-//                new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))),
-//                wcm1.getConditionalExpressionWildcard("condition"),
-//                BoolOp.AND);
-
         match1 = new BooleanExpression(new LValueExpression(assertionStatic));
-        match2 = new BooleanOperation(new BooleanExpression(new LValueExpression(assertionStatic)),
+        match2 = new BooleanOperation(BytecodeLoc.TODO, new BooleanExpression(new LValueExpression(assertionStatic)),
                         wcm1.getConditionalExpressionWildcard("condition"),
                         BoolOp.OR);
-        thrw = new StructuredThrow(wcm1.getConstructorSimpleWildcard("ignore", TypeConstants.ASSERTION_ERROR));
+        thrw = new StructuredThrow(BytecodeLoc.NONE, wcm1.getConstructorSimpleWildcard("ignore", TypeConstants.ASSERTION_ERROR));
     }
 
     /*
@@ -65,7 +71,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
                 wcm1.reset();
                 ConditionalExpression ce = sw.getCondition();
                 if (match1.equals(ce) || match2.equals(ce)) {
-                    replaceThrow(next, stm, ce);
+                    replaceThrow(next, stm, sw.getBlock(), ce);
                 }
                 continue;
             }
@@ -77,7 +83,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
                 wcm1.reset();
                 ConditionalExpression ce = sw.getCondition();
                 if (match2.equals(ce)) {
-                    replaceThrow(next, stm, ce);
+                    replaceThrow(next, stm, sw.getBlock(), ce);
                 }
                 continue;
             }
@@ -86,11 +92,11 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
     }
 
 
-    private void replaceThrow(Op04StructuredStatement thrw, Op04StructuredStatement whil, ConditionalExpression cond) {
-        whil.getStatement().rewriteExpressions(new ExpressionReplacingRewriter(cond, BooleanExpression.TRUE));
+    private void replaceThrow(Op04StructuredStatement thrw, Op04StructuredStatement whil, BlockIdentifier ident, ConditionalExpression cond) {
         StructuredStatement throwInner = thrw.getStatement();
         AbstractStructuredBlockStatement sw = (AbstractStructuredBlockStatement)whil.getStatement();
         Op04StructuredStatement body = sw.getBody();
+        whil.replaceStatement(StructuredDo.create(null, body, ident));
         StructuredStatement bodyContent = body.getStatement();
         if (!(bodyContent instanceof Block)) {
             bodyContent = new Block(new Op04StructuredStatement(bodyContent));
@@ -98,7 +104,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
         }
         Block bodyBlock = (Block)bodyContent;
         bodyBlock.addStatement(new Op04StructuredStatement(
-            new StructuredIf(new NotOperation(cond), new Op04StructuredStatement(new Block(new Op04StructuredStatement(throwInner))))));
+            new StructuredIf(BytecodeLoc.TODO, new NotOperation(BytecodeLoc.TODO, cond), new Op04StructuredStatement(new Block(new Op04StructuredStatement(throwInner))))));
         thrw.nopOut();
     }
 

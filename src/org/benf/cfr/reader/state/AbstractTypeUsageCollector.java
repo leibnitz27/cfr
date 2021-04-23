@@ -18,6 +18,11 @@ public abstract class AbstractTypeUsageCollector implements TypeUsageCollector {
     }
 
     @Override
+    public void collectFromT(TypeUsageCollectable collectable) {
+        collectFrom(collectable);
+    }
+
+    @Override
     public void collectFrom(Collection<? extends TypeUsageCollectable> collectables) {
         if (collectables != null) {
             for (TypeUsageCollectable collectable : collectables) {

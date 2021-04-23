@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -30,11 +31,12 @@ public class StructuredIf extends AbstractStructuredStatement implements CanRemo
     Op04StructuredStatement ifTaken;
     Op04StructuredStatement elseBlock;
 
-    public StructuredIf(ConditionalExpression conditionalExpression, Op04StructuredStatement ifTaken) {
-        this(conditionalExpression, ifTaken, null);
+    public StructuredIf(BytecodeLoc loc, ConditionalExpression conditionalExpression, Op04StructuredStatement ifTaken) {
+        this(loc, conditionalExpression, ifTaken, null);
     }
 
-    public StructuredIf(ConditionalExpression conditionalExpression, Op04StructuredStatement ifTaken, Op04StructuredStatement elseBlock) {
+    public StructuredIf(BytecodeLoc loc, ConditionalExpression conditionalExpression, Op04StructuredStatement ifTaken, Op04StructuredStatement elseBlock) {
+        super(loc);
         this.conditionalExpression = conditionalExpression;
         this.ifTaken = ifTaken;
         this.elseBlock = elseBlock;
@@ -46,6 +48,11 @@ public class StructuredIf extends AbstractStructuredStatement implements CanRemo
         conditionalExpression.collectTypeUsages(collector);
         collector.collectFrom(ifTaken);
         collector.collectFrom(elseBlock);
+    }
+
+    @Override
+    public BytecodeLoc getCombinedLoc() {
+        return BytecodeLoc.combine(this, conditionalExpression);
     }
 
     @Override

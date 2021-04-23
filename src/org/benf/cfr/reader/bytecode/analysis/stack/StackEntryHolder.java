@@ -1,18 +1,20 @@
 package org.benf.cfr.reader.bytecode.analysis.stack;
 
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.util.DecompilerComment;
+
+import java.util.Set;
 
 public class StackEntryHolder {
     private StackEntry stackEntry;
 
-    public StackEntryHolder(StackType stackType) {
+    StackEntryHolder(StackType stackType) {
         stackEntry = new StackEntry(stackType);
     }
 
-    public void mergeWith(StackEntryHolder other) {
-        if (stackEntry.mergeWith(other.stackEntry)) {
-            other.stackEntry = stackEntry;
-        }
+    public void mergeWith(StackEntryHolder other, Set<DecompilerComment> comments) {
+        stackEntry.mergeWith(other.stackEntry, comments);
+        other.stackEntry = stackEntry;
     }
 
     @Override

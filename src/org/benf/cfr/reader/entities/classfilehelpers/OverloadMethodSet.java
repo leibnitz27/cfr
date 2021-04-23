@@ -165,9 +165,10 @@ public class OverloadMethodSet {
             for (int x = 0, len = args.size(); x < len; ++x) {
                 Expression arg = args.get(x);
                 boolean isNull = Literal.NULL.equals(arg);
-                JavaTypeInstance actual = arg.getInferredJavaType().getJavaTypeInstance();
-                actual = actual.getDeGenerifiedType();
-                JavaTypeInstance argType = prototype.getArgType(x, actual);
+                JavaTypeInstance origActual = arg.getInferredJavaType().getJavaTypeInstance();
+                JavaTypeInstance actual = origActual.getDeGenerifiedType();
+                JavaTypeInstance origArgType = prototype.getArgType(x, actual);
+                JavaTypeInstance argType = origArgType;
                 if (argType != null) {
                     argType = argType.getDeGenerifiedType();
                     // If the argument is an undecorated literal null, it can satisfy any object.
@@ -197,6 +198,15 @@ public class OverloadMethodSet {
                     if ((actual.implicitlyCastsTo(argType, gtb) && actual.impreciseCanCastTo(argType, gtb))) {
                         perfect = false;
                         continue;
+                    }
+                    // If we're missing type information, we might get as far as here.
+                    if (gtb != null) {
+                        JavaTypeInstance bound = gtb.getBindingFor(origArgType);
+                        if (bound.equals(actual)) {
+                            // it's not perfect if we had to use gtb.
+                            perfect = false;
+                            continue;
+                        }
                     }
                 }
                 possiter.remove();
