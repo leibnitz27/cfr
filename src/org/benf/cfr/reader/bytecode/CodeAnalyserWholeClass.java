@@ -6,14 +6,12 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Dead
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.classfilehelpers.ConstantLinks;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -409,52 +407,12 @@ public class CodeAnalyserWholeClass {
     }
 
     private static void relinkConstantStrings(ClassFile classFile, DCCommonState state) {
-        Map<String, Expression> rewrites = new HashMap<String, Expression>();
-        Set<String> dupes = new HashSet<String>();
-        ClassFile currClass = classFile;
-
-        boolean local = true;
-        while (currClass != null) {
-            for (ClassFileField f : currClass.getFields()) {
-                Field field = f.getField();
-                boolean use = field.testAccessFlag(AccessFlag.ACC_STATIC)
-                        && field.testAccessFlag(AccessFlag.ACC_FINAL)
-                        // While it's possible to relink other types, I think the chances of an external
-                        // reference are higher.  Constants abound, and I don't want Months[CUSTOMER_ID].
-                        && field.getJavaTypeInstance() == TypeConstants.STRING;
-                if (!use) continue;
-                TypedLiteral lit = field.getConstantValue();
-                Object o = lit == null ? null : lit.getValue();
-                if (o == null) continue;
-                if (!(o instanceof String)) return; // something pretty wrong here.
-                String val = (String) o;
-                // duplicate value for val? Leave null & poison it.
-                if (rewrites.containsKey(val)) {
-                    dupes.add(val);
-                } else {
-                    rewrites.put(val, new LValueExpression(new StaticVariable(currClass, f, local)));
-                }
-            }
-            if (currClass.isInnerClass()) {
-                JavaTypeInstance parent = currClass.getClassType().getInnerClassHereInfo().getOuterClass();
-                try {
-                    currClass = state.getClassFile(parent);
-                } catch (Exception ignore) {
-                    currClass = null;
-                }
-                local = false;
-            } else {
-                break;
-            }
-        }
-        for (String val : dupes) {
-            rewrites.remove(val);
-        }
-        if (rewrites.isEmpty()) return;
-        Op04Rewriter rewriter = new InlinedConstantRewriter(rewrites);
+        Map<String, Expression> rewrites = ConstantLinks.getLocalStringConstants(classFile, state);
+        if (rewrites == null || rewrites.isEmpty()) return;
+        Op04Rewriter rewriter = new LocalInlinedStringConstantRewriter(rewrites);
 
         for (Method m : classFile.getMethods()) {
-            if (!m.hasCodeAttribute()) return;
+            if (!m.hasCodeAttribute()) continue;
             Op04StructuredStatement code = m.getAnalysis();
             if (!code.isFullyStructured()) continue;
             rewriter.rewrite(code);

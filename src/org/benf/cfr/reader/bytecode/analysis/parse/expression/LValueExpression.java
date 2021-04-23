@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -138,5 +139,12 @@ public class LValueExpression extends AbstractExpression {
     @Override
     public Literal getComputedLiteral(Map<LValue, Literal> display) {
         return display.get(lValue);
+    }
+
+    public static Expression of(LValue lValue) {
+        if (lValue instanceof StackSSALabel) {
+            return new StackValue(BytecodeLoc.NONE, (StackSSALabel)lValue);
+        }
+        return new LValueExpression(lValue);
     }
 }

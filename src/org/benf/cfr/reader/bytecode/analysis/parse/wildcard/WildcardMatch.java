@@ -319,12 +319,12 @@ public class WildcardMatch {
         }
     }
 
-    public class LValueWildcard extends DebugDumpable implements LValue, Wildcard<LValue> {
+    public static class LValueWildcard extends DebugDumpable implements LValue, Wildcard<LValue> {
         private final Predicate<LValue> test;
         private transient LValue matchedValue;
 
 
-        private LValueWildcard(Predicate<LValue> test) {
+        public LValueWildcard(Predicate<LValue> test) {
             this.test = test;
         }
 
@@ -457,10 +457,10 @@ public class WildcardMatch {
         }
     }
 
-    public class StackLabelWildCard extends StackSSALabel implements Wildcard<StackSSALabel> {
+    public static class StackLabelWildCard extends StackSSALabel implements Wildcard<StackSSALabel> {
         private transient StackSSALabel matchedValue;
 
-        StackLabelWildCard() {
+        public StackLabelWildCard() {
             super(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST));
         }
 
@@ -593,10 +593,10 @@ public class WildcardMatch {
         }
     }
 
-    public class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
+    public static class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
         private transient Expression matchedValue;
 
-        ExpressionWildcard() {
+        public ExpressionWildcard() {
         }
 
         @Override
@@ -687,14 +687,14 @@ public class WildcardMatch {
 
     }
 
-    public class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<MemberFunctionInvokation> {
+    public static class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<MemberFunctionInvokation> {
         private final String name;
         private final boolean isInitMethod;
         private final Expression object;
         private final List<Expression> args;
         private transient MemberFunctionInvokation matchedValue;
 
-        MemberFunctionInvokationWildcard(String name, boolean isInitMethod, Expression object, List<Expression> args) {
+        public MemberFunctionInvokationWildcard(String name, boolean isInitMethod, Expression object, List<Expression> args) {
             this.name = name;
             this.isInitMethod = isInitMethod;
             this.object = object;

@@ -398,6 +398,7 @@ public class CodeAnalyser {
          *
          * We need to nop out relevant instructions ASAP, so as not to introduce pointless
          * temporaries.
+         * (However we don't know enough typing at this stage to remove all).
          */
         if (options.getOption(OptionsImpl.REWRITE_LAMBDAS, classFileVersion) &&
                 bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.USES_INVOKEDYNAMIC)) {
@@ -481,7 +482,11 @@ public class CodeAnalyser {
         // We then see if we can infer information from RHS <- LHS re generics, but make sure that we
         // don't do it over aggressively (see UntypedMapTest);
         GenericInferer.inferGenericObjectInfoFromCalls(op03SimpleParseNodes);
-        
+
+        if (options.getOption(OptionsImpl.RELINK_CONSTANTS)) {
+            Op03Rewriters.relinkInstanceConstants(classFile.getRefClassType(), op03SimpleParseNodes, dcCommonState);
+        }
+
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         if (aggressiveSizeReductions) {

@@ -18,6 +18,7 @@ public interface TypeConstants {
     String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
     
     JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
+    JavaRefTypeInstance OBJECTS = JavaRefTypeInstance.createTypeConstant(objectsName);
     JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Enum");
     JavaRefTypeInstance ASSERTION_ERROR = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.AssertionError");
     JavaRefTypeInstance CHAR_SEQUENCE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(charSequenceName);

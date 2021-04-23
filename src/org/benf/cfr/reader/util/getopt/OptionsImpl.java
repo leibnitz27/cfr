@@ -341,8 +341,11 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = register(new PermittedOptionProvider.Argument<Boolean>(
             "removeinnerclasssynthetics", defaultTrueBooleanDecoder,
             "Remove (where possible) implicit outer class references in inner classes"));
+    public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANTS = register(new PermittedOptionProvider.Argument<Boolean>(
+            "relinkconst", defaultTrueBooleanDecoder,
+            "Relink constant strings - if there is a local reference to a string which matches a static final, use the static final."));
     public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANT_STRINGS = register(new PermittedOptionProvider.Argument<Boolean>(
-            "relinkconststring", defaultTrueBooleanDecoder,
+            "relinkconststring", new DefaultChainBooleanDecoder(RELINK_CONSTANTS, false),
             "Relink constant strings - if there is a local reference to a string which matches a static final, use the static final."));
     public static final PermittedOptionProvider.Argument<Boolean> LIFT_CONSTRUCTOR_INIT = register(new PermittedOptionProvider.Argument<Boolean>(
             "liftconstructorinit", defaultTrueBooleanDecoder,

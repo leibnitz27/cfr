@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -213,5 +214,9 @@ public class Op03Rewriters {
 
     public static void condenseStaticInstances(List<Op03SimpleStatement> op03SimpleParseNodes) {
         StaticInstanceCondenser.INSTANCE.rewrite(op03SimpleParseNodes);
+    }
+
+    public static void relinkInstanceConstants(JavaRefTypeInstance thisType, List<Op03SimpleStatement> op03SimpleParseNodes, DCCommonState dcCommonState) {
+        InstanceConstants.INSTANCE.rewrite(thisType, op03SimpleParseNodes, dcCommonState);
     }
 }
