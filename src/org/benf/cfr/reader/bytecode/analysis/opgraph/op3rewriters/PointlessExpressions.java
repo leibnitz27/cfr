@@ -7,8 +7,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
+import org.benf.cfr.reader.entities.Field;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheckSimple;
 import org.benf.cfr.reader.util.collections.Functional;
 
 import java.util.List;
@@ -21,7 +24,7 @@ class PointlessExpressions {
         for (Op03SimpleStatement esc : exrps) {
             ExpressionStatement es = (ExpressionStatement) esc.getStatement();
             Expression expression = es.getExpression();
-            if (expression instanceof LValueExpression ||
+            if ((expression instanceof LValueExpression && !expression.canThrow(ExceptionCheckSimple.INSTANCE)) ||
                     expression instanceof StackValue ||
                     expression instanceof Literal) {
                 esc.nopOut();

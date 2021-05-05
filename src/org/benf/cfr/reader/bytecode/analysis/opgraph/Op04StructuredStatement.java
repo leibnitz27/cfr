@@ -590,7 +590,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             // need to be translated to a break.
             if (scope.statementIsLast(stm)) {
                 return StructuredComment.EMPTY_COMMENT;
-            } else if (scope.getDirectFallThrough(stm).contains(target)) {
+            } else if (scope.getDirectFallThrough().contains(target)) {
                 return StructuredComment.EMPTY_COMMENT;
             } else {
                 return stm;

@@ -123,7 +123,7 @@ public class LValueExpression extends AbstractExpression {
 
     @Override
     public boolean canThrow(ExceptionCheck caught) {
-        return false;
+        return lValue.canThrow(caught);
     }
 
     @Override
