@@ -25,6 +25,7 @@ public class LocalVariable extends AbstractLValue {
     private final Ident ident;
     private boolean guessedFinal;
     private boolean guessedVar;
+    private boolean ignored;
     private final int originalRawOffset;
     private JavaAnnotatedTypeInstance customCreationType;
 
@@ -70,6 +71,13 @@ public class LocalVariable extends AbstractLValue {
     @Override
     public void markVar() {
         guessedVar = true;
+    }
+
+    public void markIgnored() { ignored = true; }
+
+    @Override
+    public boolean isFakeIgnored() {
+        return ignored;
     }
 
     @Override

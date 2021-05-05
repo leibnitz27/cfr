@@ -16,7 +16,7 @@ import org.benf.cfr.reader.util.collections.Functional;
 
 import java.util.List;
 
-class PointlessExpressions {
+public class PointlessExpressions {
 
     // Expression statements which can't have any effect can be removed.
     static void removePointlessExpressionStatements(List<Op03SimpleStatement> statements) {
@@ -24,9 +24,7 @@ class PointlessExpressions {
         for (Op03SimpleStatement esc : exrps) {
             ExpressionStatement es = (ExpressionStatement) esc.getStatement();
             Expression expression = es.getExpression();
-            if ((expression instanceof LValueExpression && !expression.canThrow(ExceptionCheckSimple.INSTANCE)) ||
-                    expression instanceof StackValue ||
-                    expression instanceof Literal) {
+            if (isSafeToIgnore(expression)) {
                 esc.nopOut();
             }
         }
@@ -44,5 +42,11 @@ class PointlessExpressions {
                 }
             }
         }
+    }
+
+    public static boolean isSafeToIgnore(Expression expression) {
+        return (expression instanceof LValueExpression && !expression.canThrow(ExceptionCheckSimple.INSTANCE)) ||
+                expression instanceof StackValue ||
+                expression instanceof Literal;
     }
 }

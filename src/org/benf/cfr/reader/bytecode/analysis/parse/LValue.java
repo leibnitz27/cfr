@@ -37,6 +37,8 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
 
     boolean isFinal();
 
+    boolean isFakeIgnored();
+
     void markVar();
 
     boolean isVar();

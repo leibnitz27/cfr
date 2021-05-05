@@ -1166,6 +1166,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         SyntheticOuterRefRewriter syntheticOuterRefRewriter = new SyntheticOuterRefRewriter();
         for (StructuredStatement statement : statements) {
             statement.rewriteExpressions(syntheticOuterRefRewriter);
+            PointlessStructuredExpressions.removePointlessExpression(statement);
         }
     }
 

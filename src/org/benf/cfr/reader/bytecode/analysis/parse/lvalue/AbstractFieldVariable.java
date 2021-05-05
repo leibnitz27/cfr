@@ -78,6 +78,11 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
     }
 
     @Override
+    public boolean isFakeIgnored() {
+        return false;
+    }
+
+    @Override
     public void markVar() {
 
     }

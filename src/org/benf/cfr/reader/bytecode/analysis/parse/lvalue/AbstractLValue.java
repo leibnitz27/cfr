@@ -64,6 +64,11 @@ public abstract class AbstractLValue implements LValue {
     }
 
     @Override
+    public boolean isFakeIgnored() {
+        return false;
+    }
+
+    @Override
     public final String toString() {
         return ToStringDumper.toString(this);
     }
