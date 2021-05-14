@@ -88,10 +88,10 @@ public class ConstantLinks {
                 Object o = lit == null ? null : lit.getValue();
                 if (o == null) continue;
                 // duplicate value for val? Leave null & poison it.
-                addOrPoison(classFile, expfact, rewrites, local, f, o);
+                addOrPoison(currClass, expfact, rewrites, local, f, o);
                 // A few hacks
                 if (lit.getType() == TypedLiteral.LiteralType.Integer) {
-                    addOrPoison(classFile, expfact, spares, local, f, (double)lit.getIntValue());
+                    addOrPoison(currClass, expfact, spares, local, f, (double)lit.getIntValue());
                 }
             }
             if (currClass.isInnerClass()) {
