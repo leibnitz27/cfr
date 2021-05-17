@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -658,6 +659,12 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     for (LValue testSafe : collector.getUsedLValues()) {
                         if (!previousIdents.isValidReplacementOnExit(testSafe, currentIdents)) return null;
                     }
+
+                    // We know that the ssaidents of previous and now won't add up.  But if we're somehow moving this
+                    // inside a loop, problems!
+                    // (Sigh, the casts are a bit gross.   Need to split out statementcontainer interface.)
+                    if (!(statementContainer instanceof Op03SimpleStatement)) return null;
+                    if (!Misc.justReachableFrom((Op03SimpleStatement)statementContainer, (Op03SimpleStatement)replacement, 5)) return null;
 
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);

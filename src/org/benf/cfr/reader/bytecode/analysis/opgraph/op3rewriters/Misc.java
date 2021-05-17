@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -351,5 +352,14 @@ public class Misc {
             result.addAll(statement.getSources());
         }
         return result;
+    }
+
+    public static boolean justReachableFrom(Op03SimpleStatement target, Op03SimpleStatement maybeSource, int checkDepth) {
+        while (target != maybeSource && checkDepth-- > 0) {
+            List<Op03SimpleStatement> sources = target.getSources();
+            if (sources.size() != 1) return false;
+            target = sources.get(0);
+        }
+        return target == maybeSource;
     }
 }
