@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.Troolean;
@@ -94,6 +95,17 @@ public class FieldVariable extends AbstractFieldVariable {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        if (!super.canThrow(caught))  {
+            return false;
+        }
+        if (objectIsThis()) {
+            return false;
+        }
+        return true;
     }
 
     private boolean objectIsIllegalThis() {

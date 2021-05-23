@@ -36,6 +36,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         }
 
         boolean first = true;
+        dumpComments(classFile, d);
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
         d.separator("{").newln();

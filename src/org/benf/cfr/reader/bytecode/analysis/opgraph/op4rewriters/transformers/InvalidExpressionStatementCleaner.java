@@ -10,6 +10,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssi
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 
+import java.util.Set;
+
 public class InvalidExpressionStatementCleaner extends AbstractExpressionRewriter implements StructuredStatementTransformer {
 
     private VariableFactory variableFactory;

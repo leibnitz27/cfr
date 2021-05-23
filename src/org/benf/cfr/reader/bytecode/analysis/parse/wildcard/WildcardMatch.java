@@ -339,6 +339,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public boolean isFakeIgnored() {
+            return false;
+        }
+
+        @Override
         public void markVar() {
 
         }

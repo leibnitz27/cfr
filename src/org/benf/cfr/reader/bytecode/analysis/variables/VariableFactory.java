@@ -51,7 +51,9 @@ public class VariableFactory {
     }
 
     public LValue ignoredVariable(InferredJavaType type) {
-        return new LocalVariable("cfr_ignored_" + ignored++, type);
+        LocalVariable res = new LocalVariable("cfr_ignored_" + ignored++, type);
+        res.markIgnored();
+        return res;
     }
 
     public LValue tempVariable(InferredJavaType type) {

@@ -43,6 +43,11 @@ public class StackSSALabel extends AbstractLValue {
     }
 
     @Override
+    public boolean isFakeIgnored() {
+        return false;
+    }
+
+    @Override
     public void markVar() {
 
     }

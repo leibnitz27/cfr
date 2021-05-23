@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.TypeContext;
 
@@ -58,6 +59,11 @@ public class StaticVariable extends AbstractFieldVariable {
     @Override
     public Precedence getPrecedence() {
         return Precedence.HIGHEST;
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return false;
     }
 
     @Override
