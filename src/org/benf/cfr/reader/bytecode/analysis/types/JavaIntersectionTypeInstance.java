@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     private final List<JavaTypeInstance> parts;
     private final int id;
-    private static AtomicInteger sid;
+    private final static AtomicInteger sid = new AtomicInteger();
 
     public JavaIntersectionTypeInstance(List<JavaTypeInstance> parts) {
         this.parts = parts;
