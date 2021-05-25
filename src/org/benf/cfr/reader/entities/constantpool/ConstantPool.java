@@ -11,6 +11,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 public class ConstantPool {
@@ -24,8 +25,8 @@ public class ConstantPool {
     private final ClassFile classFile;
     private String comparisonKey;
     private boolean isLoaded;
-    private final int idx = sidx++;
-    private static int sidx = 0;
+    private final int idx = sidx.getAndIncrement();
+    private final static AtomicInteger sidx = new AtomicInteger();
     private final boolean dynamicConstants;
 
     public ConstantPool(ClassFile classFile, DCCommonState dcCommonState, ByteData raw, int count) {

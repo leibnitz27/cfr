@@ -11,15 +11,16 @@ import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     private final List<JavaTypeInstance> parts;
     private final int id;
-    private static int sid;
+    private static AtomicInteger sid;
 
     public JavaIntersectionTypeInstance(List<JavaTypeInstance> parts) {
         this.parts = parts;
-        id = sid++;
+        id = sid.getAndIncrement();
     }
 
     JavaIntersectionTypeInstance withPart(JavaTypeInstance part) {

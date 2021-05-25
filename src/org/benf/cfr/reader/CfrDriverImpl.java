@@ -9,6 +9,7 @@ import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.ClassFileSourceWrapper;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.AnalysisType;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.DumperFactory;
@@ -53,6 +54,8 @@ public class CfrDriverImpl implements CfrDriver {
          */
         boolean skipInnerClass = toAnalyse.size() > 1 && options.getOption(OptionsImpl.SKIP_BATCH_INNER_CLASSES);
 
+        // Can't sort a 1.6 singleton list.
+        toAnalyse = ListFactory.newList(toAnalyse);
         Collections.sort(toAnalyse);
         for (String path : toAnalyse) {
             // TODO : We shouldn't have to discard state here.  But we do, because
