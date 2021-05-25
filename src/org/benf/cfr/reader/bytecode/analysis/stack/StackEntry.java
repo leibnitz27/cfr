@@ -14,7 +14,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class StackEntry {
-
+    // Should really be a 'static state per cfr driver', but the content won't
+    // affect a decompilation.
+    // see bug #250.
     private final static AtomicLong sid = new AtomicLong(0);
 
     private final long id0;
@@ -26,7 +28,7 @@ public class StackEntry {
     private final InferredJavaType inferredJavaType = new InferredJavaType();
 
     StackEntry(StackType stackType) {
-        id0 = sid.addAndGet(1);
+        id0 = sid.getAndIncrement();
         ids.add(id0);
         this.lValue = new StackSSALabel(id0, this);
         this.stackType = stackType;
