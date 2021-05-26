@@ -9,18 +9,19 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileDumper extends StreamDumper {
-    private String dir;
-    private boolean clobber;
+    private final String dir;
+    private final boolean clobber;
     private final JavaTypeInstance type;
     private final SummaryDumper summaryDumper;
     private final String path;
     private final BufferedWriter writer;
+    private final AtomicInteger truncCount;
 
     private static final int MAX_FILE_LEN_MINUS_EXT = 249;
     private static final int TRUNC_PREFIX_LEN = 150;
-    private static int truncCount = 0;
 
     private String mkFilename(String dir, Pair<String, String> names, SummaryDumper summaryDumper) {
         String packageName = names.getFirst();
@@ -29,7 +30,7 @@ public class FileDumper extends StreamDumper {
             /*
              * Have to try to find a replacement name.
              */
-            className = className.substring(0, TRUNC_PREFIX_LEN) + "_cfr_" + (truncCount++);
+            className = className.substring(0, TRUNC_PREFIX_LEN) + "_cfr_" + truncCount.getAndIncrement();
             summaryDumper.notify("Class name " + names.getSecond() + " was shortened to " + className + " due to filesystem limitations.");
         }
 
@@ -38,8 +39,9 @@ public class FileDumper extends StreamDumper {
                 className + ".java";
     }
 
-    FileDumper(String dir, boolean clobber, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+    FileDumper(String dir, boolean clobber, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, AtomicInteger truncCount, IllegalIdentifierDump illegalIdentifierDump) {
         super(typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
+        this.truncCount = truncCount;
         this.dir = dir;
         this.clobber = clobber;
         this.type = type;

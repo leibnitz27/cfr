@@ -7,6 +7,7 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
@@ -17,7 +18,7 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
     private final int length;
     private final String value;
 
-    private static int idx;
+    private final static AtomicInteger idx = new AtomicInteger();
 
     public ConstantPoolEntryUTF8(ConstantPool cp, ByteData data, Options options) {
         super(cp);
@@ -61,7 +62,7 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
             tmpValue = new String(bytes, UTF8_CHARSET);
         }
         if (tmpValue.length() > 512 && options.getOption(OptionsImpl.HIDE_LONGSTRINGS)) {
-            tmpValue = "longStr" + idx++ + "[" + tmpValue.substring(0, 10).replace('\r', '_').replace('\n', '_') + "]";
+            tmpValue = "longStr" + idx.getAndIncrement() + "[" + tmpValue.substring(0, 10).replace('\r', '_').replace('\n', '_') + "]";
         }
         this.value = tmpValue;
     }

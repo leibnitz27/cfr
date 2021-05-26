@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class InternalDumperFactoryImpl implements DumperFactory {
     private final boolean checkDupes;
@@ -26,7 +27,7 @@ public class InternalDumperFactoryImpl implements DumperFactory {
     private final Options options;
     private final ProgressDumper progressDumper;
     private final String prefix;
-
+    private final AtomicInteger truncCount = new AtomicInteger();
 
     public InternalDumperFactoryImpl(Options options) {
         this.checkDupes = OsInfo.OS().isCaseInsensitive() && !options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME);
@@ -69,7 +70,7 @@ public class InternalDumperFactoryImpl implements DumperFactory {
 
         if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
 
-        FileDumper res = new FileDumper(targetInfo.getFirst() + prefix, targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
+        FileDumper res = new FileDumper(targetInfo.getFirst() + prefix, targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, truncCount, illegalIdentifierDump);
         if (checkDupes) {
             if (!seen.add(res.getFileName().toLowerCase())) {
                 seenCaseDupe = true;

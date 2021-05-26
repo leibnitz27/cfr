@@ -58,7 +58,7 @@ public class InferredJavaType {
         TRANSFORM
     }
 
-
+    // This doesn't need to be threadsafe, it's a debugging aid only.
     private static int global_id = 0;
 
     private enum ClashState {
