@@ -28,7 +28,7 @@ public class ForIterStatement extends AbstractStatement {
 
     @Override
     public BytecodeLoc getCombinedLoc() {
-        return BytecodeLoc.combine(list, this);
+        return BytecodeLoc.combine(this, list);
     }
 
     @Override
