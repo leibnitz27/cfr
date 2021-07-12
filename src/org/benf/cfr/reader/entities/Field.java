@@ -102,16 +102,34 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             AttributeSignature sig = getSignatureAttribute();
             ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
             ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
-            ConstantPoolEntryUTF8 prototype;
-            if (signature == null) {
-                prototype = descriptor;
-            } else {
-                prototype = signature;
+            JavaTypeInstance sigType = null;
+            JavaTypeInstance desType;
+            if (signature != null) {
+                try {
+                    sigType = ConstantPoolUtils.decodeTypeTok(signature.getValue(), cp);
+                } catch (Exception e) {
+                    // ignore.
+                }
             }
-            /*
-             * If we've got a signature, use that, otherwise use the descriptor.
-             */
-            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(prototype.getValue(), cp);
+            try {
+                desType =  ConstantPoolUtils.decodeTypeTok(descriptor.getValue(), cp);
+            } catch (RuntimeException e) {
+                if (sigType == null) {
+                    throw e;
+                }
+                desType = sigType;
+            }
+
+            if (sigType != null) {
+                if (sigType.getDeGenerifiedType().equals(desType.getDeGenerifiedType())) {
+                    cachedDecodedType = sigType;
+                } else {
+                    // someone lied....
+                    cachedDecodedType = desType;
+                }
+            } else {
+                cachedDecodedType = desType;
+            }
         }
         return cachedDecodedType;
     }
