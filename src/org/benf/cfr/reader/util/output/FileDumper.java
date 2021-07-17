@@ -70,7 +70,7 @@ public class FileDumper extends StreamDumper {
                 try {
                     writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file),encoding));
                 } catch (UnsupportedEncodingException e) {
-                    throw new UnsupportedOperationException("what you specified dumper encoding '"+encoding+"' does not support by current");
+                    throw new UnsupportedOperationException("Specified encoding '"+encoding+"' is not supported");
                 }
             }else {
                 writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
