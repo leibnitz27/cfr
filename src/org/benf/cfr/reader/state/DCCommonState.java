@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.state;
 
+import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
 import org.benf.cfr.reader.apiunreleased.JarContent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -34,6 +35,7 @@ public class DCCommonState {
 
     private final ClassCache classCache;
     private final ClassFileSource2 classFileSource;
+    private final ClassFileSource externalFileSource;
     private final Options options;
     private final Map<String, ClassFile> classFileCache;
     private Set<JavaTypeInstance> versionCollisions;
@@ -41,9 +43,10 @@ public class DCCommonState {
     private final ObfuscationMapping obfuscationMapping;
     private final OverloadMethodSetCache overloadMethodSetCache;
 
-    public DCCommonState(Options options, ClassFileSource2 classFileSource) {
+    public DCCommonState(Options options, ClassFileSource2 classFileSource, ClassFileSource externalFileSource) {
         this.options = options;
         this.classFileSource = classFileSource;
+        this.externalFileSource = externalFileSource;
         this.classCache = new ClassCache(this);
         this.classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
             @Override
@@ -59,6 +62,7 @@ public class DCCommonState {
     public DCCommonState(DCCommonState dcCommonState, final BinaryFunction<String, DCCommonState, ClassFile> cacheAccess) {
         this.options = dcCommonState.options;
         this.classFileSource = dcCommonState.classFileSource;
+        this.externalFileSource = dcCommonState.externalFileSource;
         this.classCache = new ClassCache(this);
         this.classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
             @Override
@@ -75,6 +79,7 @@ public class DCCommonState {
     public DCCommonState(DCCommonState dcCommonState, ObfuscationMapping mapping) {
         this.options = dcCommonState.options;
         this.classFileSource = dcCommonState.classFileSource;
+        this.externalFileSource = dcCommonState.externalFileSource;
         this.classCache = new ClassCache(this);
         this.classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
             @Override
@@ -110,7 +115,13 @@ public class DCCommonState {
 
     public ClassFile loadClassFileAtPath(final String path) {
         try {
-            Pair<byte[], String> content = classFileSource.getClassFileContent(path);
+            Pair<byte[], String> content = null;
+            if (externalFileSource != null) {
+                content = externalFileSource.getClassFileContent(path);
+            }
+            if (content == null) {
+                content = classFileSource.getClassFileContent(path);
+            }
             ByteData data = new BaseByteData(content.getFirst());
             return new ClassFile(data, content.getSecond(), this);
         } catch (Exception e) {

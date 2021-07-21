@@ -46,6 +46,6 @@ public class Main {
         }
 
         CfrDriver cfrDriver = new CfrDriver.Builder().withBuiltOptions(options).build();
-        cfrDriver.analyse(files);
+        cfrDriver.analyse(files,null);
     }
 }

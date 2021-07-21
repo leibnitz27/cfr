@@ -124,7 +124,7 @@ public class PluginRunner {
         ClassFileSource2 source = classFileSource == null ?
                 new ClassFileSourceImpl(options) :
                 new ClassFileSourceWrapper(classFileSource);
-        return new DCCommonState(options, source);
+        return new DCCommonState(options, source,null);
     }
 
 }
