@@ -82,4 +82,10 @@ public class ClassFileVersion {
     public static ClassFileVersion JAVA_14 = new ClassFileVersion(58, 0, "14");
     public static ClassFileVersion JAVA_14_Experimental = new ClassFileVersion(58, 65535, "14");
     public static ClassFileVersion JAVA_15 = new ClassFileVersion(59, 0, "15");
+    public static ClassFileVersion JAVA_16 = new ClassFileVersion(60, 0, "16");
+    public static ClassFileVersion JAVA_16_Experimental = new ClassFileVersion(60, 65535, "16");
+    public static ClassFileVersion JAVA_17 = new ClassFileVersion(61, 0, "17");
+    public static ClassFileVersion JAVA_17_Experimental = new ClassFileVersion(61, 65535, "17");
+    public static ClassFileVersion JAVA_18 = new ClassFileVersion(62, 0, "18");
+    public static ClassFileVersion JAVA_18_Experimental = new ClassFileVersion(62, 65535, "18");
 }

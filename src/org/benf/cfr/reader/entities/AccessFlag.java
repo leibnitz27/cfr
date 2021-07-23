@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
+import org.benf.cfr.reader.entities.attributes.AttributePermittedSubclasses;
 import org.benf.cfr.reader.entities.attributes.AttributeSynthetic;
 
 import java.util.EnumSet;
@@ -22,7 +23,12 @@ public enum AccessFlag {
     ACC_SYNTHETIC("/* synthetic */"),
     ACC_ANNOTATION("/* annotation */"),
     ACC_ENUM("/* enum */"),
-    ACC_MODULE("/* module */");
+    ACC_MODULE("/* module */"),
+    // These are fake access flags - this information isn't present in the class file, rather
+    // being sourced from attributes
+    ACC_FAKE_SEALED("sealed"),
+    ACC_FAKE_NON_SEALED("non-sealed")
+    ;
 
     public final String name;
 

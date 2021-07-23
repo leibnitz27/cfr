@@ -30,6 +30,7 @@ import org.benf.cfr.reader.entities.attributes.AttributeEnclosingMethod;
 import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeModule;
+import org.benf.cfr.reader.entities.attributes.AttributePermittedSubclasses;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
@@ -84,6 +85,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.benf.cfr.reader.entities.AccessFlag.ACC_FAKE_SEALED;
 
 public class ClassFile implements Dumpable, TypeUsageCollectable {
     // Constants
@@ -229,6 +232,13 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         this.attributes = new AttributeMap(tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
+        if (attributes.containsKey(AttributePermittedSubclasses.ATTRIBUTE_NAME)) {
+            if (options.getOption(OptionsImpl.SEALED, classFileVersion)) {
+                accessFlags.add(ACC_FAKE_SEALED);
+            } else {
+                ensureDecompilerComments().addComment(DecompilerComment.CHECK_SEALED);
+            }
+        }
         this.isInnerClass = testIsInnerClass(dcCommonState);
 
         int superClassIndex = data.getU2At(OFFSET_OF_SUPER_CLASS);
@@ -465,6 +475,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         collector.collectFrom(dumpHelper);
         collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
         collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        if (accessFlags.contains(ACC_FAKE_SEALED)) {
+            collector.collectFromT(attributes.getByName(AttributePermittedSubclasses.ATTRIBUTE_NAME));
+        }
     }
 
     private void getAllClassTypes(List<JavaTypeInstance> tgt) {
@@ -1212,6 +1225,34 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         TypeAnnotationHelper.apply(jat, type, comments);
         d.dump(comments);
         d.dump(jat);
+    }
+
+    public void dumpPermitted(Dumper d) {
+        if (accessFlags.contains(ACC_FAKE_SEALED)) {
+            AttributePermittedSubclasses permitted = attributes.getByName(AttributePermittedSubclasses.ATTRIBUTE_NAME);
+            if (permitted == null) return;
+            /*
+             * If all the classes are inner classes of this, we don't display.
+             */
+            List<JavaTypeInstance> permittedClasses = permitted.getPermitted();
+            boolean allInner = true;
+            JavaTypeInstance classType = getClassType();
+            for (JavaTypeInstance type : permittedClasses) {
+                if (!type.getInnerClassHereInfo().isInnerClassOf(classType)) {
+                    allInner = false;
+                    break;
+                }
+            }
+            if (allInner) return;
+
+            d.print("permits ");
+            boolean first = true;
+            for (JavaTypeInstance type : permittedClasses) {
+                first = StringUtils.comma(first, d);
+                d.dump(type);
+            }
+            d.newln();
+        }
     }
 
     public void dumpClassIdentity(Dumper d) {

@@ -43,6 +43,7 @@ public class DecompilerComment implements Dumpable {
     public static final DecompilerComment DUFF_HANDLING = new DecompilerComment("Handled duff style switch with additional control", false);
     public static final DecompilerComment MALFORMED_SWITCH = new DecompilerComment("Recovered potentially malformed switches.  Disable with '--" + OptionsImpl.ALLOW_MALFORMED_SWITCH.getName() + " false'" , false);
     public static final DecompilerComment DYNAMIC_SIGNATURE_MISMATCH = new DecompilerComment("Invoke dynamic uses mismatched descriptor", false);
+    public static final DecompilerComment CHECK_SEALED = new DecompilerComment("Uses 'sealed' constructs - enablewith --" + OptionsImpl.SEALED.getName() + " true", false);
 
     private final String comment;
     private final String summaryMessage;

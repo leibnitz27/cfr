@@ -13,10 +13,10 @@ import java.util.List;
 public class ClassFileDumperNormal extends AbstractClassFileDumper {
 
     private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT, AccessFlag.ACC_FAKE_SEALED, AccessFlag.ACC_FAKE_NON_SEALED
     };
     private static final AccessFlag[] dumpableAccessFlagsInlineClass = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT, AccessFlag.ACC_FAKE_SEALED, AccessFlag.ACC_FAKE_NON_SEALED
     };
 
     public ClassFileDumperNormal(DCCommonState dcCommonState) {
@@ -48,6 +48,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
                 d.dump(iface).separator((x < (size - 1) ? "," : "")).newln();
             }
         }
+        c.dumpPermitted(d);
         d.removePendingCarriageReturn().print(" ");
     }
 

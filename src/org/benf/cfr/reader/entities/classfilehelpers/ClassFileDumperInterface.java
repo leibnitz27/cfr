@@ -16,7 +16,7 @@ import static org.benf.cfr.reader.util.DecompilerComment.PACKAGE_INFO_CODE;
 public class ClassFileDumperInterface extends AbstractClassFileDumper {
 
     private static final AccessFlag[] dumpableAccessFlagsInterface = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_FAKE_SEALED, AccessFlag.ACC_FAKE_NON_SEALED
     };
 
     public ClassFileDumperInterface(DCCommonState dcCommonState) {
@@ -41,6 +41,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
                 d.dump(iface).print((x < (size - 1) ? "," : "")).newln();
             }
         }
+        c.dumpPermitted(d);
         d.removePendingCarriageReturn().print(" ");
     }
 

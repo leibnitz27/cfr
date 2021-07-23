@@ -217,24 +217,22 @@ public class OptionsImpl implements Options {
 
     public static class ExperimentalVersionSpecificDefaulter implements OptionDecoderParam<Boolean, ClassFileVersion> {
 
-        ClassFileVersion versionGreaterThanOrEqual;
-        private ClassFileVersion[] experimentalVersions;
-        boolean resultIfGreaterThanOrEqual;
+        private final ClassFileVersion releaseVersion;
+        private final ClassFileVersion[] experimentalVersions;
 
-        private ExperimentalVersionSpecificDefaulter(ClassFileVersion versionGreaterThanOrEqual, boolean resultIfGreaterThanOrEqual, ClassFileVersion ... experimentalVersions) {
-            this.versionGreaterThanOrEqual = versionGreaterThanOrEqual;
+        private ExperimentalVersionSpecificDefaulter(ClassFileVersion releaseVersion, ClassFileVersion ... experimentalVersions) {
+            this.releaseVersion = releaseVersion;
             this.experimentalVersions = experimentalVersions;
-            this.resultIfGreaterThanOrEqual = resultIfGreaterThanOrEqual;
         }
 
         @Override
         public Boolean invoke(String arg, ClassFileVersion classFileVersion, Options options) {
             if (arg != null) return Boolean.parseBoolean(arg);
             // If preview features is set to false, return false;
-            if (!options.getOption(OptionsImpl.PREVIEW_FEATURES)) return false;
             if (classFileVersion == null) throw new IllegalStateException(); // ho ho ho.
-            if (isExperimentalIn(classFileVersion)) return resultIfGreaterThanOrEqual;
-            return (classFileVersion.equalOrLater(versionGreaterThanOrEqual)) == resultIfGreaterThanOrEqual;
+            if (classFileVersion.equalOrLater(releaseVersion)) return true;
+            if (!options.getOption(OptionsImpl.PREVIEW_FEATURES)) return false;
+            return isExperimentalIn(classFileVersion);
         }
 
         public boolean isExperimentalIn(ClassFileVersion classFileVersion) {
@@ -258,7 +256,7 @@ public class OptionsImpl implements Options {
                 first = StringUtils.comma(first, sb);
                 sb.append(experimental);
             }
-            return "" + resultIfGreaterThanOrEqual + " if class file from version " + versionGreaterThanOrEqual + " or greater, or experimental in " + sb.toString();
+            return "true if class file from version " + releaseVersion + " or greater, or experimental in " + sb.toString();
         }
 
     }
@@ -294,11 +292,15 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> PREVIEW_FEATURES = register(new PermittedOptionProvider.Argument<Boolean>(
             "previewfeatures", defaultTrueBooleanDecoder,
             "Decompile preview features if class was compiled with 'javac --enable-preview'"));
-    public static final ExperimentalVersionSpecificDefaulter switchExpressionVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_13, true, ClassFileVersion.JAVA_12);
+    public static final ExperimentalVersionSpecificDefaulter sealedExpressionVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_18, ClassFileVersion.JAVA_16, ClassFileVersion.JAVA_17);
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SEALED = register(new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "sealed", sealedExpressionVersion,
+            "Decompile 'sealed' constructs"));
+    public static final ExperimentalVersionSpecificDefaulter switchExpressionVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_14, ClassFileVersion.JAVA_12, ClassFileVersion.JAVA_13);
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SWITCH_EXPRESSION = register(new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "switchexpression", switchExpressionVersion,
             "Re-sugar switch expression"));
-    private static final ExperimentalVersionSpecificDefaulter recordTypesVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_14, true, ClassFileVersion.JAVA_14);
+    private static final ExperimentalVersionSpecificDefaulter recordTypesVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_16, ClassFileVersion.JAVA_14, ClassFileVersion.JAVA_15);
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> RECORD_TYPES = register(new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "recordtypes", recordTypesVersion,
             "Re-sugar record types"));
