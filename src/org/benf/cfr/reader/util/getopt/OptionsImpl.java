@@ -454,6 +454,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> OUTPUT_PATH = register(new PermittedOptionProvider.Argument<String>(
             "outputpath", defaultNullStringDecoder,
             "Decompile to files in [directory]"));
+    public static final PermittedOptionProvider.Argument<String> OUTPUT_ENCODING = register(new PermittedOptionProvider.Argument<String>(
+            "outputencoding", defaultNullStringDecoder,
+            "saving decompiled files with specified encoding [encoding]"));
     public static final PermittedOptionProvider.Argument<Troolean> CLOBBER_FILES = register(new PermittedOptionProvider.Argument<Troolean>(
             "clobber", defaultNeitherTrooleanDecoder,
             "Overwrite files when using option 'outputpath'"));
