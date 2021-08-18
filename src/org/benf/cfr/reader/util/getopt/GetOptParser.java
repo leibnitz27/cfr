@@ -93,7 +93,7 @@ public class GetOptParser {
          * A bit of a hack, but if no positional arguments are specified, and 'help' is, then
          * we don't want to blow up, so work around this.
          */
-        if (positional.isEmpty() && named.containsKey(OptionsImpl.HELP.getName())) {
+        if (positional.isEmpty() && (named.containsKey(OptionsImpl.HELP.getName()) || named.containsKey(OptionsImpl.VERSION.getName()))) {
             positional.add("ignoreMe.class");
         }
         T res = getOptSinkFactory.create(named);
@@ -106,6 +106,10 @@ public class GetOptParser {
 
     private static void printUsage() {
         System.err.println("java -jar CFRJAR.jar class_or_jar_file [method] [options]\n");
+    }
+
+    public void showVersion() {
+        printErrHeader();
     }
 
     public void showHelp(Exception e) {
@@ -154,7 +158,7 @@ public class GetOptParser {
                     String value;
                     if (next.startsWith(argPrefix)) {
                         // Does it have a default?
-                        if (name.equals(OptionsImpl.HELP.getName())) {
+                        if (name.equals(OptionsImpl.HELP.getName()) || name.equals(OptionsImpl.VERSION.getName())) {
                             value = "";
                         } else {
                             value = optData.getArgument().getFn().getDefaultValue();
