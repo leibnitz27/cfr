@@ -108,6 +108,10 @@ public class GetOptParser {
         System.err.println("java -jar CFRJAR.jar class_or_jar_file [method] [options]\n");
     }
 
+    private static void printHelpHint(boolean full) {
+        System.err.println("Please specify " + ( full ? "'--help' to get option list, or " : "" ) + "'--help optionname' for specifics, e.g.\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
+    }
+
     public void showVersion() {
         printErrHeader();
     }
@@ -116,7 +120,7 @@ public class GetOptParser {
         printErrHeader();
         printUsage();
         System.err.println("Parameter error : " + e.getMessage() + "\n");
-        System.err.println("Please specify '--help' to get option list, or '--help optionname' for specifics, e.g.\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
+        printHelpHint(true);
     }
 
     public void showOptionHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
@@ -131,7 +135,7 @@ public class GetOptParser {
         }
         System.err.println(getHelp(permittedOptionProvider));
         if (relevantOption.equals("")) {
-            System.err.println("Please specify '--help optionname' for specifics, eg\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
+            printHelpHint(false);
         } else {
             System.err.println("No such argument '" + relevantOption + "'");
         }
