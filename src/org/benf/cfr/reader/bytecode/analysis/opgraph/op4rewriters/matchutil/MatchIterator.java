@@ -92,9 +92,11 @@ public class MatchIterator<T> {
             }
 
         }else{
+            //data = null
             return null;
         }
-        return null;
+        //when data.size()==0
+        return "data:[]";
     }
 
     public void rewind() {
