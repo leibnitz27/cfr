@@ -36,11 +36,11 @@ public class MatchIterator<T> {
     }
 
     public boolean hasNext() {
-        return idx < data.size() - 1;
+        return data!=null && idx < data.size() - 1;
     }
 
     private boolean isFinished() {
-        return idx >= data.size();
+        return data!=null && idx >= data.size();
     }
 
     public boolean advance() {
@@ -55,8 +55,48 @@ public class MatchIterator<T> {
     @Override
     public String toString() {
         if (isFinished()) return "Finished";
-        T t = data.get(idx);
-        return t == null ? "null" : t.toString();
+        /*T t = data.get(idx);When the advance() method has not been called,
+            idx=-1,ArrayIndexOutOfBoundsException.   e.g:IDEA in Debug mode,
+            Variable'view will call toString().so fix this bug ,and Enriched
+            the method
+         */
+
+        /* when data=null. Constructor‘s parameter is 'ListFactory.newList()',
+            At present, the use of it in the code will not cause
+            the NullPointerException.
+            But it's used elsewhere,that parameter is null,NullPointerException Will appear
+         */
+        if(data != null) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i <= data.size() - 1; i++) {
+                if (i == 0) sb.append("data:[");
+                //data's element
+                T t = data.get(i);
+                //SimpleName+obj's hashCode
+                sb.append(t.getClass().getSimpleName()).append("@").append(Integer.toHexString(t.hashCode()));
+                //Data traversal complete
+                if (i == data.size() - 1) {
+                    sb.append("]\n");//Line feed
+                    //When the traversal is completed, explain to idx
+                    if (idx == -1) {
+                        sb.append("Accessed before being advanced:idx=-1");
+                    } else {
+                        sb.append("Current:idx=").append(idx);
+                    }
+                    //return
+                    return sb.toString();
+                } else {
+                    //Traversal is not complete, data element separate with ','
+                    sb.append(",");
+                }
+            }
+
+        }else{
+            //data = null
+            return null;
+        }
+        //when data.size()==0
+        return "data:[]";
     }
 
     public void rewind() {
