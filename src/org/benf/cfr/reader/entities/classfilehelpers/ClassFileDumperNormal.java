@@ -39,16 +39,8 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
             }
         }
 
-        List<JavaTypeInstance> interfaces = signature.getInterfaces();
-        if (!interfaces.isEmpty()) {
-            d.keyword("implements ");
-            int size = interfaces.size();
-            for (int x = 0; x < size; ++x) {
-                JavaTypeInstance iface = interfaces.get(x);
-                d.dump(iface).separator((x < (size - 1) ? "," : "")).newln();
-            }
-        }
-        c.dumpPermitted(d);
+        dumpImplements(d, signature);
+        dumpPermitted(c, d);
         d.removePendingCarriageReturn().print(" ");
     }
 

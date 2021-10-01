@@ -40,6 +40,7 @@ public class ClassFileDumperRecord extends AbstractClassFileDumper {
             f.dumpAsRecord(d, c);
         }
         d.print(") ");
+        dumpImplements(d, c.getClassSignature());
     }
 
     @Override
