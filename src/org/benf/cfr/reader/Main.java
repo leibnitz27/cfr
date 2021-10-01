@@ -45,6 +45,11 @@ public class Main {
             return;
         }
 
+        if (options.optionIsSet(OptionsImpl.VERSION)) {
+            getOptParser.showVersion();
+            return;
+        }
+
         CfrDriver cfrDriver = new CfrDriver.Builder().withBuiltOptions(options).build();
         cfrDriver.analyse(files);
     }

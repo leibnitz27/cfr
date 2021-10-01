@@ -475,6 +475,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SHOW_INFERRABLE = register(new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "showinferrable", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, false),
             "Decorate methods with explicit types if not implied by arguments"));
+    public static final PermittedOptionProvider.Argument<Boolean> VERSION = register(new PermittedOptionProvider.Argument<Boolean>(
+            "version", defaultTrueBooleanDecoder,
+            "Show the current CFR version"));
     public static final PermittedOptionProvider.Argument<String> HELP = register(new PermittedOptionProvider.Argument<String>(
             "help", defaultNullStringDecoder,
             "Show help for a given parameter"));
