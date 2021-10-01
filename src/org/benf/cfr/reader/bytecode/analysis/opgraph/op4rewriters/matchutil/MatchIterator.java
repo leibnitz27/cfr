@@ -36,11 +36,11 @@ public class MatchIterator<T> {
     }
 
     public boolean hasNext() {
-        return data!=null && idx < data.size() - 1;
+        return idx < data.size() - 1;
     }
 
     private boolean isFinished() {
-        return data!=null && idx >= data.size();
+        return idx >= data.size();
     }
 
     public boolean advance() {
@@ -52,51 +52,34 @@ public class MatchIterator<T> {
         if (idx > 0) idx--;
     }
 
+    /*
+     * toString on this should only be visible during diagnostics.
+     * don't dump too much, as this can be used on *very* large data.
+     */
     @Override
     public String toString() {
+        if (data == null) return "Null data!"; // precondition fail.
         if (isFinished()) return "Finished";
-        /*T t = data.get(idx);When the advance() method has not been called,
-            idx=-1,ArrayIndexOutOfBoundsException.   e.g:IDEA in Debug mode,
-            Variable'view will call toString().so fix this bug ,and Enriched
-            the method
-         */
 
-        /* when data=null. Constructor‘s parameter is 'ListFactory.newList()',
-            At present, the use of it in the code will not cause
-            the NullPointerException.
-            But it's used elsewhere,that parameter is null,NullPointerException Will appear
-         */
-        if(data != null) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i <= data.size() - 1; i++) {
-                if (i == 0) sb.append("data:[");
-                //data's element
-                T t = data.get(i);
-                //SimpleName+obj's hashCode
-                sb.append(t.getClass().getSimpleName()).append("@").append(Integer.toHexString(t.hashCode()));
-                //Data traversal complete
-                if (i == data.size() - 1) {
-                    sb.append("]\n");//Line feed
-                    //When the traversal is completed, explain to idx
-                    if (idx == -1) {
-                        sb.append("Accessed before being advanced:idx=-1");
-                    } else {
-                        sb.append("Current:idx=").append(idx);
-                    }
-                    //return
-                    return sb.toString();
-                } else {
-                    //Traversal is not complete, data element separate with ','
-                    sb.append(",");
-                }
-            }
-
-        }else{
-            //data = null
-            return null;
+        StringBuilder sb = new StringBuilder();
+        int dumpIdx = idx;
+        sb.append(idx).append("/").append(data.size()).append(" ");
+        if (dumpIdx == -1) {
+            sb.append("(not yet advanced)");
+            dumpIdx = 0;
         }
-        //when data.size()==0
-        return "data:[]";
+        int start = Math.max(0, dumpIdx - 3);
+        int end = Math.min(data.size(), dumpIdx + 3);
+        sb.append("[");
+        if (start > 0) sb.append("...");
+        for (int i = start; i < end; i++) {
+            if (i != start) sb.append(",");
+            T t = data.get(i);
+            sb.append(i).append("#").append(t.getClass().getSimpleName()).append("@").append(Integer.toHexString(t.hashCode()));
+        }
+        if (end < data.size()) sb.append("...");
+        sb.append("]");
+        return sb.toString();
     }
 
     public void rewind() {
