@@ -97,39 +97,52 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         return attributes.getByName(AttributeSignature.ATTRIBUTE_NAME);
     }
 
+    private JavaTypeInstance generateTypeInstance() {
+        AttributeSignature sig = getSignatureAttribute();
+        ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
+        ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
+        JavaTypeInstance sigType = null;
+        JavaTypeInstance desType;
+        if (signature != null) {
+            try {
+                sigType = ConstantPoolUtils.decodeTypeTok(signature.getValue(), cp);
+                if (sigType != null) {
+                    // TODO : Ideally, we wouldn't return early here, and we would verify the signature type against
+                    // the descriptor type.  But that means we need to have a generic type binder for the field.
+                    // That's ok, but inner classes make this quite expensive.  For now, return.
+                    return sigType;
+                }
+            } catch (Exception e) {
+                // ignore.
+            }
+        }
+
+
+        try {
+            desType =  ConstantPoolUtils.decodeTypeTok(descriptor.getValue(), cp);
+        } catch (RuntimeException e) {
+            if (sigType == null) {
+                throw e;
+            }
+            desType = sigType;
+        }
+
+        if (sigType != null) {
+            if (sigType.getDeGenerifiedType().equals(desType.getDeGenerifiedType())) {
+                return sigType;
+            } else {
+                // someone lied....
+                // TODO : This might not be a lie if the field is a generic placeholder.
+                return desType;
+            }
+        } else {
+            return desType;
+        }
+    }
+
     public JavaTypeInstance getJavaTypeInstance() {
         if (cachedDecodedType == null) {
-            AttributeSignature sig = getSignatureAttribute();
-            ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
-            ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
-            JavaTypeInstance sigType = null;
-            JavaTypeInstance desType;
-            if (signature != null) {
-                try {
-                    sigType = ConstantPoolUtils.decodeTypeTok(signature.getValue(), cp);
-                } catch (Exception e) {
-                    // ignore.
-                }
-            }
-            try {
-                desType =  ConstantPoolUtils.decodeTypeTok(descriptor.getValue(), cp);
-            } catch (RuntimeException e) {
-                if (sigType == null) {
-                    throw e;
-                }
-                desType = sigType;
-            }
-
-            if (sigType != null) {
-                if (sigType.getDeGenerifiedType().equals(desType.getDeGenerifiedType())) {
-                    cachedDecodedType = sigType;
-                } else {
-                    // someone lied....
-                    cachedDecodedType = desType;
-                }
-            } else {
-                cachedDecodedType = desType;
-            }
+            cachedDecodedType = generateTypeInstance();
         }
         return cachedDecodedType;
     }

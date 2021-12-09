@@ -25,7 +25,9 @@ public class ClassFileDumperRecord extends AbstractClassFileDumper {
     private void dumpHeader(ClassFile c, InnerClassDumpType innerClassDumpType, Dumper d) {
         d.keyword(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsClass));
 
-        d.keyword("record ").dump(c.getClassType()).print("(");
+        d.keyword("record ");
+        c.dumpClassIdentity(d);
+        d.print("(");
         List<ClassFileField> fields = Functional.filter(c.getFields(), new Predicate<ClassFileField>() {
                     @Override
                     public boolean test(ClassFileField in) {
@@ -38,6 +40,7 @@ public class ClassFileDumperRecord extends AbstractClassFileDumper {
             f.dumpAsRecord(d, c);
         }
         d.print(") ");
+        dumpImplements(d, c.getClassSignature());
     }
 
     @Override
