@@ -51,6 +51,10 @@ public class MiscUtils {
     public static boolean isThis(Expression obj, JavaTypeInstance thisType) {
         if (!(obj instanceof LValueExpression)) return false;
         LValue thisExp = ((LValueExpression) obj).getLValue();
+        return isThis(thisExp, thisType);
+    }
+
+    public static boolean isThis(LValue thisExp, JavaTypeInstance thisType) {
         if (!(thisExp instanceof LocalVariable)) return false;
         LocalVariable lv = (LocalVariable)thisExp;
         if (!(lv.getIdx() == 0 && MiscConstants.THIS.equals(lv.getName().getStringName()))) return false;

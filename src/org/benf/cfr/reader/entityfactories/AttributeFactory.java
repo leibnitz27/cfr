@@ -4,6 +4,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -76,10 +77,12 @@ public class AttributeFactory {
                 return new AttributeModulePackages(raw);
             } else if (AttributeModuleClassMain.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeModuleClassMain(raw);
+            } else if (AttributePermittedSubclasses.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributePermittedSubclasses(raw, cp);
             }
         } catch (Exception e) {
             // Can't handle it? Continue and process as an unknown attribute.
-            int x = 1;
+            MiscUtils.handyBreakPoint();
         }
         return new AttributeUnknown(raw, attributeName);
     }

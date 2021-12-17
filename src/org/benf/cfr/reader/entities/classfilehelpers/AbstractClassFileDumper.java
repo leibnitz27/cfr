@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
+import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfoUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -89,6 +90,22 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         if (showPackage) {
             d.packageName(classFile.getRefClassType());
         }
+    }
+
+    protected void dumpImplements(Dumper d, ClassSignature signature) {
+        List<JavaTypeInstance> interfaces = signature.getInterfaces();
+        if (!interfaces.isEmpty()) {
+            d.keyword("implements ");
+            int size = interfaces.size();
+            for (int x = 0; x < size; ++x) {
+                JavaTypeInstance iface = interfaces.get(x);
+                d.dump(iface).separator((x < (size - 1) ? "," : "")).newln();
+            }
+        }
+    }
+
+    protected void dumpPermitted(ClassFile c, Dumper d) {
+        c.dumpPermitted(d);
     }
 
     void dumpImports(Dumper d, ClassFile classFile) {

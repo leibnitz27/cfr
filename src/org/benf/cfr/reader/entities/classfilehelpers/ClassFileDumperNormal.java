@@ -13,10 +13,10 @@ import java.util.List;
 public class ClassFileDumperNormal extends AbstractClassFileDumper {
 
     private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT, AccessFlag.ACC_FAKE_SEALED, AccessFlag.ACC_FAKE_NON_SEALED
     };
     private static final AccessFlag[] dumpableAccessFlagsInlineClass = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT, AccessFlag.ACC_FAKE_SEALED, AccessFlag.ACC_FAKE_NON_SEALED
     };
 
     public ClassFileDumperNormal(DCCommonState dcCommonState) {
@@ -39,15 +39,8 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
             }
         }
 
-        List<JavaTypeInstance> interfaces = signature.getInterfaces();
-        if (!interfaces.isEmpty()) {
-            d.keyword("implements ");
-            int size = interfaces.size();
-            for (int x = 0; x < size; ++x) {
-                JavaTypeInstance iface = interfaces.get(x);
-                d.dump(iface).separator((x < (size - 1) ? "," : "")).newln();
-            }
-        }
+        dumpImplements(d, signature);
+        dumpPermitted(c, d);
         d.removePendingCarriageReturn().print(" ");
     }
 

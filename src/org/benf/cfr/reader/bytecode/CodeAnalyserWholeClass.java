@@ -88,6 +88,10 @@ public class CodeAnalyserWholeClass {
         if (options.getOption(OptionsImpl.SUGAR_RETRO_LAMBDA)) {
             resugarRetroLambda(classFile, state);
         }
+
+        if (options.getOption(OptionsImpl.SEALED, classFile.getClassFileVersion())) {
+            checkNonSealed(classFile, state);
+        }
     }
 
     private static void resugarRecords(ClassFile classFile, DCCommonState state) {
@@ -96,6 +100,10 @@ public class CodeAnalyserWholeClass {
 
     private static void resugarRetroLambda(ClassFile classFile, DCCommonState state) {
         RetroLambdaRewriter.rewrite(classFile, state);
+    }
+
+    private static void checkNonSealed(ClassFile classFile, DCCommonState state) {
+        SealedClassChecker.rewrite(classFile, state);
     }
 
     private static void removeRedundantSupers(ClassFile classFile) {

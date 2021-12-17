@@ -2,9 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.ExpressionRewriterTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
@@ -12,8 +14,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewAnonymousArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
@@ -130,9 +135,10 @@ public class RecordRewriter {
         // Assignments from the parameters to the members should be at the end, in which case
         // they can hidden / removed.
         // If there is no code after this, the canonical can be hidden as implicit.
-        removeImplicitAssignments(canonicalCons, instances, thisType);
-        // Mark the canonical constructor for later.
-        canonicalCons.setConstructorFlag(Method.MethodConstructor.RECORD_CANONICAL_CONSTRUCTOR);
+        if (removeImplicitAssignments(canonicalCons, instances, thisType)) {
+            // Mark the canonical constructor for later.
+            canonicalCons.setConstructorFlag(Method.MethodConstructor.RECORD_CANONICAL_CONSTRUCTOR);
+        }
         // Now if it's empty, hide altogether.
         hideConstructorIfEmpty(canonicalCons);
 
@@ -306,8 +312,8 @@ public class RecordRewriter {
         }
     }
 
-    private static void removeImplicitAssignments(Method canonicalCons, List<ClassFileField> instances, JavaRefTypeInstance thisType) {
-        if (canonicalCons.getCodeAttribute() == null) return;
+    private static boolean removeImplicitAssignments(Method canonicalCons, List<ClassFileField> instances, JavaRefTypeInstance thisType) {
+        if (canonicalCons.getCodeAttribute() == null) return false;
         Op04StructuredStatement code = canonicalCons.getAnalysis();
 
         instances = ListFactory.newList(instances);
@@ -315,29 +321,71 @@ public class RecordRewriter {
         List<LocalVariable> args = canonicalCons.getMethodPrototype().getComputedParameters();
         // We expect a block.  The last N statements should be assignments
         StructuredStatement topCode = code.getStatement();
-        if (!(topCode instanceof Block)) return;
+        if (!(topCode instanceof Block)) return false;
         Block block = (Block)topCode;
 
         List<Op04StructuredStatement> statements = block.getBlockStatements();
+        List<Op04StructuredStatement> toNop = ListFactory.newList();
+        int nopFrom = statements.size();
         for (int x=statements.size()-1;x>=0;x--) {
             Op04StructuredStatement stm = statements.get(x);
             StructuredStatement statement = stm.getStatement();
             // this is very messy - refactor using wildcardmatch.
             if (statement.isEffectivelyNOP()) continue;
-            if (!(statement instanceof StructuredAssignment)) return;
+            if (!(statement instanceof StructuredAssignment)) break;
             LValue lhs = ((StructuredAssignment) statement).getLvalue();
             ClassFileField field = getCFF(lhs, thisType);
-            if (field == null) return;
+            if (field == null) break;
             int idx = instances.indexOf(field);
-            if (idx == -1) return;
+            if (idx == -1) break;
             instances.set(idx, null);
 
             Expression rhs = ((StructuredAssignment) statement).getRvalue();
-            if (!(rhs instanceof LValueExpression)) return;
+            if (!(rhs instanceof LValueExpression)) break;
             LValue rlv = ((LValueExpression) rhs).getLValue();
             LocalVariable expected = args.get(idx);
-            if (rlv != expected) return;
-            stm.nopOut();
+            if (rlv != expected) break;
+            toNop.add(stm);
+            nopFrom = x;
+        }
+        /*
+         * If there are any remaining usages of 'this.' left, we can't use the 0 argument canonical constructor,
+         * because since J14, it's no longer valid to refer to 'this.' inside it.
+         *
+         * If we're not using the 0 argument version, we must assign all fields, so can't use the nops above.
+         */
+        ThisCheck thisCheck = new ThisCheck(thisType);
+        ExpressionRewriterTransformer check = new ExpressionRewriterTransformer(thisCheck);
+        for (int x=0;x<nopFrom && !thisCheck.failed;++x) {
+            check.transform(statements.get(x));
+        }
+        if (thisCheck.failed) {
+            return false;
+        }
+
+        for (Op04StructuredStatement nop : toNop) {
+            nop.nopOut();
+        }
+        return true;
+    }
+
+    static class ThisCheck extends AbstractExpressionRewriter {
+        private final JavaTypeInstance thisType;
+        private boolean failed;
+
+        ThisCheck(JavaTypeInstance thisType) {
+            this.thisType = thisType;
+        }
+
+        @Override
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (failed) {
+                return lValue;
+            }
+            if (MiscUtils.isThis(lValue, thisType)) {
+                failed = true;
+            }
+            return super.rewriteExpression(lValue, ssaIdentifiers, statementContainer, flags);
         }
     }
 

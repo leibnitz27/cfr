@@ -41,10 +41,13 @@ class PrePostchangeAssignmentRewriter {
         Expression lvalueExpression = new LValueExpression(mutatedLValue);
         UsageWatcher usageWatcher = new UsageWatcher(mutatedLValue);
 
+        Op03SimpleStatement lastCurr = null;
         while (true) {
+            if (lastCurr == current) return false;
             List<Op03SimpleStatement> candidates = back ? current.getSources() : current.getTargets();
             if (candidates.size() != 1) return false;
 
+            lastCurr = current;
             current = candidates.get(0);
             /*
              * If current makes use of x in any way OTHER than a simple assignment, we have to abort.

@@ -6,7 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -266,6 +265,11 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
             classRenamer.notifyClassFiles(jarContent.getClassFiles());
         }
 
+        String jarClassPath = jarContent.getManifestEntries().get(MiscConstants.MANIFEST_CLASS_PATH);
+        if (jarClassPath != null) {
+            addToRelativeClassPath(file, jarClassPath);
+        }
+
         List < String > output = ListFactory.newList();
         for (String classPath : jarContent.getClassFiles()) {
             if (classPath.toLowerCase().endsWith(".class")) {
@@ -323,36 +327,54 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
 
             String[] classPaths = classPath.split("" + File.pathSeparatorChar);
             for (String path : classPaths) {
-                if (dump) {
-                    System.out.println(" " + path);
-                }
-                File f = new File(path);
-                if (f.exists()) {
-                    if (f.isDirectory()) {
-                        if (dump) {
-                            System.out.println(" (Directory)");
-                        }
-                        // Load all the jars in that directory.
-                        File[] files = f.listFiles();
-                        if (files != null) {
-                            for (File file : files) {
-                                processClassPathFile(file, file.getAbsolutePath(), classToPathMap, AnalysisType.JAR, dump);
-                            }
-                        }
-                    } else {
-                        processClassPathFile(f, path, classToPathMap, AnalysisType.JAR, dump);
-                    }
-                } else {
-                    if (dump) {
-                        System.out.println(" (Can't access)");
-                    }
-                }
+                processToClassPath(dump, path);
             }
             if (dump) {
                 System.out.println(" */");
             }
         }
         return classToPathMap;
+    }
+
+    private void processToClassPath(boolean dump, String path) {
+        if (dump) {
+            System.out.println(" " + path);
+        }
+        File f = new File(path);
+        if (f.exists()) {
+            if (f.isDirectory()) {
+                if (dump) {
+                    System.out.println(" (Directory)");
+                }
+                // Load all the jars in that directory.
+                File[] files = f.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        processClassPathFile(file, file.getAbsolutePath(), classToPathMap, AnalysisType.JAR, dump);
+                    }
+                }
+            } else {
+                processClassPathFile(f, path, classToPathMap, AnalysisType.JAR, dump);
+            }
+        } else {
+            if (dump) {
+                System.out.println(" (Can't access)");
+            }
+        }
+    }
+
+    private void addToRelativeClassPath(File file, String jarClassPath) {
+        String[] classPaths = jarClassPath.split(" ");
+        boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
+        String relative = null;
+        try {
+            relative = file.getParentFile().getCanonicalPath();
+        } catch (IOException e) {
+            return;
+        }
+        for (String path : classPaths) {
+            processToClassPath(dump, relative + File.separatorChar + path);
+        }
     }
 
     private void processClassPathFile(File file, String absolutePath, Map<String, JarSourceEntry> classToPathMap, AnalysisType analysisType, boolean dump) {

@@ -40,6 +40,7 @@ public class DCCommonState {
     private transient LinkedHashSet<String> couldNotLoadClasses = new LinkedHashSet<String>();
     private final ObfuscationMapping obfuscationMapping;
     private final OverloadMethodSetCache overloadMethodSetCache;
+    private final Set<JavaTypeInstance> permittedSealed;
 
     public DCCommonState(Options options, ClassFileSource2 classFileSource) {
         this.options = options;
@@ -54,6 +55,7 @@ public class DCCommonState {
         this.versionCollisions = SetFactory.newSet();
         this.obfuscationMapping = NullMapping.INSTANCE;
         this.overloadMethodSetCache = new OverloadMethodSetCache();
+        this.permittedSealed = SetFactory.newSet();
     }
 
     public DCCommonState(DCCommonState dcCommonState, final BinaryFunction<String, DCCommonState, ClassFile> cacheAccess) {
@@ -69,6 +71,7 @@ public class DCCommonState {
         this.versionCollisions = dcCommonState.versionCollisions;
         this.obfuscationMapping = dcCommonState.obfuscationMapping;
         this.overloadMethodSetCache = dcCommonState.overloadMethodSetCache;
+        this.permittedSealed = dcCommonState.permittedSealed;
     }
 
     // TODO : If we have any more of these, refactor to a builder!
@@ -85,6 +88,7 @@ public class DCCommonState {
         this.versionCollisions = dcCommonState.versionCollisions;
         this.obfuscationMapping = mapping;
         this.overloadMethodSetCache = dcCommonState.overloadMethodSetCache;
+        this.permittedSealed = dcCommonState.permittedSealed;
     }
 
     public void setCollisions(Set<JavaTypeInstance> versionCollisions) {

@@ -93,7 +93,7 @@ public class GetOptParser {
          * A bit of a hack, but if no positional arguments are specified, and 'help' is, then
          * we don't want to blow up, so work around this.
          */
-        if (positional.isEmpty() && named.containsKey(OptionsImpl.HELP.getName())) {
+        if (positional.isEmpty() && (named.containsKey(OptionsImpl.HELP.getName()) || named.containsKey(OptionsImpl.VERSION.getName()))) {
             positional.add("ignoreMe.class");
         }
         T res = getOptSinkFactory.create(named);
@@ -108,11 +108,19 @@ public class GetOptParser {
         System.err.println("java -jar CFRJAR.jar class_or_jar_file [method] [options]\n");
     }
 
+    private static void printHelpHint(boolean full) {
+        System.err.println("Please specify " + ( full ? "'--help' to get option list, or " : "" ) + "'--help optionname' for specifics, e.g.\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
+    }
+
+    public void showVersion() {
+        printErrHeader();
+    }
+
     public void showHelp(Exception e) {
         printErrHeader();
         printUsage();
         System.err.println("Parameter error : " + e.getMessage() + "\n");
-        System.err.println("Please specify '--help' to get option list, or '--help optionname' for specifics, e.g.\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
+        printHelpHint(true);
     }
 
     public void showOptionHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
@@ -127,7 +135,7 @@ public class GetOptParser {
         }
         System.err.println(getHelp(permittedOptionProvider));
         if (relevantOption.equals("")) {
-            System.err.println("Please specify '--help optionname' for specifics, eg\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
+            printHelpHint(false);
         } else {
             System.err.println("No such argument '" + relevantOption + "'");
         }
@@ -154,7 +162,7 @@ public class GetOptParser {
                     String value;
                     if (next.startsWith(argPrefix)) {
                         // Does it have a default?
-                        if (name.equals(OptionsImpl.HELP.getName())) {
+                        if (name.equals(OptionsImpl.HELP.getName()) || name.equals(OptionsImpl.VERSION.getName())) {
                             value = "";
                         } else {
                             value = optData.getArgument().getFn().getDefaultValue();

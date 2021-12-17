@@ -70,7 +70,9 @@ public class InternalDumperFactoryImpl implements DumperFactory {
 
         if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
 
-        FileDumper res = new FileDumper(targetInfo.getFirst() + prefix, targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, truncCount, illegalIdentifierDump);
+        String encoding = options.getOption(OptionsImpl.OUTPUT_ENCODING);
+        FileDumper res = new FileDumper(targetInfo.getFirst() + prefix ,encoding ,targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, truncCount, illegalIdentifierDump);
+
         if (checkDupes) {
             if (!seen.add(res.getFileName().toLowerCase())) {
                 seenCaseDupe = true;
