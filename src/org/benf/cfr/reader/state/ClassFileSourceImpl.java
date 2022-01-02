@@ -368,7 +368,11 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
         boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
         String relative = null;
         try {
-            relative = file.getParentFile().getCanonicalPath();
+            File parent = file.getAbsoluteFile().getParentFile();
+            if (parent == null) {
+                return;
+            }
+            relative = parent.getCanonicalPath();
         } catch (IOException e) {
             return;
         }
