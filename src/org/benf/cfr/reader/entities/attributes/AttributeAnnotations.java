@@ -74,4 +74,9 @@ public abstract class AttributeAnnotations extends Attribute implements TypeUsag
             annotationTableEntry.collectTypeUsages(collector);
         }
     }
+
+    @Override
+    public String toString() {
+        return annotationTableEntryList.toString();
+    }
 }
