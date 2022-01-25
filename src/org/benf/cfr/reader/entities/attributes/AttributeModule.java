@@ -59,7 +59,7 @@ public class AttributeModule extends Attribute {
     }
 
     public enum ModuleContentFlags {
-        TRANSITIVE("/* transitive */"),
+        TRANSITIVE("transitive"),
         STATIC_PHASE("/* static phase */"),
         SYNTHETIC("/* synthetic */"),
         MANDATED("/* mandated */");

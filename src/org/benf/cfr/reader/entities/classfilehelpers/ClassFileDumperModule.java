@@ -54,8 +54,9 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
                 continue;
             }
             ConstantPoolEntryModuleInfo module = cp.getModuleEntry(r.getIndex());
+            d.print("requires ");
             d.print(CollectionUtils.joinPostFix(flags, " "));
-            d.print("requires ").print(module.getName().getValue()).endCodeln();
+            d.print(module.getName().getValue()).endCodeln();
             effect = true;
         }
         if (effect) {
