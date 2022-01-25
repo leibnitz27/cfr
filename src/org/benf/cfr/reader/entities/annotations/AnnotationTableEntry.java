@@ -5,6 +5,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.Map;
 
@@ -58,5 +59,12 @@ public class AnnotationTableEntry implements TypeUsageCollectable {
 
     public boolean isAnnotationEqual(AnnotationTableEntry other) {
         return clazz.equals(other.getClazz()) && elementValueMap.equals(other.elementValueMap);
+    }
+
+    @Override
+    public String toString() {
+        ToStringDumper dumper = new ToStringDumper();
+        dump(dumper);
+        return dumper.toString();
     }
 }
