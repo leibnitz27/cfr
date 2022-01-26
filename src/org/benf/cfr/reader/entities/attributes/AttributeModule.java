@@ -178,6 +178,9 @@ public class AttributeModule extends Attribute {
             return offset;
         }
 
+        public int getIndex() {
+            return index;
+        }
     }
 
     public static class Provide {

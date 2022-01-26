@@ -37,6 +37,7 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
         dumpRequires(cp, d, module.getRequires());
         dumpOpensExports(cp, d, module.getExports(), "exports");
         dumpOpensExports(cp, d, module.getOpens(), "opens");
+        dumpUses(cp, d, module.getUses());
         dumpProvides(cp, d, module.getProvides());
         d.indent(-1);
         d.print("}").newln();
@@ -87,6 +88,22 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
                     d.print(toModule.getName().getValue());
                 }
             }
+            d.endCodeln();
+            effect = true;
+        }
+        if (effect) {
+            d.newln();
+        }
+    }
+
+    private void dumpUses(ConstantPool cp, Dumper d, List<AttributeModule.Use> l) {
+        if (l.isEmpty()) {
+            return;
+        }
+        boolean effect = false;
+        for (AttributeModule.Use u : l) {
+            ConstantPoolEntryClass pck = cp.getClassEntry(u.getIndex());
+            d.print("uses ").dump(pck.getTypeInstance());
             d.endCodeln();
             effect = true;
         }
