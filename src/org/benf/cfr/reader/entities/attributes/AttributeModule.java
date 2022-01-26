@@ -2,6 +2,7 @@ package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryModuleInfo;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -20,7 +21,6 @@ public class AttributeModule extends Attribute {
     private static final long OFFSET_OF_DYNAMIC_INFO = 12;
     private final int nameIdx;
     private final int flags;
-    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final int versionIdx;
     private final List<Require> requires;
     private final List<ExportOpen> exports;
@@ -89,15 +89,25 @@ public class AttributeModule extends Attribute {
     public static class Require {
         private final int index;
         private final int flags;
-        @SuppressWarnings("unused")
         private final int version_index;
 
+        /**
+         * Gets the index of the referenced {@link ConstantPoolEntryModuleInfo}.
+         */
         public int getIndex() {
             return index;
         }
 
         public Set<ModuleContentFlags> getFlags() {
             return ModuleContentFlags.build(flags);
+        }
+
+        /**
+         * Gets the index of the referenced {@link ConstantPoolEntryUTF8}, or 0 if no
+         * version information is specified.
+         */
+        public int getVersionIndex() {
+            return version_index;
         }
 
         private Require(int index, int flags, int version_index) {
@@ -290,5 +300,13 @@ public class AttributeModule extends Attribute {
         return ((ConstantPoolEntryModuleInfo)cp.getEntry(nameIdx)).getName().getValue();
     }
 
-
+    /**
+     * Gets the module version, or {@code null} if not specified.
+     */
+    public String getModuleVersion() {
+        if (versionIdx == 0) {
+            return null;
+        }
+        return cp.getUTF8Entry(versionIdx).getValue();
+    }
 }
