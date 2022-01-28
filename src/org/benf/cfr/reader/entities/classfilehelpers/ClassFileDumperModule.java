@@ -66,11 +66,13 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
             d.print(module.getName().getValue());
 
             int versionIndex = r.getVersionIndex();
-            if (versionIndex != 0) {
-                d.print(" /* version: " + cp.getUTF8Entry(versionIndex).getValue() + " */");
+            if (versionIndex == 0) {
+                d.endCodeln();
+            } else {
+                // should probably add overload of endCodeLn to do this tidily....
+                d.print(";").separator(" ").comment("version: " + cp.getUTF8Entry(versionIndex).getValue());
             }
 
-            d.endCodeln();
             effect = true;
         }
         if (effect) {
