@@ -51,4 +51,9 @@ public class AttributeMap implements TypeUsageCollectable {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return attributes.toString();
+    }
 }

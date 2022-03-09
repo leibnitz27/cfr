@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.util.output;
 
-import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -169,6 +168,9 @@ public class ToStringDumper extends AbstractDumper {
         return this;
     }
 
+    /**
+     * Returns the dumped output.
+     */
     @Override
     public String toString() {
         return sb.toString();

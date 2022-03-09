@@ -23,15 +23,27 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
 
     @Override
     public Dumper dump(ClassFile classFile, InnerClassDumpType innerClass, Dumper d) {
+        dumpTopHeader(classFile, d, false);
+        dumpImports(d, classFile);
+        dumpComments(classFile, d);
+        dumpAnnotations(classFile, d);
+
         AttributeModule module = classFile.getAttributes().getByName(AttributeModule.ATTRIBUTE_NAME);
         ConstantPool cp = module.getCp();
         Set<AttributeModule.ModuleFlags> flags = module.getFlags();
         d.print(CollectionUtils.joinPostFix(flags, " "));
         d.print("module ").print(module.getModuleName()).print(" {").newln();
         d.indent(1);
+        String moduleVersion = module.getModuleVersion();
+        if (moduleVersion != null) {
+            d.comment("version: " + moduleVersion);
+            d.newln();
+        }
+
         dumpRequires(cp, d, module.getRequires());
         dumpOpensExports(cp, d, module.getExports(), "exports");
         dumpOpensExports(cp, d, module.getOpens(), "opens");
+        dumpUses(cp, d, module.getUses());
         dumpProvides(cp, d, module.getProvides());
         d.indent(-1);
         d.print("}").newln();
@@ -49,8 +61,18 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
                 continue;
             }
             ConstantPoolEntryModuleInfo module = cp.getModuleEntry(r.getIndex());
+            d.print("requires ");
             d.print(CollectionUtils.joinPostFix(flags, " "));
-            d.print("requires ").print(module.getName().getValue()).endCodeln();
+            d.print(module.getName().getValue());
+
+            int versionIndex = r.getVersionIndex();
+            if (versionIndex == 0) {
+                d.endCodeln();
+            } else {
+                // should probably add overload of endCodeLn to do this tidily....
+                d.print(";").separator(" ").comment("version: " + cp.getUTF8Entry(versionIndex).getValue());
+            }
+
             effect = true;
         }
         if (effect) {
@@ -89,6 +111,22 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
         }
     }
 
+    private void dumpUses(ConstantPool cp, Dumper d, List<AttributeModule.Use> l) {
+        if (l.isEmpty()) {
+            return;
+        }
+        boolean effect = false;
+        for (AttributeModule.Use u : l) {
+            ConstantPoolEntryClass pck = cp.getClassEntry(u.getIndex());
+            d.print("uses ").dump(pck.getTypeInstance());
+            d.endCodeln();
+            effect = true;
+        }
+        if (effect) {
+            d.newln();
+        }
+    }
+
     private void dumpProvides(ConstantPool cp, Dumper d, List<AttributeModule.Provide> l) {
         if (l.isEmpty()) {
             return;
@@ -108,7 +146,6 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
             }
             d.endCodeln();
         }
-        d.newln();
     }
 
 

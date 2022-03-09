@@ -180,22 +180,21 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
                 if (res != null) return res;
             }
 
+            int idx = inputPath.lastIndexOf("/");
+            String name = idx < 0 ? inputPath : inputPath.substring(idx + 1);
+
             // Going down this branch will trigger a class load, which will cause
             // static initialisers to be run.
             // This is expensive, but normally tolerable, except that there is a javafx
             // static initialiser which crashes the VM if called unexpectedly!
-            Class cls;
-            try {
-                cls = Class.forName(classPath);
-            } catch (IllegalStateException e) {
+            URL resource = Class.forName(classPath).getResource(name);
+
+            if (resource == null) {
                 return null;
             }
-            int idx = inputPath.lastIndexOf("/");
-            String name = idx < 0 ? inputPath : inputPath.substring(idx + 1);
-
-            return getUrlContent(cls.getResource(name));
-        } catch (Exception e) {
-            // This exception handler doesn't add anything.
+            return getUrlContent(resource);
+        } catch (Throwable t) {
+            // Class.forName can throw a linkage error in some circumstances, so it's necessary to trap throwable.
             return null;
         }
     }
@@ -368,7 +367,11 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
         boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
         String relative = null;
         try {
-            relative = file.getParentFile().getCanonicalPath();
+            File parent = file.getAbsoluteFile().getParentFile();
+            if (parent == null) {
+                return;
+            }
+            relative = parent.getCanonicalPath();
         } catch (IOException e) {
             return;
         }
