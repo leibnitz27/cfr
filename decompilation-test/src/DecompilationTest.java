@@ -62,8 +62,8 @@ class DecompilationTest {
      * should be used.
      *
      * <p><b>Important:</b> This is a separate directory and not part of the test class path
-     * to avoid that the class test data class files are loaded by accident and interfere
-     * with the test execution.
+     * to avoid that the test data class files are loaded by accident and interfere with the
+     * test execution.
      */
     private static final Path TEST_DATA_ROOT_DIR;
     private static final Path TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR;
@@ -273,6 +273,8 @@ class DecompilationTest {
         Map<String, String> options = new HashMap<>();
         // Do not include CFR version, would otherwise cause source changes when switching CFR version
         options.put(OptionsImpl.SHOW_CFR_VERSION.getName(), "false");
+        // Don't dump exception stack traces because they might differ depending on how these tests are started (different IDEs, Maven, ...)
+        options.put(OptionsImpl.DUMP_EXCEPTION_STACK_TRACE.getName(), "false");
 
         if (Files.exists(cfrOptionsFilePath)) {
             for (String line : Files.readAllLines(cfrOptionsFilePath)) {
