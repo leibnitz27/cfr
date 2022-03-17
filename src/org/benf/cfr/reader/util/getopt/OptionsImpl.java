@@ -571,6 +571,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> TRACK_BYTECODE_LOC = register(new PermittedOptionProvider.Argument<Boolean>(
             "trackbytecodeloc", defaultFalseBooleanDecoder,
             "Propagate bytecode location info."));
+    public static final PermittedOptionProvider.Argument<Boolean> DUMP_EXCEPTION_STACK_TRACE = register(new PermittedOptionProvider.Argument<Boolean>(
+            "dumpexceptionstacktrace", defaultTrueBooleanDecoder,
+            "Whether to dump the stack trace of exceptions which occurred during decompilation. Disabling this can be useful to get consistent decompilation output, regardless of how CFR is invoked."));
 
 
     public OptionsImpl(Map<String, String> opts) {

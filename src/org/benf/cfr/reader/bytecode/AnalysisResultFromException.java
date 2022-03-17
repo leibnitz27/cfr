@@ -9,8 +9,8 @@ public class AnalysisResultFromException implements AnalysisResult {
     private final Op04StructuredStatement code;
     private final DecompilerComments comments;
 
-    public AnalysisResultFromException(Exception e) {
-        this.code = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+    public AnalysisResultFromException(Exception e, boolean dumpStackTrace) {
+        this.code = new Op04StructuredStatement(new StructuredFakeDecompFailure(e, dumpStackTrace));
         this.comments = new DecompilerComments();
         comments.addComment(new DecompilerComment("Exception decompiling", e));
     }

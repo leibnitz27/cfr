@@ -279,7 +279,7 @@ public class CodeAnalyser {
             if (extraComments != null) res.getComments().addComments(extraComments);
             return res;
         } catch (RuntimeException e) {
-            return new AnalysisResultFromException(e);
+            return new AnalysisResultFromException(e, options.getOption(OptionsImpl.DUMP_EXCEPTION_STACK_TRACE));
         }
     }
 
