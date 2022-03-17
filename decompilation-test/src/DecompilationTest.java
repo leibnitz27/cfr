@@ -9,9 +9,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -101,12 +104,53 @@ class DecompilationTest {
         return path;
     }
 
+    private static class IgnoredFilesMatcher {
+        private final Path enclosingDir;
+        private final List<PathMatcher> matchers;
+
+        private IgnoredFilesMatcher(Path enclosingDir, List<PathMatcher> matchers) {
+            this.enclosingDir = enclosingDir;
+            this.matchers = matchers;
+        }
+
+        private static String escapeForPathMatcher(String s) {
+         // Must escape backslashes for FileSystem.getPathMatcher()
+            return s.replace("\\", "\\\\");
+        }
+
+        public static IgnoredFilesMatcher fromPaths(Path enclosingDir, String... paths) {
+            FileSystem fileSystem = FileSystems.getDefault();
+            String escapedSeparator = escapeForPathMatcher(fileSystem.getSeparator());
+
+            List<PathMatcher> matchers = Arrays.stream(paths)
+                .map(path -> path.replace("/", escapedSeparator))
+                .map(path -> fileSystem.getPathMatcher("glob:" + path))
+                .collect(Collectors.toList());
+            return new IgnoredFilesMatcher(enclosingDir, matchers);
+        }
+
+        public boolean isIgnored(Path path) {
+            if (!path.startsWith(enclosingDir)) {
+                throw new IllegalArgumentException("Path outside of enclosing directory: " + path);
+            }
+            Path relativePath = enclosingDir.relativize(path);
+            return matchers.stream().anyMatch(matcher -> matcher.matches(relativePath));
+        }
+    }
+
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
     @ArgumentsSource(ClassFileTestDataProvider.class)
     @interface ClassFileTestDataSource {
         /** Name of the directory containing the class files */
         String value();
+
+        /**
+         * Optional list of {@linkplain FileSystem#getPathMatcher(String) glob patterns} (except only using {@code /}
+         * as separator) relative to the {@linkplain #value() specified directory} matching files which should be
+         * ignored.
+         */
+        String[] ignoredFiles() default {};
     }
 
     private static Path resolveRelativized(Path base, Path toRelativize, Path newBase, String fileNameExtension) {
@@ -125,19 +169,22 @@ class DecompilationTest {
 
     static class ClassFileTestDataProvider implements ArgumentsProvider, AnnotationConsumer<ClassFileTestDataSource> {
         private String subDirPath;
+        private String[] ignoredFilePatterns;
 
         @Override
         public void accept(ClassFileTestDataSource annotation) {
             subDirPath = annotation.value();
+            ignoredFilePatterns = annotation.ignoredFiles();
         }
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
             Path directory = getTestDataSubDir(subDirPath);
+            IgnoredFilesMatcher ignoredFilesMatcher = IgnoredFilesMatcher.fromPaths(directory, ignoredFilePatterns);
 
             List<Path> classFilePaths = new ArrayList<>();
 
-            try (Stream<Path> files = Files.walk(directory).filter(Files::isRegularFile)) {
+            try (Stream<Path> files = Files.walk(directory).filter(Files::isRegularFile).filter(path -> !ignoredFilesMatcher.isIgnored(path))) {
                 for (Path path : (Iterable<Path>) files::iterator) {
                     String fileName = path.getFileName().toString();
 
@@ -196,22 +243,32 @@ class DecompilationTest {
     @interface JarTestDataSource {
         /** Name of the directory containing the JAR files */
         String value();
+
+        /**
+         * Optional list of {@linkplain FileSystem#getPathMatcher(String) glob patterns} (except only using {@code /}
+         * as separator) relative to the {@linkplain #value() specified directory} matching files which should be
+         * ignored.
+         */
+        String[] ignoredFiles() default {};
     }
 
     static class JarTestDataProvider implements ArgumentsProvider, AnnotationConsumer<JarTestDataSource> {
         private String subDirPath;
+        private String[] ignoredFilePatterns;
 
         @Override
         public void accept(JarTestDataSource annotation) {
             subDirPath = annotation.value();
+            ignoredFilePatterns = annotation.ignoredFiles();
         }
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
             Path directory = getTestDataSubDir(subDirPath);
+            IgnoredFilesMatcher ignoredFilesMatcher = IgnoredFilesMatcher.fromPaths(directory, ignoredFilePatterns);
 
             List<Path> jarFilePaths;
-            try (Stream<Path> files = Files.walk(directory).filter(Files::isRegularFile)) {
+            try (Stream<Path> files = Files.walk(directory).filter(Files::isRegularFile).filter(path -> !ignoredFilesMatcher.isIgnored(path))) {
                 jarFilePaths = files.collect(Collectors.toList());
             }
 
