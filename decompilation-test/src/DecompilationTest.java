@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -335,6 +336,11 @@ class DecompilationTest {
 
         if (Files.exists(cfrOptionsFilePath)) {
             for (String line : Files.readAllLines(cfrOptionsFilePath)) {
+                // Ignore comments
+                if (line.startsWith("#")) {
+                    continue;
+                }
+
                 String[] option = line.split(" ", 2);
                 options.put(option[0], option[1]);
             }
@@ -437,26 +443,46 @@ class DecompilationTest {
         return new DecompilationResult(summary, exceptionsOutput.toString(), decompiledList);
     }
 
-    private static AssertionError diffAndWriteOnMismatch(Path expectedFilePath, String actualContent) throws IOException {
-        String expectedContent = readNormalizedString(expectedFilePath);
+    private static String stripDecompilationNotes(String expectedCode) {
+        String[] lines = expectedCode.split("\\R", -1);
+        StringJoiner strippedCodeJoiner = new StringJoiner("\n");
+
+        for (String line : lines) {
+            // Ignore if line is a decompilation note, starting with: //#
+            if (!line.trim().startsWith("//#")) {
+                // Remove inline decompilation notes: /*# ... #*/
+                strippedCodeJoiner.add(line.replaceAll("/\\*#.+#\\*/", ""));
+            }
+        }
+
+        return strippedCodeJoiner.toString();
+    }
+
+    /**
+     * Compares the content of the specified file with the {@code actualCode}. If both are equal
+     * {@code null} is returned. Otherwise, a diff file is created in {@link #TEST_FAILURE_DIFF_OUTPUT_DIR}
+     * (or a subdirectory) and an {@link AssertionError} indicating the mismatch is returned.
+     */
+    private static AssertionError diffCodeAndWriteOnMismatch(Path expectedCodeFilePath, String actualCode) throws IOException {
+        String expectedCode = stripDecompilationNotes(readNormalizedString(expectedCodeFilePath));
 
         AssertionError assertionError;
         try {
             // Trigger AssertionError and later throw that because IDEs often support diff
             // functionality for the values
-            assertEquals(expectedContent, actualContent);
+            assertEquals(expectedCode, actualCode);
             return null;
         } catch (AssertionError e) {
             assertionError = e;
         }
 
-        List<String> expectedLines = Arrays.asList(expectedContent.split("\\R"));
-        List<String> actualLines = Arrays.asList(actualContent.split("\\R"));
+        List<String> expectedLines = Arrays.asList(expectedCode.split("\\R"));
+        List<String> actualLines = Arrays.asList(actualCode.split("\\R"));
         Patch<String> diff = DiffUtils.diff(expectedLines, actualLines);
 
-        String fileName = expectedFilePath.getFileName().toString();
-        List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName, "actual-output", expectedLines, diff, 1);
-        Path outputPath = TEST_FAILURE_DIFF_OUTPUT_DIR.resolve(TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR.toAbsolutePath().relativize(expectedFilePath.toAbsolutePath()).getParent().resolve(fileName + ".diff"));
+        String fileName = expectedCodeFilePath.getFileName().toString();
+        List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName, "actual-code", expectedLines, diff, 1);
+        Path outputPath = TEST_FAILURE_DIFF_OUTPUT_DIR.resolve(TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR.toAbsolutePath().relativize(expectedCodeFilePath.toAbsolutePath()).getParent().resolve(fileName + ".diff"));
         Files.createDirectories(outputPath.getParent());
         Files.write(outputPath, unifiedDiff);
 
@@ -489,7 +515,7 @@ class DecompilationTest {
                 throwTestSetupError("Missing file: " + expectedJavaPath);
             }
         } else {
-            AssertionError assertionError = diffAndWriteOnMismatch(expectedJavaPath, actualJavaCode);
+            AssertionError assertionError = diffCodeAndWriteOnMismatch(expectedJavaPath, actualJavaCode);
             if (assertionError != null) {
                 throw assertionError;
             }
@@ -608,7 +634,7 @@ class DecompilationTest {
 
                 checkedFiles.add(filePath.toAbsolutePath().normalize());
 
-                AssertionError error = diffAndWriteOnMismatch(filePath, decompiled.getJava());
+                AssertionError error = diffCodeAndWriteOnMismatch(filePath, decompiled.getJava());
                 if (error != null) {
                     if (assertionError == null) {
                         assertionError = error;

@@ -7,6 +7,7 @@ public class proof {
      */
     public static void main(String[] stringArray) {
         Object v0 = null;
-        System.out.println("All ur base r belong 2 us");
+        //# A line decompilation note
+        System.out.println("All ur base r belong 2 us"/*# An inline decompilation note #*/);
     }
 }
