@@ -41,7 +41,7 @@ to get CFR to decompile `java.lang.Object`.
 
 As part of the Maven build automatic decompilation tests are performed. They verify that the current decompiled output of CFR matches the expected previous output. The test data (Java class and JAR files) are part of a separate Git repository; it is therefore necessary to clone this repository with `git clone --recurse-submodules`. The expected output and CFR test configuration is however part of this repository to allow altering it without having to modify the corresponding test data. The test data is in the `decompilation-test/test-data` directory, and the respective expected data and custom configuration is in the `decompilation-test/test-data-expected-output` directory (with a similar directory structure, see [Expected data structure](#expected-data-structure) below).
 
-The decompilation test is also performed by the GitHub workflow and in case of test failures the unified diff is available in a workflow artifact called "decompilation-test-failures-diff".
+The decompilation tests are also performed by the GitHub workflow, and in case of test failures the unified diff is available in a [workflow artifact](https://docs.github.com/en/actions/managing-workflow-runs/downloading-workflow-artifacts) called "decompilation-test-failures-diff".
 
 **The expected output is not the gold standard**, it merely describes the currently expected output. There is nothing wrong with adjusting the expected output, if the changes to the decompilation results are reasonable.
 
@@ -57,13 +57,13 @@ Example:
 renameillegalidents true
 ```
 
-See [Expected data structure](#expected-data-structure) below for for to name the file and where to place it.
+See [Expected data structure](#expected-data-structure) below for how to name the file and where to place it.
 
 ### Expected data structure
 
 #### Class files
 
-For class files the expected data and custom configuration is in the same respective location under `test-data-expected-output`, with the files names being based on the class file name.
+For class files the expected data and custom configuration is in the same respective location under `test-data-expected-output`, with the file names being based on the class file name.
 
 For example, for the class file `test-data/classes/subdir/MyClass.class` the following files can be used:
 
@@ -86,7 +86,7 @@ For example, for the multi-release JAR file `test-data/jars/subdir/MyJar.jar` th
     - `mypackage.MyClass.java`  
       Contains the expected decompiled Java output for the class `mypackage.MyClass`, optionally with [decompilation notes](#decompilation-note-comments).
     - `java-11/mypackage.MyClass.java`  
-      Contains the expected decompiled Java output for a class file specific to Java 11 and higher.
+      Contains the expected decompiled Java output for a class file specific to Java 11 and higher (for multi-release JARs).
     - `_.options`  
       An optional [options file](#options-file) customizing decompilation.
     - `_.expected.summary`  
@@ -96,12 +96,12 @@ For example, for the multi-release JAR file `test-data/jars/subdir/MyJar.jar` th
 
 ### Decompilation note comments
 
-The expected Java output files support comments representing _decompilation notes_. They are ignored during comparison with the actual Java output and can for example be used to indicate incorrect or improvable output. There are two kinds of decompilation notes:
+The expected Java output files support comments representing _decompilation notes_. They are ignored during comparison with the actual Java output and can for example be used to indicate incorrect or improvable CFR output. There are two kinds of decompilation notes:
 
-- Line: Start with `//#` (optionally with indentation)
+- Line: Start with `//#` (optionally prefixed with whitespace)
 - Inline: `/*# ... #*/`
 
-Line decompilation notes should be used sparingly, especially in large files because they shift line numbers (due to being removed during comparison) for the diff files, which can be confusing.
+Line decompilation notes should be used sparingly, especially in large files, because they shift line numbers for the diff files (due to being removed during comparison), which can be confusing.
 
 Example:
 ```java
@@ -115,7 +115,7 @@ public class MyClass {
 
 ### Updating / creating expected data
 
-When adding a lot of new classes or JAR files for the decompilation test or when a change to CFR affects the output for a lot of classes or JAR files, manually creating or updating the expected output can be rather cumbersome. For these cases the following system properties exist which help with this. They can be set with `-D<system-property>` when running tests. However, when these system properties are set, the respective tests will still fail (but the expected data is updated) to prevent accidentally using them for regular test execution.
+When adding a lot of new classes or JAR files for the decompilation tests or when a change to CFR affects the output for a lot of classes or JAR files, manually creating or updating the expected output can be rather cumbersome. For these cases the following system properties exist which help with this. They can be set with `-D<system-property>` when running tests. However, when these system properties are set, the respective tests will still fail (but the expected data is updated) to prevent accidentally using them for regular test execution.
 
 - `cfr.decompilation-test.create-expected`  
 Generates all missing expected test data based on the current CFR output.
