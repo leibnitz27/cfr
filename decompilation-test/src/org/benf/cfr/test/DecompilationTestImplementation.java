@@ -1,3 +1,5 @@
+package org.benf.cfr.test;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -41,7 +43,6 @@ import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -51,7 +52,10 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.patch.Patch;
 
-class DecompilationTest {
+/**
+ * Implementation for {@link DecompilationTest}.
+ */
+class DecompilationTestImplementation {
     /**
      * Create files representing expected data, in case they do not exist yet.
      * This is intended to simplify adding new test data. If due to this new files
@@ -493,9 +497,7 @@ class DecompilationTest {
         fail("Test setup error: " + message);
     }
 
-    @ParameterizedTest(name = "[{index}] {0}")
-    @ClassFileTestDataSource("classes")
-    void classFile(String displayName, Path classFilePath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaPath) throws IOException {
+    static void assertClassFile(Path classFilePath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaPath) throws IOException {
         Map<String, String> options = createOptionsMap(cfrOptionsFilePath);
         DecompilationResult decompilationResult = decompile(classFilePath, options);
 
@@ -596,9 +598,7 @@ class DecompilationTest {
         return resolveSafely(parent, subPath);
     }
 
-    @ParameterizedTest(name = "[{index}] {0}")
-    @JarTestDataSource("jars")
-    void jar(String displayName, Path jarPath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaFilesDirPath) throws IOException {
+    static void assertJar(Path jarPath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaFilesDirPath) throws IOException {
         Map<String, String> options = createOptionsMap(cfrOptionsFilePath);
         options.put(OptionsImpl.ANALYSE_AS.getName(), AnalysisType.JAR.name());
 
