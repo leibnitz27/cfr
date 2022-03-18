@@ -63,7 +63,7 @@ class DecompilationTestImplementation {
      * this setting during regular test execution by accident, which would otherwise
      * erroneously make the tests succeed.
      */
-    private static final boolean CREATE_EXPECTED_DATA_IF_MISSING = System.getProperty("cfr.decompilation-test.create-missing") != null;
+    private static final boolean CREATE_EXPECTED_DATA_IF_MISSING = System.getProperty("cfr.decompilation-test.create-expected") != null;
 
     /**
      * Updates the expected data, in case it does not match the actual data.
@@ -103,6 +103,16 @@ class DecompilationTestImplementation {
     private static final String EXPECTED_SUMMARY_FILE_EXTENSION = ".expected.summary";
     private static final String EXPECTED_EXCEPTIONS_FILE_EXTENSION = ".expected.exceptions";
     private static final String EXPECTED_SOURCE_CODE_FILE_EXTENSION = ".expected.java";
+
+    private static final String JAR_OPTIONS_FILE_NAME = "_" + OPTIONS_FILE_EXTENSION;
+    private static final String JAR_EXPECTED_SUMMARY_FILE_NAME = "_" + EXPECTED_SUMMARY_FILE_EXTENSION;
+    private static final String JAR_EXPECTED_EXCEPTIONS_FILE_NAME = "_" + EXPECTED_EXCEPTIONS_FILE_EXTENSION;
+
+    private static final Set<String> JAR_SPECIAL_EXPECTED_FILE_NAMES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+        JAR_OPTIONS_FILE_NAME,
+        JAR_EXPECTED_SUMMARY_FILE_NAME,
+        JAR_EXPECTED_EXCEPTIONS_FILE_NAME
+    )));
 
     private static Path getTestDataSubDir(String subDirPath) throws Exception {
         Path path = TEST_DATA_ROOT_DIR.resolve(subDirPath);
@@ -333,12 +343,16 @@ class DecompilationTestImplementation {
 
             return jarFilePaths.stream().sorted().map(jarPath -> {
                 String displayName = directory.relativize(jarPath).toString();
-                Path cfrOptionsFilePath = resolveRelativized(directory, jarPath, expectedDir, OPTIONS_FILE_EXTENSION);
-                Path expectedSummaryPath = resolveRelativized(directory, jarPath, expectedDir, EXPECTED_SUMMARY_FILE_EXTENSION);
-                Path expectedExceptionsPath = resolveRelativized(directory, jarPath, expectedDir, EXPECTED_EXCEPTIONS_FILE_EXTENSION);
-                Path expectedJavaFilesDirPath = resolveRelativized(directory, jarPath, expectedDir, "");
+                Path expectedDataDir = resolveRelativized(directory, jarPath, expectedDir, "");
 
-                return Arguments.of(displayName, jarPath, cfrOptionsFilePath, expectedSummaryPath, expectedExceptionsPath, expectedJavaFilesDirPath);
+                // Place these files in the same directory to have IDE and OS group them properly;
+                // placing them outside of directory might cause them to be displayed separately
+                // because some IDEs and OS' group directories and files separately
+                Path cfrOptionsFilePath = expectedDataDir.resolve(JAR_OPTIONS_FILE_NAME);
+                Path expectedSummaryPath = expectedDataDir.resolve(JAR_EXPECTED_SUMMARY_FILE_NAME);
+                Path expectedExceptionsPath = expectedDataDir.resolve(JAR_EXPECTED_EXCEPTIONS_FILE_NAME);
+
+                return Arguments.of(displayName, jarPath, cfrOptionsFilePath, expectedSummaryPath, expectedExceptionsPath, expectedDataDir);
             });
         }
     }
@@ -716,6 +730,7 @@ class DecompilationTestImplementation {
     }
 
     private static Path getExpectedPathForDecompiled(Path parent, DecompiledMultiVer decompiled) {
+        // Note: Does not use `.expected.java` to avoid confusion with class or package name
         String fileName = decompiled.getPackageName() + '.' + decompiled.getClassName() + ".java";
         String subPath;
 
@@ -791,7 +806,9 @@ class DecompilationTestImplementation {
             // Verify that CFR produced all expected files
             try (Stream<Path> allFiles = Files.walk(expectedJavaFilesDirPath).filter(Files::isRegularFile)) {
                 allFiles.map(path -> path.toAbsolutePath().normalize()).forEach(path -> {
-                    if (!checkedFiles.contains(path)) {
+                    String fileName = path.getFileName().toString();
+
+                    if (!JAR_SPECIAL_EXPECTED_FILE_NAMES.contains(fileName) && !checkedFiles.contains(path)) {
                         throwTestSetupError("Expected file was not checked: " + path);
                     }
                 });
