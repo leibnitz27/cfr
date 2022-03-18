@@ -59,9 +59,21 @@ class DecompilationTestImplementation {
     /**
      * Create files representing expected data, in case they do not exist yet.
      * This is intended to simplify adding new test data. If due to this new files
-     * are generated, the corresponding test if marked as failed.
+     * are generated, the corresponding test is marked as failed, to avoid using
+     * this setting during regular test execution by accident, which would otherwise
+     * erroneously make the tests succeed.
      */
     private static final boolean CREATE_EXPECTED_DATA_IF_MISSING = System.getProperty("cfr.decompilation-test.create-missing") != null;
+
+    /**
+     * Updates the expected data, in case it does not match the actual data.
+     * This is intended to simplify adjusting the expected output in case a
+     * decompiler change affects multiple tests. If due to this the expected
+     * data is updated, the corresponding test is marked as failed, to avoid using
+     * this setting during regular test execution by accident, which would otherwise
+     * erroneously make the tests succeed.
+     */
+    private static final boolean UPDATE_EXPECTED_DATA = System.getProperty("cfr.decompilation-test.update-expected") != null;
 
     /**
      * Path of the directory containing all test data. Directory might not exist or might be
@@ -340,8 +352,8 @@ class DecompilationTestImplementation {
 
         if (Files.exists(cfrOptionsFilePath)) {
             for (String line : Files.readAllLines(cfrOptionsFilePath)) {
-                // Ignore comments
-                if (line.startsWith("#")) {
+                // Ignore comments and empty lines
+                if (line.startsWith("#") || line.trim().isEmpty()) {
                     continue;
                 }
 
@@ -447,6 +459,10 @@ class DecompilationTestImplementation {
         return new DecompilationResult(summary, exceptionsOutput.toString(), decompiledList);
     }
 
+    private static void writeString(Path path, String s) throws IOException {
+        Files.write(path, s.getBytes(StandardCharsets.UTF_8));
+    }
+
     private static String stripDecompilationNotes(String expectedCode) {
         String[] lines = expectedCode.split("\\R", -1);
         StringJoiner strippedCodeJoiner = new StringJoiner("\n");
@@ -462,39 +478,137 @@ class DecompilationTestImplementation {
         return strippedCodeJoiner.toString();
     }
 
+    private static class DiffCodeResult {
+        /**
+         * Assertion error in case the expected test data differed from the actual test data.
+         * {@code null} if they were the same, or if {@link #updatedExpectedData} or
+         * {@link #decompilationNotesPreventedUpdate} is {@code true}.
+         */
+        public final AssertionError assertionError;
+        /**
+         * Indicates whether due to {@link DecompilationTestImplementation#UPDATE_EXPECTED_DATA}
+         * the expected test data was updated because it differed from the actual test data.
+         */
+        public final boolean updatedExpectedData;
+        /**
+         * Whether updating the expected test data was not possible because it contains decompilation
+         * notes which would get lost.
+         */
+        public final boolean decompilationNotesPreventedUpdate;
+
+        public DiffCodeResult(AssertionError assertionError, boolean updatedExpectedData, boolean decompilationNotesPreventedUpdate) {
+            this.assertionError = assertionError;
+            this.updatedExpectedData = updatedExpectedData;
+            this.decompilationNotesPreventedUpdate = decompilationNotesPreventedUpdate;
+        }
+    }
+
     /**
-     * Compares the content of the specified file with the {@code actualCode}. If both are equal
-     * {@code null} is returned. Otherwise, a diff file is created in {@link #TEST_FAILURE_DIFF_OUTPUT_DIR}
-     * (or a subdirectory) and an {@link AssertionError} indicating the mismatch is returned.
+     * Compares the content of the specified file with the {@code actualCode} and returns a {@link DiffCodeResult}.
+     * If there is a difference between the expected and the actual data, a diff file is created in
+     * {@link #TEST_FAILURE_DIFF_OUTPUT_DIR} (or a subdirectory).
      */
-    private static AssertionError diffCodeAndWriteOnMismatch(Path expectedCodeFilePath, String actualCode) throws IOException {
-        String expectedCode = stripDecompilationNotes(readNormalizedString(expectedCodeFilePath));
+    private static DiffCodeResult diffCodeAndWriteOnMismatch(Path expectedCodeFilePath, String actualCode) throws IOException {
+        String originalExpectedCode = readNormalizedString(expectedCodeFilePath);
+        String expectedCodeWithoutNotes = stripDecompilationNotes(originalExpectedCode);
 
         AssertionError assertionError;
         try {
             // Trigger AssertionError and later throw that because IDEs often support diff
             // functionality for the values
-            assertEquals(expectedCode, actualCode);
-            return null;
+            assertEquals(expectedCodeWithoutNotes, actualCode);
+            return new DiffCodeResult(null, false, false);
         } catch (AssertionError e) {
             assertionError = e;
         }
 
-        List<String> expectedLines = Arrays.asList(expectedCode.split("\\R"));
-        List<String> actualLines = Arrays.asList(actualCode.split("\\R"));
-        Patch<String> diff = DiffUtils.diff(expectedLines, actualLines);
+        if (UPDATE_EXPECTED_DATA) {
+            // If no decompilation notes are contained, can update the file; otherwise the decompilation notes
+            // would be lost
+            if (originalExpectedCode.equals(expectedCodeWithoutNotes)) {
+                writeString(expectedCodeFilePath, actualCode);
+                return new DiffCodeResult(null, true, false);
+            } else {
+                return new DiffCodeResult(null, false, true);
+            }
+        } else {
+            List<String> expectedLines = Arrays.asList(expectedCodeWithoutNotes.split("\\R", -1));
+            List<String> actualLines = Arrays.asList(actualCode.split("\\R", -1));
+            Patch<String> diff = DiffUtils.diff(expectedLines, actualLines);
 
-        String fileName = expectedCodeFilePath.getFileName().toString();
-        List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName, "actual-code", expectedLines, diff, 1);
-        Path outputPath = TEST_FAILURE_DIFF_OUTPUT_DIR.resolve(TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR.toAbsolutePath().relativize(expectedCodeFilePath.toAbsolutePath()).getParent().resolve(fileName + ".diff"));
-        Files.createDirectories(outputPath.getParent());
-        Files.write(outputPath, unifiedDiff);
+            String fileName = expectedCodeFilePath.getFileName().toString();
+            List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName, "actual-code", expectedLines, diff, 1);
+            Path outputPath = TEST_FAILURE_DIFF_OUTPUT_DIR.resolve(TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR.toAbsolutePath().relativize(expectedCodeFilePath.toAbsolutePath()).getParent().resolve(fileName + ".diff"));
+            Files.createDirectories(outputPath.getParent());
+            Files.write(outputPath, unifiedDiff);
 
-        return assertionError;
+            return new DiffCodeResult(assertionError, false, false);
+        }
     }
 
     private static void throwTestSetupError(String message) {
         fail("Test setup error: " + message);
+    }
+
+    /**
+     * Fail the test because missing expected data was created.
+     *
+     * @see #CREATE_EXPECTED_DATA_IF_MISSING
+     */
+    private static void failCreatedMissingExpectedData() {
+        fail("Created missing expected data");
+    }
+
+    /**
+     * Fail the test because expected data was updated.
+     *
+     * @param filesWithDecompilationNotes
+     *      List of expected Java files which could not be updated because they contain
+     *      decompilation notes
+     * @see #UPDATE_EXPECTED_DATA
+     */
+    private static void failUpdatedExpectedData(List<Path> filesWithDecompilationNotes) {
+        String message = "Updated expected data";
+
+        if (!filesWithDecompilationNotes.isEmpty()) {
+            String filesList = filesWithDecompilationNotes.stream().map(Path::toString).collect(Collectors.joining(", "));
+            message += "; but failed updating these files due to decompilation notes which would get lost: " + filesList;
+        }
+        fail(message);
+    }
+
+    /**
+     * Fail the test because expected data could not be updated because it contains
+     * decompilation notes which would get lost.
+     *
+     * @param filesWithDecompilationNotes
+     *      List of expected Java files which could not be updated because they contain
+     *      decompilation notes
+     * @see #UPDATE_EXPECTED_DATA
+     */
+    private static void failNotUpdatableDueToDecompilationNotes(List<Path> filesWithDecompilationNotes) {
+        String filesList = filesWithDecompilationNotes.stream().map(Path::toString).collect(Collectors.joining(", "));
+        fail("Failed updating these files due to decompilation notes which would get lost: " + filesList);
+    }
+
+    /**
+     * Asserts that the content of the file is equal to the {@code actualData}. Returns {@code true} if
+     * they are equal. Otherwise, if {@link #UPDATE_EXPECTED_DATA} is {@code true} the expected data file
+     * is updated and {@code false} is returned; otherwise the corresponding {@link AssertionError} is
+     * thrown.
+     */
+    private static boolean assertFileEquals(Path expectedDataFile, String actualData) throws IOException {
+        try {
+            assertEquals(readNormalizedString(expectedDataFile), actualData);
+            return true;
+        } catch (AssertionError assertionError) {
+            if (UPDATE_EXPECTED_DATA) {
+                writeString(expectedDataFile, actualData);
+                return false;
+            } else {
+                throw assertionError;
+            }
+        }
     }
 
     static void assertClassFile(Path classFilePath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaPath) throws IOException {
@@ -502,6 +616,8 @@ class DecompilationTestImplementation {
         DecompilationResult decompilationResult = decompile(classFilePath, options);
 
         boolean createdExpectedFile = false;
+        boolean updatedExpectedFile = false;
+        List<Path> notUpdatableDueToDecompilationNotes = new ArrayList<>();
 
         List<DecompiledMultiVer> decompiledList = decompilationResult.decompiled;
         assertEquals(1, decompiledList.size());
@@ -512,14 +628,20 @@ class DecompilationTestImplementation {
         if (!Files.exists(expectedJavaPath)) {
             if (CREATE_EXPECTED_DATA_IF_MISSING) {
                 createdExpectedFile = true;
-                Files.write(expectedJavaPath, actualJavaCode.getBytes(StandardCharsets.UTF_8));
+                writeString(expectedJavaPath, actualJavaCode);
             } else {
                 throwTestSetupError("Missing file: " + expectedJavaPath);
             }
         } else {
-            AssertionError assertionError = diffCodeAndWriteOnMismatch(expectedJavaPath, actualJavaCode);
+            DiffCodeResult diffCodeResult = diffCodeAndWriteOnMismatch(expectedJavaPath, actualJavaCode);
+            AssertionError assertionError = diffCodeResult.assertionError;
             if (assertionError != null) {
                 throw assertionError;
+            }
+
+            updatedExpectedFile |= diffCodeResult.updatedExpectedData;
+            if (diffCodeResult.decompilationNotesPreventedUpdate) {
+                notUpdatableDueToDecompilationNotes.add(expectedJavaPath);
             }
         }
 
@@ -528,12 +650,14 @@ class DecompilationTestImplementation {
             if (!Files.exists(expectedSummaryPath)) {
                 if (CREATE_EXPECTED_DATA_IF_MISSING) {
                     createdExpectedFile = true;
-                    Files.write(expectedSummaryPath, actualSummary.getBytes(StandardCharsets.UTF_8));
+                    writeString(expectedSummaryPath, actualSummary);
                 } else {
                     throwTestSetupError("Missing file: " + expectedSummaryPath);
                 }
             } else {
-                assertEquals(readNormalizedString(expectedSummaryPath), actualSummary);
+                if (!assertFileEquals(expectedSummaryPath, actualSummary)) {
+                    updatedExpectedFile = true;
+                }
             }
         }
 
@@ -542,17 +666,25 @@ class DecompilationTestImplementation {
             if (!Files.exists(expectedExceptionsPath)) {
                 if (CREATE_EXPECTED_DATA_IF_MISSING) {
                     createdExpectedFile = true;
-                    Files.write(expectedExceptionsPath, actualExceptions.getBytes(StandardCharsets.UTF_8));
+                    writeString(expectedExceptionsPath, actualExceptions);
                 } else {
                     throwTestSetupError("Missing file: " + expectedExceptionsPath);
                 }
             } else {
-                assertEquals(readNormalizedString(expectedExceptionsPath), actualExceptions);
+                if (!assertFileEquals(expectedExceptionsPath, actualExceptions)) {
+                    updatedExpectedFile = true;
+                }
             }
         }
 
         if (createdExpectedFile) {
-            fail("Created missing expected data");
+            failCreatedMissingExpectedData();
+        }
+        if (updatedExpectedFile) {
+            failUpdatedExpectedData(notUpdatableDueToDecompilationNotes);
+        }
+        if (!notUpdatableDueToDecompilationNotes.isEmpty()) {
+            failNotUpdatableDueToDecompilationNotes(notUpdatableDueToDecompilationNotes);
         }
     }
 
@@ -606,6 +738,8 @@ class DecompilationTestImplementation {
         List<DecompiledMultiVer> decompiledList = decompilationResult.decompiled;
 
         boolean createdExpectedFile = false;
+        boolean updatedExpectedFile = false;
+        List<Path> notUpdatableDueToDecompilationNotes = new ArrayList<>();
 
         if (!Files.exists(expectedJavaFilesDirPath)) {
             if (CREATE_EXPECTED_DATA_IF_MISSING) {
@@ -616,7 +750,7 @@ class DecompilationTestImplementation {
                     // Create parent directory for every file to account for files which are nested
                     // inside additional directories
                     Files.createDirectories(filePath.getParent());
-                    Files.write(filePath, decompiled.getJava().getBytes(StandardCharsets.UTF_8));
+                    writeString(filePath, decompiled.getJava());
                 }
             } else {
                 throwTestSetupError("Missing directory: " + expectedJavaFilesDirPath);
@@ -634,13 +768,19 @@ class DecompilationTestImplementation {
 
                 checkedFiles.add(filePath.toAbsolutePath().normalize());
 
-                AssertionError error = diffCodeAndWriteOnMismatch(filePath, decompiled.getJava());
+                DiffCodeResult diffCodeResult = diffCodeAndWriteOnMismatch(filePath, decompiled.getJava());
+                AssertionError error = diffCodeResult.assertionError;
                 if (error != null) {
                     if (assertionError == null) {
                         assertionError = error;
                     } else {
                         assertionError.addSuppressed(error);
                     }
+                }
+
+                updatedExpectedFile |= diffCodeResult.updatedExpectedData;
+                if (diffCodeResult.decompilationNotesPreventedUpdate) {
+                    notUpdatableDueToDecompilationNotes.add(filePath);
                 }
             }
 
@@ -663,12 +803,14 @@ class DecompilationTestImplementation {
             if (!Files.exists(expectedSummaryPath)) {
                 if (CREATE_EXPECTED_DATA_IF_MISSING) {
                     createdExpectedFile = true;
-                    Files.write(expectedSummaryPath, actualSummary.getBytes(StandardCharsets.UTF_8));
+                    writeString(expectedSummaryPath, actualSummary);
                 } else {
                     throwTestSetupError("Missing file: " + expectedSummaryPath);
                 }
             } else {
-                assertEquals(readNormalizedString(expectedSummaryPath), actualSummary);
+                if (!assertFileEquals(expectedSummaryPath, actualSummary)) {
+                    updatedExpectedFile = true;
+                }
             }
         }
 
@@ -677,17 +819,25 @@ class DecompilationTestImplementation {
             if (!Files.exists(expectedExceptionsPath)) {
                 if (CREATE_EXPECTED_DATA_IF_MISSING) {
                     createdExpectedFile = true;
-                    Files.write(expectedExceptionsPath, actualExceptions.getBytes(StandardCharsets.UTF_8));
+                    writeString(expectedExceptionsPath, actualExceptions);
                 } else {
                     throwTestSetupError("Missing file: " + expectedExceptionsPath);
                 }
             } else {
-                assertEquals(readNormalizedString(expectedExceptionsPath), actualExceptions);
+                if (!assertFileEquals(expectedExceptionsPath, actualExceptions)) {
+                    updatedExpectedFile = true;
+                }
             }
         }
 
         if (createdExpectedFile) {
-            fail("Created missing expected data");
+            failCreatedMissingExpectedData();
+        }
+        if (updatedExpectedFile) {
+            failUpdatedExpectedData(notUpdatableDueToDecompilationNotes);
+        }
+        if (!notUpdatableDueToDecompilationNotes.isEmpty()) {
+            failNotUpdatableDueToDecompilationNotes(notUpdatableDueToDecompilationNotes);
         }
     }
 }
