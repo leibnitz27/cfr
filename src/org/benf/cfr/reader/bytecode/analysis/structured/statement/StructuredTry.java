@@ -14,6 +14,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class StructuredTry extends AbstractStructuredStatement {
@@ -77,8 +78,15 @@ public class StructuredTry extends AbstractStructuredStatement {
             dumper.separator(")");
         }
         tryBlock.dump(dumper);
-        for (Op04StructuredStatement catchBlock : catchBlocks) {
+        dumper.removePendingCarriageReturn();
+        dumper.print(' ');
+        for (Iterator<Op04StructuredStatement> it = catchBlocks.iterator(); it.hasNext();) {
+            Op04StructuredStatement catchBlock = it.next();
             catchBlock.dump(dumper);
+            if (it.hasNext() || finallyBlock != null) {
+                dumper.removePendingCarriageReturn();
+                dumper.print(' ');
+            }
         }
         if (finallyBlock != null) {
             finallyBlock.dump(dumper);
