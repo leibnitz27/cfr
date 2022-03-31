@@ -200,13 +200,20 @@ class DecompilationTestImplementation {
 
         @Override
         public void accept(ClassFileTestDataSource annotation) {
+            System.err.println("HERE");
             subDirPath = annotation.value();
             ignoredFilePatterns = annotation.ignoredFiles();
+        }
+
+        public static void foo() {
+            throw new IllegalStateException();
         }
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
             Path directory = getTestDataSubDir(subDirPath);
+            foo();
+            System.err.println("Checking for class files @ " + subDirPath);
             IgnoredFilesMatcher ignoredFilesMatcher = IgnoredFilesMatcher.fromPaths(directory, ignoredFilePatterns);
 
             List<Path> classFilePaths = new ArrayList<>();
