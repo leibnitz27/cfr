@@ -1,4 +1,4 @@
 [submodule "decompilation-test/test-data"]
 	path = decompilation-test/test-data
-	url = https://github.com/Marcono1234/cfr_tests.git
-	branch = marcono1234/decompilation-test-poc
+	url = https://github.com/leibnitz27/cfr_tests.git
+	branch = master
