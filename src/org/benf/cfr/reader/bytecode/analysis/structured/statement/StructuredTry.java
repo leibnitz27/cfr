@@ -78,14 +78,12 @@ public class StructuredTry extends AbstractStructuredStatement {
             dumper.separator(")");
         }
         tryBlock.dump(dumper);
-        dumper.removePendingCarriageReturn();
-        dumper.print(' ');
+        dumper.removePendingCarriageReturn().separator(" ");
         for (Iterator<Op04StructuredStatement> it = catchBlocks.iterator(); it.hasNext();) {
             Op04StructuredStatement catchBlock = it.next();
             catchBlock.dump(dumper);
             if (it.hasNext() || finallyBlock != null) {
-                dumper.removePendingCarriageReturn();
-                dumper.print(' ');
+                dumper.removePendingCarriageReturn().separator(" ");
             }
         }
         if (finallyBlock != null) {
