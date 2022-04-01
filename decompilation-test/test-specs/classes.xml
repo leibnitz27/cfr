@@ -1,0 +1,31 @@
+<classes>
+    <!-- paths are relative to test-data -->
+    <class>
+        <!-- We will decompile this source file.  Note, the java_6 in here
+             refers to the compiler that's been used, not the JVM used for decompilation.
+        -->
+        <path>precompiled_tests/java_6/org/benf/cfr/tests</path>
+        <name>CondJumpTest2c</name>
+        <!-- label + name should be unique -->
+        <label>6</label>
+        <!-- Options are ... optional -->
+        <options>
+            <option key="usenametable" value="false"/>
+        </options>
+    </class>
+    <class>
+        <path>precompiled_tests/java_10/org/benf/cfr/tests</path>
+        <name>CondJumpTest2c</name>
+        <label>10</label>
+    </class>
+    <class>
+        <path>precompiled_tests/java_6/org/benf/cfr/tests</path>
+        <name>EnumTestEmpty</name>
+        <label>6</label>
+    </class>
+    <class>
+        <path>precompiled_tests/java_13/org/benf/cfr/tests</path>
+        <name>EnumTestEmpty</name>
+        <label>13</label>
+    </class>
+</classes>
