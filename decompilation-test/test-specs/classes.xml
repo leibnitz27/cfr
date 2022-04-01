@@ -28,4 +28,9 @@
         <name>EnumTestEmpty</name>
         <label>13</label>
     </class>
+    <class>
+        <path>precompiled_tests/java_10/org/benf/cfr/tests</path>
+        <name>TryTest1</name>
+        <label>10</label>
+    </class>
 </classes>
