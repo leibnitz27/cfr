@@ -2,9 +2,9 @@ package org.benf.cfr.test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.benf.cfr.test.DecompilationTestImplementation.ClassFileTestDataSource;
-import org.benf.cfr.test.DecompilationTestImplementation.JarTestDataSource;
 import org.junit.jupiter.params.ParameterizedTest;
 
 /**
@@ -13,14 +13,8 @@ import org.junit.jupiter.params.ParameterizedTest;
  */
 class DecompilationTest {
     @ParameterizedTest(name = "[{index}] {0}")
-    @ClassFileTestDataSource("classes")
-    void classFile(String displayName, Path classFilePath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaPath) throws IOException {
-        DecompilationTestImplementation.assertClassFile(classFilePath, cfrOptionsFilePath, expectedSummaryPath, expectedExceptionsPath, expectedJavaPath);
-    }
-
-    @ParameterizedTest(name = "[{index}] {0}")
-    @JarTestDataSource("jars")
-    void jar(String displayName, Path jarPath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaFilesDirPath) throws IOException {
-        DecompilationTestImplementation.assertJar(jarPath, cfrOptionsFilePath, expectedSummaryPath, expectedExceptionsPath, expectedJavaFilesDirPath);
+    @ClassFileTestDataSource("classes.xml")
+    void classFile(Path classFilePath, Map<String, String> cfrOptionsDict, Path output, String outputPrefix) throws IOException {
+        DecompilationTestImplementation.assertClassFile(classFilePath, cfrOptionsDict, output, outputPrefix);
     }
 }

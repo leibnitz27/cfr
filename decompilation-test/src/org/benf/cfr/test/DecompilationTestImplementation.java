@@ -1,44 +1,13 @@
 package org.benf.cfr.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import com.github.difflib.DiffUtils;
+import com.github.difflib.UnifiedDiffUtils;
+import com.github.difflib.patch.Patch;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.api.OutputSinkFactory;
 import org.benf.cfr.reader.api.OutputSinkFactory.Sink;
 import org.benf.cfr.reader.api.SinkReturns.DecompiledMultiVer;
 import org.benf.cfr.reader.api.SinkReturns.ExceptionMessage;
-import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
@@ -47,10 +16,37 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.support.AnnotationConsumer;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
 
-import com.github.difflib.DiffUtils;
-import com.github.difflib.UnifiedDiffUtils;
-import com.github.difflib.patch.Patch;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Implementation for {@link DecompilationTest}.
@@ -86,10 +82,12 @@ class DecompilationTestImplementation {
      * test execution.
      */
     private static final Path TEST_DATA_ROOT_DIR;
+    private static final Path TEST_SPECS_DIR;
     private static final Path TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR;
     static {
         Path decompilationTestDir = Paths.get("decompilation-test");
         TEST_DATA_ROOT_DIR = decompilationTestDir.resolve("test-data");
+        TEST_SPECS_DIR = decompilationTestDir.resolve("test-specs");
         TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR = decompilationTestDir.resolve("test-data-expected-output");
     }
 
@@ -99,20 +97,9 @@ class DecompilationTestImplementation {
      */
     private static final Path TEST_FAILURE_DIFF_OUTPUT_DIR = Paths.get("target", "cfr-test-failures-diff");
 
-    private static final String OPTIONS_FILE_EXTENSION = ".options";
     private static final String EXPECTED_SUMMARY_FILE_EXTENSION = ".expected.summary";
     private static final String EXPECTED_EXCEPTIONS_FILE_EXTENSION = ".expected.exceptions";
     private static final String EXPECTED_SOURCE_CODE_FILE_EXTENSION = ".expected.java";
-
-    private static final String JAR_OPTIONS_FILE_NAME = "_" + OPTIONS_FILE_EXTENSION;
-    private static final String JAR_EXPECTED_SUMMARY_FILE_NAME = "_" + EXPECTED_SUMMARY_FILE_EXTENSION;
-    private static final String JAR_EXPECTED_EXCEPTIONS_FILE_NAME = "_" + EXPECTED_EXCEPTIONS_FILE_EXTENSION;
-
-    private static final Set<String> JAR_SPECIAL_EXPECTED_FILE_NAMES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-        JAR_OPTIONS_FILE_NAME,
-        JAR_EXPECTED_SUMMARY_FILE_NAME,
-        JAR_EXPECTED_EXCEPTIONS_FILE_NAME
-    )));
 
     private static Path getTestDataSubDir(String subDirPath) throws Exception {
         Path path = TEST_DATA_ROOT_DIR.resolve(subDirPath);
@@ -131,78 +118,23 @@ class DecompilationTestImplementation {
         return path;
     }
 
-    private static class IgnoredFilesMatcher {
-        private final Path enclosingDir;
-        private final List<PathMatcher> matchers;
-
-        private IgnoredFilesMatcher(Path enclosingDir, List<PathMatcher> matchers) {
-            this.enclosingDir = enclosingDir;
-            this.matchers = matchers;
-        }
-
-        private static String escapeForPathMatcher(String s) {
-         // Must escape backslashes for FileSystem.getPathMatcher()
-            return s.replace("\\", "\\\\");
-        }
-
-        public static IgnoredFilesMatcher fromPaths(Path enclosingDir, String... paths) {
-            FileSystem fileSystem = FileSystems.getDefault();
-            String escapedSeparator = escapeForPathMatcher(fileSystem.getSeparator());
-
-            List<PathMatcher> matchers = Arrays.stream(paths)
-                .map(path -> path.replace("/", escapedSeparator))
-                .map(path -> fileSystem.getPathMatcher("glob:" + path))
-                .collect(Collectors.toList());
-            return new IgnoredFilesMatcher(enclosingDir, matchers);
-        }
-
-        public boolean isIgnored(Path path) {
-            if (!path.startsWith(enclosingDir)) {
-                throw new IllegalArgumentException("Path outside of enclosing directory: " + path);
-            }
-            Path relativePath = enclosingDir.relativize(path);
-            return matchers.stream().anyMatch(matcher -> matcher.matches(relativePath));
-        }
-    }
-
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
     @ArgumentsSource(ClassFileTestDataProvider.class)
     @interface ClassFileTestDataSource {
-        /** Name of the directory containing the class files */
+        /** Name of the file containing the class files test specifications */
         String value();
-
-        /**
-         * Optional list of {@linkplain FileSystem#getPathMatcher(String) glob patterns} (except only using {@code /}
-         * as separator) relative to the {@linkplain #value() specified directory} matching files which should be
-         * ignored.
-         */
-        String[] ignoredFiles() default {};
-    }
-
-    private static Path resolveRelativized(Path base, Path toRelativize, Path newBase, String fileNameExtension) {
-        Path parentDir = newBase.resolve(base.relativize(toRelativize.getParent()));
-        String fileName = toRelativize.getFileName().toString();
-
-        String fileNameWithoutExtension;
-        int extensionIndex = fileName.indexOf('.');
-        if (extensionIndex != -1) {
-            fileNameWithoutExtension = fileName.substring(0, extensionIndex);
-        } else {
-            fileNameWithoutExtension = fileName;
-        }
-        return parentDir.resolve(fileNameWithoutExtension + fileNameExtension);
     }
 
     static class ClassFileTestDataProvider implements ArgumentsProvider, AnnotationConsumer<ClassFileTestDataSource> {
-        private String subDirPath;
-        private String[] ignoredFilePatterns;
+        private String configFilePath;
+        // Yes, using terrible built in xml support.
+        private DocumentBuilderFactory dbf;
 
         @Override
         public void accept(ClassFileTestDataSource annotation) {
-            System.err.println("HERE");
-            subDirPath = annotation.value();
-            ignoredFilePatterns = annotation.ignoredFiles();
+            configFilePath = annotation.value();
+            dbf = DocumentBuilderFactory.newInstance();
         }
 
         public static void foo() {
@@ -211,176 +143,52 @@ class DecompilationTestImplementation {
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
-            Path directory = getTestDataSubDir(subDirPath);
-            foo();
-            System.err.println("Checking for class files @ " + subDirPath);
-            IgnoredFilesMatcher ignoredFilesMatcher = IgnoredFilesMatcher.fromPaths(directory, ignoredFilePatterns);
 
-            List<Path> classFilePaths = new ArrayList<>();
+            List<Arguments> res = new ArrayList<>();
 
-            try (Stream<Path> files = Files.walk(directory).filter(Files::isRegularFile).filter(path -> !ignoredFilesMatcher.isIgnored(path))) {
-                for (Path path : (Iterable<Path>) files::iterator) {
-                    String fileName = path.getFileName().toString();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(TEST_SPECS_DIR.resolve(configFilePath).toString());
 
-                    // Ignore class files for nested classes; CFR will load them when the enclosing class is decompiled
-                    if (fileName.contains("$")) {
-                        String expectedEnclosingClassFileName = fileName.substring(0, fileName.indexOf('$')) + ".class";
-                        Path expectedEnclosingClassFilePath = path.resolveSibling(expectedEnclosingClassFileName);
+            /* discover tests we want to do from config file; this is expected to match the
+             * binary files in the relevant directory.
+             */
+            doc.getDocumentElement().normalize();
+            NodeList classes = doc.getElementsByTagName("class");
 
-                        if (!Files.exists(expectedEnclosingClassFilePath)) {
-                            throw new ExtensionConfigurationException("Enclosing class file '" + expectedEnclosingClassFilePath + "' for '" + fileName + "' is missing");
-                        }
-                    } else {
-                        classFilePaths.add(path);
-                    }
+            for (int x=0;x<classes.getLength();++x) {
+                Element clazz = (Element)classes.item(x);
+
+                // Should be using path selector here, content is simple enough to cheat.
+                String classFilePath = clazz.getElementsByTagName("path").item(0).getTextContent();
+                String name = clazz.getElementsByTagName("name").item(0).getTextContent();
+                String label = clazz.getElementsByTagName("label").item(0).getTextContent();
+                Map<String, String> options = new HashMap<>();
+                NodeList optionNodes = clazz.getElementsByTagName("option");
+                for (int o=0;o<optionNodes.getLength();++o) {
+                    NamedNodeMap attrs = optionNodes.item(o).getAttributes();
+                    String key = attrs.getNamedItem("key").getTextContent();
+                    String value = attrs.getNamedItem("value").getTextContent();
+                    options.put(key, value);
                 }
+                Path expectedSource = getTestDataSubDir(classFilePath).resolve(name + ".class");
+                Path expectedTgt = TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR.resolve("classes");
+
+                res.add(Arguments.of(expectedSource, options, expectedTgt, name + "." + label));
             }
-
-            if (classFilePaths.isEmpty()) {
-                throw new ExtensionConfigurationException("Directory '" + directory + "' does not contain any class files");
-            }
-
-            Path expectedDir = TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR.resolve(subDirPath);
-            // Verify that all files in the expected output dir are used
-            try (Stream<Path> files = Files.walk(expectedDir).filter(Files::isRegularFile)) {
-                for (Path path : (Iterable<Path>) files::iterator) {
-                    Path parentDir = directory.resolve(expectedDir.relativize(path.getParent()));
-                    String fileName = path.getFileName().toString();
-
-                    int extensionIndex = fileName.indexOf('.');
-                    if (extensionIndex == -1) {
-                        throw new IllegalArgumentException("Missing extension for " + path);
-                    }
-                    Path testDataPath = parentDir.resolve(fileName.substring(0, extensionIndex) + ".class");
-
-                    if (!classFilePaths.contains(testDataPath)) {
-                        throw new ExtensionConfigurationException("'" + path + "' has no corresponding test data file");
-                    }
-                }
-            }
-
-            return classFilePaths.stream().sorted().map(classFilePath -> {
-                String displayName = directory.relativize(classFilePath).toString();
-                Path cfrOptionsFilePath = resolveRelativized(directory, classFilePath, expectedDir, OPTIONS_FILE_EXTENSION);
-                Path expectedSummaryPath = resolveRelativized(directory, classFilePath, expectedDir, EXPECTED_SUMMARY_FILE_EXTENSION);
-                Path expectedExceptionsPath = resolveRelativized(directory, classFilePath, expectedDir, EXPECTED_EXCEPTIONS_FILE_EXTENSION);
-                Path expectedJavaPath = resolveRelativized(directory, classFilePath, expectedDir, EXPECTED_SOURCE_CODE_FILE_EXTENSION);
-
-                return Arguments.of(displayName, classFilePath, cfrOptionsFilePath, expectedSummaryPath, expectedExceptionsPath, expectedJavaPath);
-            });
+            return res.stream();
         }
     }
 
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @ArgumentsSource(JarTestDataProvider.class)
-    @interface JarTestDataSource {
-        /** Name of the directory containing the JAR files */
-        String value();
-
-        /**
-         * Optional list of {@linkplain FileSystem#getPathMatcher(String) glob patterns} (except only using {@code /}
-         * as separator) relative to the {@linkplain #value() specified directory} matching files which should be
-         * ignored.
-         */
-        String[] ignoredFiles() default {};
-    }
-
-    static class JarTestDataProvider implements ArgumentsProvider, AnnotationConsumer<JarTestDataSource> {
-        private String subDirPath;
-        private String[] ignoredFilePatterns;
-
-        @Override
-        public void accept(JarTestDataSource annotation) {
-            subDirPath = annotation.value();
-            ignoredFilePatterns = annotation.ignoredFiles();
-        }
-
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
-            Path directory = getTestDataSubDir(subDirPath);
-            IgnoredFilesMatcher ignoredFilesMatcher = IgnoredFilesMatcher.fromPaths(directory, ignoredFilePatterns);
-
-            List<Path> jarFilePaths;
-            try (Stream<Path> files = Files.walk(directory).filter(Files::isRegularFile).filter(path -> !ignoredFilesMatcher.isIgnored(path))) {
-                jarFilePaths = files.collect(Collectors.toList());
-            }
-
-            if (jarFilePaths.isEmpty()) {
-                throw new ExtensionConfigurationException("Directory '" + directory + "' does not contain any JAR files");
-            }
-
-            Path expectedDir = TEST_DATA_EXPECTED_OUTPUT_ROOT_DIR.resolve(subDirPath);
-            List<Path> expectedDataDirs = jarFilePaths.stream()
-                .map(path -> resolveRelativized(directory, path, expectedDir, ""))
-                .collect(Collectors.toList());
-
-            // Verify that all expected data directories are used; otherwise they would be silently ignored
-            // when corresponding test data does not exist anymore
-            Files.walkFileTree(expectedDir, new SimpleFileVisitor<Path>() {
-                boolean hasSubDirs = false;
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    hasSubDirs = true;
-                    if (expectedDataDirs.contains(dir)) {
-                        // Can skip this subtree because it is used
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-
-                    // Mark as false and check whether subtree set it to true when reaching postVisitDirectory
-                    hasSubDirs = false;
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    if (exc != null) {
-                        throw exc;
-                    }
-
-                    // Check if leaf directory was found and it does not have a data directory parent
-                    // (otherwise this directory would have been skipped by that parent)
-                    if (!hasSubDirs) {
-                        throw new ExtensionConfigurationException("Directory without corresponding JAR file: " + dir);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-
-            return jarFilePaths.stream().sorted().map(jarPath -> {
-                String displayName = directory.relativize(jarPath).toString();
-                Path expectedDataDir = resolveRelativized(directory, jarPath, expectedDir, "");
-
-                // Place these files in the same directory to have IDE and OS group them properly;
-                // placing them outside of directory might cause them to be displayed separately
-                // because some IDEs and OS' group directories and files separately
-                Path cfrOptionsFilePath = expectedDataDir.resolve(JAR_OPTIONS_FILE_NAME);
-                Path expectedSummaryPath = expectedDataDir.resolve(JAR_EXPECTED_SUMMARY_FILE_NAME);
-                Path expectedExceptionsPath = expectedDataDir.resolve(JAR_EXPECTED_EXCEPTIONS_FILE_NAME);
-
-                return Arguments.of(displayName, jarPath, cfrOptionsFilePath, expectedSummaryPath, expectedExceptionsPath, expectedDataDir);
-            });
-        }
-    }
-
-    private static Map<String, String> createOptionsMap(Path cfrOptionsFilePath) throws IOException {
+    private static Map<String, String> createOptionsMap(Map<String, String> baseOptions) {
         Map<String, String> options = new HashMap<>();
+
         // Do not include CFR version, would otherwise cause source changes when switching CFR version
         options.put(OptionsImpl.SHOW_CFR_VERSION.getName(), "false");
         // Don't dump exception stack traces because they might differ depending on how these tests are started (different IDEs, Maven, ...)
         options.put(OptionsImpl.DUMP_EXCEPTION_STACK_TRACE.getName(), "false");
 
-        if (Files.exists(cfrOptionsFilePath)) {
-            for (String line : Files.readAllLines(cfrOptionsFilePath)) {
-                // Ignore comments and empty lines
-                if (line.startsWith("#") || line.trim().isEmpty()) {
-                    continue;
-                }
-
-                String[] option = line.split(" ", 2);
-                options.put(option[0], option[1]);
-            }
+        for (Map.Entry<String, String> kvp : baseOptions.entrySet()) {
+            options.put(kvp.getKey(), kvp.getValue());
         }
         return options;
     }
@@ -632,8 +440,8 @@ class DecompilationTestImplementation {
         }
     }
 
-    static void assertClassFile(Path classFilePath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaPath) throws IOException {
-        Map<String, String> options = createOptionsMap(cfrOptionsFilePath);
+    static void assertClassFile(Path classFilePath, Map<String, String> baseOptions, Path outputDir, String filePrefix) throws IOException {
+        Map<String, String> options = createOptionsMap(baseOptions);
         DecompilationResult decompilationResult = decompile(classFilePath, options);
 
         boolean createdExpectedFile = false;
@@ -646,12 +454,16 @@ class DecompilationTestImplementation {
         assertEquals(0, decompiled.getRuntimeFrom());
         String actualJavaCode = decompiled.getJava();
 
+        Path expectedJavaPath = outputDir.resolve(filePrefix + EXPECTED_SOURCE_CODE_FILE_EXTENSION);
+        Path expectedSummaryPath = outputDir.resolve(filePrefix + EXPECTED_SUMMARY_FILE_EXTENSION);
+        Path expectedExceptionsPath = outputDir.resolve(filePrefix + EXPECTED_EXCEPTIONS_FILE_EXTENSION);
+
         if (!Files.exists(expectedJavaPath)) {
             if (CREATE_EXPECTED_DATA_IF_MISSING) {
                 createdExpectedFile = true;
                 writeString(expectedJavaPath, actualJavaCode);
             } else {
-                throwTestSetupError("Missing file: " + expectedJavaPath);
+                throwTestSetupError("Missing file: " + expectedJavaPath + " (Create with -Dcfr.decompilation-test.create-expected)");
             }
         } else {
             DiffCodeResult diffCodeResult = diffCodeAndWriteOnMismatch(expectedJavaPath, actualJavaCode);
@@ -663,162 +475,6 @@ class DecompilationTestImplementation {
             updatedExpectedFile |= diffCodeResult.updatedExpectedData;
             if (diffCodeResult.decompilationNotesPreventedUpdate) {
                 notUpdatableDueToDecompilationNotes.add(expectedJavaPath);
-            }
-        }
-
-        String actualSummary = decompilationResult.summary;
-        if (!actualSummary.isEmpty() || Files.exists(expectedSummaryPath)) {
-            if (!Files.exists(expectedSummaryPath)) {
-                if (CREATE_EXPECTED_DATA_IF_MISSING) {
-                    createdExpectedFile = true;
-                    writeString(expectedSummaryPath, actualSummary);
-                } else {
-                    throwTestSetupError("Missing file: " + expectedSummaryPath);
-                }
-            } else {
-                if (!assertFileEquals(expectedSummaryPath, actualSummary)) {
-                    updatedExpectedFile = true;
-                }
-            }
-        }
-
-        String actualExceptions = decompilationResult.exceptions;
-        if (!actualExceptions.isEmpty() || Files.exists(expectedExceptionsPath)) {
-            if (!Files.exists(expectedExceptionsPath)) {
-                if (CREATE_EXPECTED_DATA_IF_MISSING) {
-                    createdExpectedFile = true;
-                    writeString(expectedExceptionsPath, actualExceptions);
-                } else {
-                    throwTestSetupError("Missing file: " + expectedExceptionsPath);
-                }
-            } else {
-                if (!assertFileEquals(expectedExceptionsPath, actualExceptions)) {
-                    updatedExpectedFile = true;
-                }
-            }
-        }
-
-        if (createdExpectedFile) {
-            failCreatedMissingExpectedData();
-        }
-        if (updatedExpectedFile) {
-            failUpdatedExpectedData(notUpdatableDueToDecompilationNotes);
-        }
-        if (!notUpdatableDueToDecompilationNotes.isEmpty()) {
-            failNotUpdatableDueToDecompilationNotes(notUpdatableDueToDecompilationNotes);
-        }
-    }
-
-    private static Path resolveSafely(Path parent, String child) {
-        if (parent.getNameCount() == 0) {
-            throw new IllegalArgumentException("Parent path must consist of at least one name");
-        }
-
-        Path childPath = parent.getFileSystem().getPath(child);
-
-        if (childPath.isAbsolute()) {
-            throw new IllegalArgumentException("Child must not be absolute");
-        }
-        if (childPath.getNameCount() == 0) {
-            throw new IllegalArgumentException("Child must not be empty");
-        }
-
-        Path parentNormalized = parent.normalize();
-        Path resolvedNormalized = parentNormalized.resolve(childPath).normalize();
-
-        if (!resolvedNormalized.startsWith(parentNormalized)
-            || !resolvedNormalized.endsWith(childPath)
-        ) {
-            throw new IllegalArgumentException("Malformed child: " + childPath);
-        }
-        else {
-            return parent.resolve(childPath);
-        }
-    }
-
-    private static Path getExpectedPathForDecompiled(Path parent, DecompiledMultiVer decompiled) {
-        // Note: Does not use `.expected.java` to avoid confusion with class or package name
-        String fileName = decompiled.getPackageName() + '.' + decompiled.getClassName() + ".java";
-        String subPath;
-
-        int javaVersion = decompiled.getRuntimeFrom();
-        if (javaVersion != 0) {
-            subPath = "java-" + javaVersion + "/" + fileName;
-        } else {
-            subPath = fileName;
-        }
-
-        // Resolve safely to avoid writing file outside of intended directory
-        return resolveSafely(parent, subPath);
-    }
-
-    static void assertJar(Path jarPath, Path cfrOptionsFilePath, Path expectedSummaryPath, Path expectedExceptionsPath, Path expectedJavaFilesDirPath) throws IOException {
-        Map<String, String> options = createOptionsMap(cfrOptionsFilePath);
-        options.put(OptionsImpl.ANALYSE_AS.getName(), AnalysisType.JAR.name());
-
-        DecompilationResult decompilationResult = decompile(jarPath, options);
-        List<DecompiledMultiVer> decompiledList = decompilationResult.decompiled;
-
-        boolean createdExpectedFile = false;
-        boolean updatedExpectedFile = false;
-        List<Path> notUpdatableDueToDecompilationNotes = new ArrayList<>();
-
-        if (!Files.exists(expectedJavaFilesDirPath)) {
-            if (CREATE_EXPECTED_DATA_IF_MISSING) {
-                createdExpectedFile = true;
-
-                for (DecompiledMultiVer decompiled : decompiledList) {
-                    Path filePath = getExpectedPathForDecompiled(expectedJavaFilesDirPath, decompiled);
-                    // Create parent directory for every file to account for files which are nested
-                    // inside additional directories
-                    Files.createDirectories(filePath.getParent());
-                    writeString(filePath, decompiled.getJava());
-                }
-            } else {
-                throwTestSetupError("Missing directory: " + expectedJavaFilesDirPath);
-            }
-        } else {
-            Set<Path> checkedFiles = new HashSet<>();
-            // Store error to first process all files and afterwards cause test failure
-            AssertionError assertionError = null;
-
-            for (DecompiledMultiVer decompiled : decompiledList) {
-                Path filePath = getExpectedPathForDecompiled(expectedJavaFilesDirPath, decompiled);
-                if (!Files.exists(filePath)) {
-                    throwTestSetupError("Missing file: " + filePath);
-                }
-
-                checkedFiles.add(filePath.toAbsolutePath().normalize());
-
-                DiffCodeResult diffCodeResult = diffCodeAndWriteOnMismatch(filePath, decompiled.getJava());
-                AssertionError error = diffCodeResult.assertionError;
-                if (error != null) {
-                    if (assertionError == null) {
-                        assertionError = error;
-                    } else {
-                        assertionError.addSuppressed(error);
-                    }
-                }
-
-                updatedExpectedFile |= diffCodeResult.updatedExpectedData;
-                if (diffCodeResult.decompilationNotesPreventedUpdate) {
-                    notUpdatableDueToDecompilationNotes.add(filePath);
-                }
-            }
-
-            if (assertionError != null) {
-                throw assertionError;
-            }
-
-            // Verify that CFR produced all expected files
-            try (Stream<Path> allFiles = Files.walk(expectedJavaFilesDirPath).filter(Files::isRegularFile)) {
-                allFiles.map(path -> path.toAbsolutePath().normalize()).forEach(path -> {
-                    String fileName = path.getFileName().toString();
-
-                    if (!JAR_SPECIAL_EXPECTED_FILE_NAMES.contains(fileName) && !checkedFiles.contains(path)) {
-                        throwTestSetupError("Expected file was not checked: " + path);
-                    }
-                });
             }
         }
 
