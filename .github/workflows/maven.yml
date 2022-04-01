@@ -10,16 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
+    - name: Check out Git repository
+      uses: actions/checkout@v2
       with:
-        java-version: 1.8
-    - name: Cache local Maven repository
-      uses: actions/cache@v1
+        # Clone decompilation test data submodule
+        submodules: true
+
+    - name: Set up Java
+      uses: actions/setup-java@v2
       with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    - name: Build with Maven
+        distribution: temurin
+        java-version: 8
+        cache: maven
+
+    - id: maven-build
+      name: Build with Maven
       run: mvn --batch-mode --update-snapshots -Dgpg.skip=true clean verify
+
+    - name: Upload decompilation test failures artifact
+      # Only run when Maven build failed, see https://github.community/t/run-step-only-if-previous-step-failed/127124/3
+      if: failure() && steps.maven-build.outcome == 'failure'
+      uses: actions/upload-artifact@v2
+      with:
+        name: decompilation-test-failures-diff
+        path: target/cfr-test-failures-diff
