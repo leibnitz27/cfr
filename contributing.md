@@ -16,13 +16,13 @@ Ok, that's out of the way.
 
 # Great things to contribute
 
-* Improvements to the 'test framework'.  At the moment, it's a fairly Heath Robinson-ian (or Rube Goldberg, pick your poison) contraption, to allow multiple versions of Java to be tested.  I **know** it could be better.....
+* Improvements to the 'test framework'.  At the moment, it's a fairly Heath Robinson-ian (or Rube Goldberg, pick your poison) contraption, to allow multiple versions of Java to be tested.  I **know** it could be better..... (special thanks to Marcono1234 already here).
 * Tests.  Because CFR is Java 6 only, the tests are held in a seperate repo. <a href="https://github.com/leibnitz27/cfr_tests">cfr_tests</a>, which will build and compare several hundred exemplars in multiple versions of Java.
 * Fixes for your new Tests. ;) (*hint* - if you've got a bugfix to contribute, please also have contributed a test to prove it!)
 
 # Not great things to contribute
 
-* Output code formatting (other than egregious fixes).  CFR can't be all things to all people, and there are lots of great tools out there to apply your own flavour of egyptian braces, non-egyptian braces, positive semi-definite braces etc.
+* Output code formatting (other than egregious fixes).  CFR can't be all things to all people, and there are lots of great tools out there to apply your own flavour of egyptian braces, non-egyptian braces, positive semi-definite braces etc.   NB:  The last actual published conventions by a java dev team are the ancient https://www.oracle.com/java/technologies/javase/codeconventions-contents.html , so I'll buy a formatting change if it matches that ;)
 * Java above 6.  See above.  *I know.*  But it's all syntactic sugar anyway.  **cough**.  Anyway, you get to work with $$FUNKY_NEW_LANGUAGE$$ in your day job.
 * External dependencies.  *I know.*  See above.  
 * Reflection.  No reflection please. 
