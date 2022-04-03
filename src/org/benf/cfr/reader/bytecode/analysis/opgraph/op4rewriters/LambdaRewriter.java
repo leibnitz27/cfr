@@ -33,6 +33,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredRetu
 import org.benf.cfr.reader.bytecode.analysis.types.DynamicInvokeType;
 import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaIntersectionTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -110,14 +111,19 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 if (child instanceof LambdaExpressionCommon) {
                     JavaTypeInstance resType = res.getInferredJavaType().getJavaTypeInstance();
                     JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
-                    if (childType.implicitlyCastsTo(resType, null)) {
+
+                    // If the child type is an intersection type it cannot be removed safely, at least not if
+                    // it includes Serializable since that makes the complete lambda serializable
+                    if (childType instanceof JavaIntersectionTypeInstance) {
+                        return new CastExpression(BytecodeLoc.NONE, child.getInferredJavaType(), child, true);
+                    } else if (childType.implicitlyCastsTo(resType, null)) {
                         return child;
                     } else {
                         /*
                          * This is more interesting - the cast doesn't work?  This means we might need to explicitly label
                          * the lambda expression type.
                          */
-                        Expression tmp = ((LambdaExpressionCommon) child).childCastForced() ? child : new CastExpression(BytecodeLoc.NONE, child.getInferredJavaType(), child, true);
+                        Expression tmp = new CastExpression(BytecodeLoc.NONE, child.getInferredJavaType(), child, true);
                         res = new CastExpression(BytecodeLoc.NONE, res.getInferredJavaType(), tmp);
                         return res;
                     }
