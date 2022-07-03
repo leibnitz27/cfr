@@ -23,10 +23,13 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.CollectionUtils;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -179,11 +182,62 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
     }
 
+    private List<AnnotationTableEntry> getRecordComponentAnnotations(ClassFile owner, List<AnnotationTableEntry> fieldAnnotations) {
+        // Note: Don't have to consider TYPE_USE annotations because they are implicitly propagated
+        // to field and already dumped as part of regular field annotation handling
+        
+        List<AnnotationTableEntry> componentAnnotations = null;
+
+        AttributeRecord recordAttribute = owner.getAttributes().getByName(AttributeRecord.ATTRIBUTE_NAME);
+        List<Attribute> componentAttributes;
+        if (recordAttribute != null && (componentAttributes = recordAttribute.getRecordComponentAttributes(fieldName)) != null) {
+            componentAnnotations = MiscAnnotations.BasicAnnotations(new AttributeMap(componentAttributes));
+        }
+
+        if (componentAnnotations == null) {
+            // Return all annotations which were propagated from component to field
+            return fieldAnnotations;
+        } else if (fieldAnnotations == null) {
+            return componentAnnotations;
+        } else {
+            // Create copy because original list might not be modifiable
+            componentAnnotations = ListFactory.newList(componentAnnotations);
+
+            // First collect the type of all annotations with target RECORD_COMPONENT
+            Set<JavaTypeInstance> componentAnnotationTypes = Functional.mapToSet(componentAnnotations, new UnaryFunction<AnnotationTableEntry, JavaTypeInstance>() {
+                @Override
+                public JavaTypeInstance invoke(AnnotationTableEntry arg) {
+                    return arg.getClazz();
+                }
+            });
+
+            // Then consider all annotations without RECORD_COMPONENT target, but with FIELD
+            // target which are implicitly propagated from component to field
+            // Annotations which are already in componentAnnotationTypes have both RECORD_COMPONENT
+            // and FIELD as target and therefore don't have to be added a second time
+
+            // Note: METHOD annotations propagated from component don't have to be considered;
+            // RecordRewriter will not hide the accessor method if it has annotations
+
+            for (AnnotationTableEntry fieldAnnotation : fieldAnnotations) {
+                if (!componentAnnotationTypes.contains(fieldAnnotation.getClazz())) {
+                    componentAnnotations.add(fieldAnnotation);
+                }
+            }
+
+            return componentAnnotations;
+        }
+    }
+
     public void dump(Dumper d, String name, ClassFile owner, boolean asRecordField) {
         JavaTypeInstance type = getJavaTypeInstance();
 
         List<AnnotationTableEntry> declarationAnnotations = MiscAnnotations.BasicAnnotations(attributes);
-        TypeAnnotationHelper tah = TypeAnnotationHelper.create(attributes, TypeAnnotationEntryValue.type_field);
+        // If field is backing a record component, get annotations for component as well
+        if (asRecordField) {
+            declarationAnnotations = getRecordComponentAnnotations(owner, declarationAnnotations);
+        }
+        TypeAnnotationHelper tah = TypeAnnotationHelper.create(attributes, TypeAnnotationEntryValue.type_field_or_record_component);
         List<AnnotationTableTypeEntry> fieldTypeAnnotations = tah == null ? null : tah.getEntries();
 
         DeclarationAnnotationsInfo annotationsInfo = DeclarationAnnotationHelper.getDeclarationInfo(type, declarationAnnotations, fieldTypeAnnotations);

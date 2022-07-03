@@ -301,7 +301,19 @@ public class RecordRewriter {
         ClassFileField cff = getCFF(wcm.getLValueWildCard("var").getMatch(), thisType);
         if (cff != classFileField) return;
         classFileField.markHidden();
-        method.hideDead();
+
+        /*
+         * If method has annotations cannot hide it. This is due to ambiguities regarding whether
+         * method was explicitly declared in source and annotated, or whether it was generated
+         * by the compiler and annotations with target METHOD were propagated from annotated
+         * record component. Class file currently does not contain enough information to determine
+         * this (see https://bugs.openjdk.org/browse/JDK-8251375), so to avoid losing annotations
+         * by accident or introducing unwanted side effects by placing them on record component,
+         * just keep the method.
+         */
+        if (method.getMethodAnnotations().isEmpty()) {
+            method.hideDead();
+        }
     }
 
     private static void hideConstructorIfEmpty(Method canonicalCons) {

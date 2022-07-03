@@ -77,6 +77,8 @@ public class AttributeFactory {
                 return new AttributeModulePackages(raw);
             } else if (AttributeModuleClassMain.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeModuleClassMain(raw);
+            } else if (AttributeRecord.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeRecord(raw, cp, classFileVersion);
             } else if (AttributePermittedSubclasses.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributePermittedSubclasses(raw, cp);
             }

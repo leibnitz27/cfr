@@ -26,6 +26,7 @@ import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.collections.CollectionUtils;
 import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
@@ -443,6 +444,12 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             thrownTypes = new LinkedHashSet<JavaTypeInstance>(getDeclaredThrownTypes());
         }
         return thrownTypes;
+    }
+
+    /** Gets the annotations with target {@code METHOD} */
+    public List<AnnotationTableEntry> getMethodAnnotations() {
+        MethodPrototypeAnnotationsHelper annotationsHelper = new MethodPrototypeAnnotationsHelper(attributes);
+        return ListFactory.orEmptyList(annotationsHelper.getMethodAnnotations());
     }
 
     private void dumpSignatureText(boolean asClass, Dumper d) {
