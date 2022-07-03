@@ -269,7 +269,7 @@ public class MethodPrototype implements TypeUsageCollectable {
                     annotationsHelper.dumpParamType(arg, paramIdx, d);
                     d.dump(arg);
                 } else {
-                    ((JavaArrayTypeInstance) arg).toVarargString(d);
+                    annotationsHelper.dumpVarargsParamType((JavaArrayTypeInstance) arg, paramIdx, d);
                 }
             } else {
                 annotationsHelper.dumpParamType(arg, paramIdx, d);
