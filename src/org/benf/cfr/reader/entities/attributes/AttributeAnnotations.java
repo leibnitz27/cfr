@@ -12,6 +12,7 @@ import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class AttributeAnnotations extends Attribute implements TypeUsageCollectable {
@@ -60,7 +61,8 @@ public abstract class AttributeAnnotations extends Attribute implements TypeUsag
     }
 
     public List<AnnotationTableEntry> getEntryList() {
-        return annotationTableEntryList;
+        // Prevent accidental modification
+        return Collections.unmodifiableList(annotationTableEntryList);
     }
 
     @Override

@@ -97,6 +97,14 @@ public class Functional {
         return result;
     }
 
+    public static <X, Y> Set<Y> mapToSet(Collection<X> input, UnaryFunction<X, Y> function) {
+        Set<Y> result = SetFactory.newSet();
+        for (X item : input) {
+            result.add(function.invoke(item));
+        }
+        return result;
+    }
+
     public static <X> List<X> uniqAll(List<X> input) {
         Set<X> found = SetFactory.newSet();
         List<X> result = ListFactory.newList();

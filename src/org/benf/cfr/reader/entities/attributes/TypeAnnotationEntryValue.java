@@ -11,7 +11,7 @@ public enum TypeAnnotationEntryValue {
     type_extends_implements(0x10, TypeAnnotationEntryKind.supertype_target, TypeAnnotationLocation.ClassFile),
     type_type_parameter_class_interface(0x11, TypeAnnotationEntryKind.type_parameter_bound_target, TypeAnnotationLocation.ClassFile),
     type_type_parameter_method_constructor(0x12, TypeAnnotationEntryKind.type_parameter_bound_target, TypeAnnotationLocation.method_info),
-    type_field(0x13, TypeAnnotationEntryKind.empty_target, TypeAnnotationLocation.field_info),
+    type_field_or_record_component(0x13, TypeAnnotationEntryKind.empty_target, TypeAnnotationLocation.field_info),
     type_ret_or_new(0x14, TypeAnnotationEntryKind.empty_target, TypeAnnotationLocation.method_info),
     type_receiver(0x15, TypeAnnotationEntryKind.empty_target, TypeAnnotationLocation.method_info),
     type_formal(0x16, TypeAnnotationEntryKind.method_formal_parameter_target, TypeAnnotationLocation.method_info),
