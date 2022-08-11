@@ -38,11 +38,6 @@ public class LambdaExpressionNewArray extends AbstractExpression implements Lamb
     }
 
     @Override
-    public boolean childCastForced() {
-        return false;
-    }
-
-    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         return this;
     }

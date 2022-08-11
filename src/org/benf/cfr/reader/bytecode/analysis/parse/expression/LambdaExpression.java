@@ -13,7 +13,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaIntersectionTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -86,11 +85,6 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
     }
 
     @Override
-    public boolean childCastForced() {
-        return getInferredJavaType().getJavaTypeInstance() instanceof JavaIntersectionTypeInstance;
-    }
-
-    @Override
     public Precedence getPrecedence() {
         return Precedence.PAREN_SUB_MEMBER;
     }
@@ -99,10 +93,6 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
     public Dumper dumpInner(Dumper d) {
         boolean multi = args.size() != 1;
         boolean first = true;
-        // If we need to CAST the lambda to something, we have to do this.
-        if (childCastForced()) {
-            d.separator("(").dump(getInferredJavaType().getJavaTypeInstance()).separator(")");
-        }
         if (explicitArgTypes != null && explicitArgTypes.size() == args.size()) {
             d.separator("(");
             for (int i=0;i<args.size();++i) {
