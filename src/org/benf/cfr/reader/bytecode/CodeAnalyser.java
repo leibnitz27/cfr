@@ -910,6 +910,9 @@ public class CodeAnalyser {
             }
 
             Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);
+            // It's likely we'll only need to perform this due to lambdas in the previous stage, but
+            // for now keep more general.
+            Op04StructuredStatement.removeRedundantIntersectionCasts(dcCommonState, method, block);
             // Now lambdas have been rewritten, reprocess ONLY to insert local class
             // definitions.
             // Note that local class definitions are removed at the point of lambda rewrite.

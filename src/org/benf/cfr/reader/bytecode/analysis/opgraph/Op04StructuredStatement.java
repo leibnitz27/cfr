@@ -1137,6 +1137,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new LambdaRewriter(state, method).rewrite(root);
     }
 
+    public static void removeRedundantIntersectionCasts(DCCommonState state, Method method, Op04StructuredStatement root) {
+        new RedundantIntersectionCastTransformer().transform(root);
+    }
+
     public static void removeUnnecessaryVarargArrays(Options options, Method method, Op04StructuredStatement root) {
         new VarArgsRewriter().rewrite(root);
     }

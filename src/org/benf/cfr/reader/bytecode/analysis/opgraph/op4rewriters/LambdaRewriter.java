@@ -113,10 +113,12 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                     JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
 
                     // If the child type is an intersection type it cannot be removed safely, at least not if
-                    // it includes Serializable since that makes the complete lambda serializable
+                    // it includes Serializable since that makes the complete lambda serializable.
                     if (childType instanceof JavaIntersectionTypeInstance) {
-                        return new CastExpression(BytecodeLoc.NONE, child.getInferredJavaType(), child, true);
-                    } else if (childType.implicitlyCastsTo(resType, null)) {
+                        child = new CastExpression(BytecodeLoc.NONE, child.getInferredJavaType(), child, true);
+                    }
+
+                    if (childType.implicitlyCastsTo(resType, null)) {
                         return child;
                     } else {
                         /*
