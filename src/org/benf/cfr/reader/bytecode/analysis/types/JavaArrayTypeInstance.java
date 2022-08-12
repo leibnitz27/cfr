@@ -24,7 +24,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         this.underlyingType = underlyingType;
     }
 
-    private class Annotated implements JavaAnnotatedTypeInstance {
+    class Annotated implements JavaAnnotatedTypeInstance {
         private final List<List<AnnotationTableEntry>> entries;
         private final JavaAnnotatedTypeInstance annotatedUnderlyingType;
 
@@ -36,10 +36,11 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
             annotatedUnderlyingType = underlyingType.getAnnotatedInstance();
         }
 
-        @Override
-        public Dumper dump(Dumper d) {
+        private Dumper dump(Dumper d, boolean isVarargs) {
             annotatedUnderlyingType.dump(d);
-            for (List<AnnotationTableEntry> entry : entries) {
+            java.util.Iterator<List<AnnotationTableEntry>> entryIterator = entries.iterator();
+            while (entryIterator.hasNext()) {
+                List<AnnotationTableEntry> entry = entryIterator.next();
                 if (!entry.isEmpty()) {
                     d.print(' ');
                     for (AnnotationTableEntry oneEntry : entry) {
@@ -47,9 +48,18 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
                         d.print(' ');
                     }
                 }
-                d.print("[]");
+                d.print(isVarargs && !entryIterator.hasNext() ? "..." : "[]");
             }
             return d;
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            return dump(d, false);
+        }
+
+        public Dumper dumpVarargs(Dumper d) {
+            return dump(d, true);
         }
 
         @Override
