@@ -80,15 +80,7 @@ public class MethodPrototypeAnnotationsHelper {
         return typeEntries;
     }
 
-    void dumpParamType(JavaTypeInstance arg, int paramIdx, Dumper d) {
-        dumpParamType(arg, paramIdx, false, d);
-    }
-
-    void dumpVarargsParamType(JavaArrayTypeInstance arg, int paramIdx, Dumper d) {
-        dumpParamType(arg, paramIdx, true, d);
-    }
-
-    private void dumpParamType(JavaTypeInstance arg, final int paramIdx, boolean isVarargs, Dumper d) {
+    public void dumpParamType(JavaTypeInstance arg, final int paramIdx, Dumper d) {
         List<AnnotationTableEntry> entries = getParameterAnnotations(paramIdx);
         List<AnnotationTableTypeEntry> typeEntries = getTypeParameterAnnotations(paramIdx);
         DeclarationAnnotationsInfo annotationsInfo = DeclarationAnnotationHelper.getDeclarationInfo(arg, entries, typeEntries);
@@ -104,22 +96,13 @@ public class MethodPrototypeAnnotationsHelper {
         dumpAnnotationTableEntries(declAnnotationsToDump, d);
 
         if (typeAnnotationsToDump.isEmpty()) {
-            if (isVarargs) {
-                ((JavaArrayTypeInstance) arg).toVarargString(d);
-            } else {
-                d.dump(arg);
-            }
+            d.dump(arg);
         } else {
             JavaAnnotatedTypeInstance jat = arg.getAnnotatedInstance();
             DecompilerComments comments = new DecompilerComments();
             TypeAnnotationHelper.apply(jat, typeAnnotationsToDump, comments);
             d.dump(comments);
-
-            if (isVarargs) {
-                ((JavaArrayTypeInstance.Annotated) jat).dumpVarargs(d);
-            } else {
-                d.dump(jat);
-            }
+            d.dump(jat);
         }
     }
 }

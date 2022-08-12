@@ -24,6 +24,19 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         this.underlyingType = underlyingType;
     }
 
+    public boolean isVarArgs() { return false; }
+
+    // Return a short lived copy of this type which knows it is varargs.
+    // Do not retain.
+    public JavaArrayTypeInstance getVarArgTweak() {
+        return new JavaArrayTypeInstance(dimensions, underlyingType) {
+            @Override
+            public boolean isVarArgs() {
+                return true;
+            }
+        };
+    }
+
     class Annotated implements JavaAnnotatedTypeInstance {
         private final List<List<AnnotationTableEntry>> entries;
         private final JavaAnnotatedTypeInstance annotatedUnderlyingType;
@@ -36,7 +49,8 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
             annotatedUnderlyingType = underlyingType.getAnnotatedInstance();
         }
 
-        private Dumper dump(Dumper d, boolean isVarargs) {
+        @Override
+        public Dumper dump(Dumper d) {
             annotatedUnderlyingType.dump(d);
             java.util.Iterator<List<AnnotationTableEntry>> entryIterator = entries.iterator();
             while (entryIterator.hasNext()) {
@@ -48,18 +62,9 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
                         d.print(' ');
                     }
                 }
-                d.print(isVarargs && !entryIterator.hasNext() ? "..." : "[]");
+                d.print(isVarArgs() && !entryIterator.hasNext() ? "..." : "[]");
             }
             return d;
-        }
-
-        @Override
-        public Dumper dump(Dumper d) {
-            return dump(d, false);
-        }
-
-        public Dumper dumpVarargs(Dumper d) {
-            return dump(d, true);
         }
 
         @Override
@@ -103,7 +108,12 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext) {
-        toCommonString(getNumArrayDimensions(), d);
+        if (isVarArgs()) {
+            toCommonString(getNumArrayDimensions() - 1, d);
+            d.print(" ...");
+        } else {
+            toCommonString(getNumArrayDimensions(), d);
+        }
     }
 
     @Override
@@ -116,11 +126,6 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         for (int x = 0; x < numDims; ++x) {
             d.print("[]");
         }
-    }
-
-    void toVarargString(Dumper d) {
-        toCommonString(getNumArrayDimensions() - 1, d);
-        d.print(" ...");
     }
 
     @Override

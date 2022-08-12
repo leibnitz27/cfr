@@ -264,12 +264,13 @@ public class MethodPrototype implements TypeUsageCollectable {
             LocalVariable param = parameterLValues.get(paramIdx);
             if (param.isFinal()) d.print("final ");
             if (varargs && (i == argssize - 1)) {
-                if (!(arg instanceof JavaArrayTypeInstance)) {
+                if (arg instanceof JavaArrayTypeInstance) {
+                    arg = ((JavaArrayTypeInstance) arg).getVarArgTweak();
+                    annotationsHelper.dumpParamType(arg, paramIdx, d);
+                } else {
                     d.print(" /* corrupt varargs signature?! */ ");
                     annotationsHelper.dumpParamType(arg, paramIdx, d);
                     d.dump(arg);
-                } else {
-                    annotationsHelper.dumpVarargsParamType((JavaArrayTypeInstance) arg, paramIdx, d);
                 }
             } else {
                 annotationsHelper.dumpParamType(arg, paramIdx, d);
