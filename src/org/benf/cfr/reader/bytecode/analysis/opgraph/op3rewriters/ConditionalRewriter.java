@@ -587,7 +587,9 @@ lbl10: // 1 sources:
             if (blocksAtStart.size() == blocksAtEnd.size()+1) {
                 List<BlockIdentifier> change = SetUtil.differenceAtakeBtoList(blocksAtStart, blocksAtEnd);
                 // size == 1 already verified, but...
-                if (change.size() == 1 && change.get(0).getBlockType() == BlockType.CASE) {
+                if (change.size() == 1 &&
+                        (change.get(0).getBlockType() == BlockType.CASE ||
+                         change.get(0).getBlockType() == BlockType.CATCHBLOCK)) {
                     if (takenTarget.getStatement() instanceof CaseStatement) {
                         // We need to check if the statement LINEARLY preceeding this is in the block we've left.
                         if (stmtLastBlock.getBlockIdentifiers().contains(change.get(0))) {
