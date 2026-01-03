@@ -3,6 +3,7 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -114,5 +115,10 @@ class BytecodeTrackingDumper extends DelegatingDumper {
         }
         consumer.accept(result);
         delegate.close();
+    }
+
+    @Override
+    public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
+        return new TypeOverridingDumper(this, innerclassTypeUsageInformation);
     }
 }
