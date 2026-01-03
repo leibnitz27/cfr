@@ -33,4 +33,9 @@
         <name>TryTest1</name>
         <label>10</label>
     </class>
+    <class>
+        <path>precompiled_tests/java_8/org/benf/cfr/tests</path>
+        <name>TypeArgTestCharIndex</name>
+        <label>8</label>
+    </class>
 </classes>
