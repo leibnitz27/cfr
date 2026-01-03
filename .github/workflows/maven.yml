@@ -30,7 +30,7 @@ jobs:
     - name: Upload decompilation test failures artifact
       # Only run when Maven build failed, see https://github.community/t/run-step-only-if-previous-step-failed/127124/3
       if: failure() && steps.maven-build.outcome == 'failure'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: decompilation-test-failures-diff
         path: target/cfr-test-failures-diff
