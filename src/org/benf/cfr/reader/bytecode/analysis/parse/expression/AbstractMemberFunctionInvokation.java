@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxin
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.FunctionProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -21,6 +22,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
@@ -273,6 +275,22 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     @Override
     public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         object = expressionRewriter.rewriteExpression(object, ssaIdentifiers, statementContainer, flags);
+    }
+
+    protected Expression getArgForStringIndexOfCharLiteral(int argIndex, Expression arg) {
+        if (argIndex != 0) return arg;
+        String name = getMethodPrototype().getName();
+        if (!"indexOf".equals(name) && !"lastIndexOf".equals(name)) return arg;
+        JavaTypeInstance classType = getFunction().getClassEntry().getTypeInstance();
+        if (!TypeConstants.STRING.equals(classType.getDeGenerifiedType())) return arg;
+        if (!(arg instanceof Literal)) return arg;
+        Literal literal = (Literal) arg;
+        TypedLiteral typed = literal.getValue();
+        if (typed.getType() != TypedLiteral.LiteralType.Integer) return arg;
+        if (typed.getInferredJavaType().getRawType() != RawJavaType.INT) return arg;
+        int value = typed.getIntValue();
+        if (value < Character.MIN_VALUE || value > Character.MAX_VALUE) return arg;
+        return new Literal(TypedLiteral.getChar(value));
     }
 
 

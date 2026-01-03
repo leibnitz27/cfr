@@ -58,7 +58,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
         boolean first = true;
         for (int x = 0; x < args.size(); ++x) {
             if (methodPrototype.isHiddenArg(x)) continue;
-            Expression arg = args.get(x);
+            Expression arg = getArgForStringIndexOfCharLiteral(x, args.get(x));
             first = StringUtils.comma(first, d);
             methodPrototype.dumpAppropriatelyCastedArgumentString(arg, d);
         }
