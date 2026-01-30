@@ -59,7 +59,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
 
     @Override
     public BytecodeLoc getCombinedLoc() {
-        return BytecodeLoc.combine(this, args);
+        return BytecodeLoc.combine(this, args, object);
     }
 
     @Override
