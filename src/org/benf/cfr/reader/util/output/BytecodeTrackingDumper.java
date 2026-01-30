@@ -3,6 +3,9 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.attributes.AttributeCode;
+import org.benf.cfr.reader.entities.attributes.AttributeLineNumberTable;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -35,8 +38,28 @@ class BytecodeTrackingDumper extends DelegatingDumper {
         int currentLine = delegate.getCurrentLine();
 
         for (Method method : locInfo.getMethods()) {
-            perMethod.get(method).add(locInfo.getOffsetsForMethod(method), currentDepth, currentLine);
+            Collection<Integer> offsets = locInfo.getOffsetsForMethod(method);
+            NavigableMap<Integer, Integer> lineNumberTable = getLineNumberTable(method);
+            if (lineNumberTable == null || lineNumberTable.isEmpty()) {
+                perMethod.get(method).add(offsets, currentDepth, currentLine);
+                continue;
+            }
+            List<Integer> normalizedOffsets = ListFactory.newList();
+            for (Integer offset : offsets) {
+                if (offset == null) continue;
+                Integer normalized = lineNumberTable.floorKey(offset);
+                normalizedOffsets.add(normalized == null ? offset : normalized);
+            }
+            perMethod.get(method).add(normalizedOffsets, currentDepth, currentLine);
         }
+    }
+
+    private static NavigableMap<Integer, Integer> getLineNumberTable(Method method) {
+        AttributeCode codeAttribute = method.getCodeAttribute();
+        if (codeAttribute == null) return null;
+        AttributeLineNumberTable lineNumberTable = codeAttribute.getAttributes().getByName(AttributeLineNumberTable.ATTRIBUTE_NAME);
+        if (lineNumberTable == null) return null;
+        return lineNumberTable.getEntries();
     }
 
     static class LocAtLine {
