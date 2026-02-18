@@ -772,6 +772,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new HexLiteralTidier().transform(root);
         new ExpressionRewriterTransformer(LiteralRewriter.INSTANCE).transform(root);
         new InvalidExpressionStatementCleaner(variableFactory).transform(root);
+        new StringIndexOfTidier().transform(root);
     }
 
     public static void tidyObfuscation(Options options, Op04StructuredStatement root) {
