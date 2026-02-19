@@ -324,6 +324,10 @@ public class RecordRewriter {
         }
     }
 
+    /**
+     * Tries to remove implicit field assignments from this canonical record constructor, turning
+     * it into a compact canonical constructor. Returns {@code true} if successful.
+     */
     private static boolean removeImplicitAssignments(Method canonicalCons, List<ClassFileField> instances, JavaRefTypeInstance thisType) {
         if (canonicalCons.getCodeAttribute() == null) return false;
         Op04StructuredStatement code = canonicalCons.getAnalysis();
@@ -345,18 +349,22 @@ public class RecordRewriter {
             // this is very messy - refactor using wildcardmatch.
             if (statement.isEffectivelyNOP()) continue;
             if (!(statement instanceof StructuredAssignment)) break;
-            LValue lhs = ((StructuredAssignment) statement).getLvalue();
+
+            StructuredAssignment assignment = (StructuredAssignment) statement;
+            LValue lhs = assignment.getLvalue();
             ClassFileField field = getCFF(lhs, thisType);
             if (field == null) break;
             int idx = instances.indexOf(field);
             if (idx == -1) break;
             instances.set(idx, null);
 
-            Expression rhs = ((StructuredAssignment) statement).getRvalue();
+            Expression rhs = assignment.getRvalue();
             if (!(rhs instanceof LValueExpression)) break;
             LValue rlv = ((LValueExpression) rhs).getLValue();
             LocalVariable expected = args.get(idx);
             if (rlv != expected) break;
+            // Implicit parameter must use the same name as the field
+            expected.getName().forceName(field.getFieldName());
             toNop.add(stm);
             nopFrom = x;
         }
