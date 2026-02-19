@@ -28,7 +28,7 @@ public interface PermittedOptionProvider {
             return name;
         }
 
-        OptionDecoderParam<X, InputType> getFn() {
+        public OptionDecoderParam<X, InputType> getFn() {
             return fn;
         }
 
@@ -36,7 +36,7 @@ public interface PermittedOptionProvider {
             return hidden;
         }
 
-        String describe() {
+        public String describe() {
             StringBuilder sb = new StringBuilder();
             sb.append("'").append(name).append("':\n\n");
             sb.append(help).append('\n');
