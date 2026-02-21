@@ -559,7 +559,8 @@ public class InferredJavaType {
 
         public void mkDelegate(IJTInternal newDelegate) {
             if (isDelegate) {
-                delegate.mkDelegate(newDelegate);
+//                delegate.mkDelegate(newDelegate);
+                InferredJavaType.mkDelegate(delegate, newDelegate);
             } else {
                 isDelegate = true;
                 delegate = newDelegate;
