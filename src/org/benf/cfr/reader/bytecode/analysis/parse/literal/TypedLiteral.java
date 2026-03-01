@@ -257,12 +257,21 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return new TypedLiteral(LiteralType.Long, new InferredJavaType(RawJavaType.LONG, InferredJavaType.Source.LITERAL), v);
     }
 
+    public static TypedLiteral getLongLocked(long v) {
+        return new TypedLiteral(LiteralType.Long, new InferredJavaType(RawJavaType.LONG, InferredJavaType.Source.LITERAL, true), v);
+    }
+
     public static TypedLiteral getInt(int v, InferredJavaType type) {
         return new TypedLiteral(LiteralType.Integer, type, v);
     }
 
     public static TypedLiteral getInt(int v, RawJavaType type) {
         return new TypedLiteral(LiteralType.Integer, new InferredJavaType(type, Source.LITERAL), v);
+    }
+
+    public static TypedLiteral getIntLocked(int v) {
+        TypedLiteral res = getInt(v, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL, true));
+        return res;
     }
 
     public static TypedLiteral getInt(int v) {
@@ -284,12 +293,24 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return getInt(v, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.LITERAL));
     }
 
+    public static TypedLiteral getBooleanLocked(int v) {
+        return getInt(v, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.LITERAL, true));
+    }
+
     public static TypedLiteral getDouble(double v) {
         return new TypedLiteral(LiteralType.Double, new InferredJavaType(RawJavaType.DOUBLE, InferredJavaType.Source.LITERAL), v);
     }
 
+    public static TypedLiteral getDoubleLocked(double v) {
+        return new TypedLiteral(LiteralType.Double, new InferredJavaType(RawJavaType.DOUBLE, InferredJavaType.Source.LITERAL, true), v);
+    }
+
     public static TypedLiteral getFloat(float v) {
         return new TypedLiteral(LiteralType.Float, new InferredJavaType(RawJavaType.FLOAT, InferredJavaType.Source.LITERAL), v);
+    }
+
+    public static TypedLiteral getFloatLocked(float v) {
+        return new TypedLiteral(LiteralType.Float, new InferredJavaType(RawJavaType.FLOAT, InferredJavaType.Source.LITERAL, true), v);
     }
 
     public static TypedLiteral getClass(JavaTypeInstance v) {
@@ -303,6 +324,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     public static TypedLiteral getNull() {
         return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.NULL, InferredJavaType.Source.LITERAL), null);
+    }
+
+    public static TypedLiteral getNullLocked() {
+        return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.NULL, InferredJavaType.Source.LITERAL, true), null);
     }
 
     private static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
