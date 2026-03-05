@@ -18,6 +18,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpressionCo
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpressionFallback;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpressionNewArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewAnonymousArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewObjectArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -458,6 +459,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         if (anonymousLambdaArgs.size() != 1) return false;
 
         if (!(e instanceof AbstractNewArray)) return false;
+        if (e instanceof NewAnonymousArray) return false;
         AbstractNewArray ana = (AbstractNewArray)e;
         if (ana.getNumDims() != 1) return false;
         return ana.getDimSize(0).equals(new LValueExpression(anonymousLambdaArgs.get(0)));
