@@ -16,7 +16,8 @@ public interface TypeConstants {
     String methodTypeName = "java.lang.invoke.MethodType";
     String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
     String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
-    
+    String constantBootstrapsName = "java.lang.invoke.ConstantBootstraps";
+
     JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
     JavaRefTypeInstance OBJECTS = JavaRefTypeInstance.createTypeConstant(objectsName);
     JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Enum");

@@ -8,17 +8,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType.Source;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryDouble;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryFloat;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryInteger;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryLong;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodType;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryString;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
+import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
+import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
@@ -361,6 +352,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             return getMethodHandle((ConstantPoolEntryMethodHandle) cpe, cp);
         } else if (cpe instanceof ConstantPoolEntryMethodType) {
             return getMethodType((ConstantPoolEntryMethodType) cpe, cp);
+        } else if (cpe instanceof ConstantPoolEntryDynamicInfo) {
+            // This should have been filtered out at op02.
         }
         throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
     }

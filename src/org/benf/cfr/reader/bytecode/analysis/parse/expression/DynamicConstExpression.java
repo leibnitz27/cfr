@@ -86,4 +86,8 @@ public class DynamicConstExpression extends AbstractExpression {
     public Expression deepClone(CloneHelper cloneHelper) {
         return new DynamicConstExpression(getLoc(), content.deepClone(cloneHelper));
     }
+
+    public Expression getContent() {
+        return content;
+    }
 }
