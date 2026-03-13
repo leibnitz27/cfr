@@ -42,12 +42,9 @@ public class KnownBootstraps {
                             JavaTypeInstance typ = ConstantPoolUtils.decodeTypeTok(s, cp);
                             return TypedLiteral.getClass(typ);
                         }
-                        return null;
                     }
                 }
-                return null;
             }
-            return null;
         }
         return null;
     }

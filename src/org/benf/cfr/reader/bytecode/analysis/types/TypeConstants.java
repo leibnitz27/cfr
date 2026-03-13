@@ -17,6 +17,8 @@ public interface TypeConstants {
     String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
     String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
     String constantBootstrapsName = "java.lang.invoke.ConstantBootstraps";
+    String switchBootstrapsName = "java.lang.runtime.SwitchBootstraps";
+    String callSiteName = "java.lang.invoke.CallSite";
 
     JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
     JavaRefTypeInstance OBJECTS = JavaRefTypeInstance.createTypeConstant(objectsName);
@@ -41,6 +43,8 @@ public interface TypeConstants {
     JavaRefTypeInstance OVERRIDE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Override");
     JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record");
     JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods");
+    JavaRefTypeInstance SWITCHBOOTSTRAPS = JavaRefTypeInstance.createTypeConstant(switchBootstrapsName);
+    JavaRefTypeInstance CALLSITE = JavaRefTypeInstance.createTypeConstant(callSiteName);
     JavaRefTypeInstance METHOD_HANDLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandleName);
     JavaRefTypeInstance METHOD_HANDLES = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesName);
     JavaRefTypeInstance METHOD_HANDLES$LOOKUP = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesLookupName);

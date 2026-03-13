@@ -39,6 +39,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.StaticInitRetu
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.SwitchReplacer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.SynchronizedBlocks;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchPatternRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.IllegalReturnChecker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
@@ -904,6 +905,9 @@ public class CodeAnalyser {
             if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, classFileVersion)) {
                 Op04StructuredStatement.removeEndResource(method.getClassFile(), block);
             }
+
+            // Have to rewrite switch patterns BEFORE we rewrite switch expressions, because.....
+            new SwitchPatternRewriter(options, classFileVersion, bytecodeMeta).rewrite(block);
 
             if (options.getOption(OptionsImpl.SWITCH_EXPRESSION, classFileVersion)) {
                 Op04StructuredStatement.switchExpression(method, block, comments);

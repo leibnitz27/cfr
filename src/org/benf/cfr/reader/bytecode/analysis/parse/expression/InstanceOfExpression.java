@@ -46,6 +46,10 @@ public class InstanceOfExpression extends AbstractExpression {
         collector.collect(typeInstance);
     }
 
+    public JavaTypeInstance getTypeInstance() {
+        return typeInstance;
+    }
+
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new InstanceOfExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(lhs), typeInstance);
