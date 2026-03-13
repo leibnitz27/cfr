@@ -536,15 +536,20 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     private TypedLiteral getBootstrapArg(ClassFile cf, ConstantPoolEntry[] bootstrapArguments, int x, ConstantPool cp) {
         ConstantPoolEntry entry = bootstrapArguments[x];
-        DecompilerComments tmp = new DecompilerComments();
-        Expression e = getLiteralConstantPoolEntry(cf, entry, tmp);
 
-        if (e instanceof Literal) {
-            return ((Literal) e).getValue();
-        } else if (e instanceof DynamicConstExpression) {
-            return KnownBootstraps.ConvertToLiteral((DynamicConstExpression) e, cp);
+        if (entry instanceof ConstantPoolEntryDynamicInfo) {
+            DecompilerComments tmp = new DecompilerComments();
+            Expression e = getLiteralConstantPoolEntry(cf, entry, tmp);
+
+            if (e instanceof Literal) {
+                return ((Literal) e).getValue();
+            } else if (e instanceof DynamicConstExpression) {
+                return KnownBootstraps.ConvertToLiteral((DynamicConstExpression) e, cp);
+            } else {
+                return TypedLiteral.getString(e.toString());
+            }
         } else {
-            return TypedLiteral.getString(e.toString());
+            return TypedLiteral.getConstantPoolEntry(cp, entry);
         }
     }
 
