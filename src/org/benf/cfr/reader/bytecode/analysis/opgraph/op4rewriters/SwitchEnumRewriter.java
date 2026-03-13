@@ -26,6 +26,7 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -68,25 +69,50 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         WildcardMatch wcm = new WildcardMatch();
 
         if (!switchStatements.isEmpty()) {
-            MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(switchStatements);
+            {
+                MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(switchStatements);
 
-            Matcher<StructuredStatement> m = new ResetAfterTest(wcm,
-                    new CollectMatch("switch", new StructuredSwitch(BytecodeLoc.NONE,
-                            new ArrayIndex(BytecodeLoc.NONE,
-                                    wcm.getExpressionWildCard("lut"),
-                                    wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
-                            null, wcm.getBlockIdentifier("block"))));
+                Matcher<StructuredStatement> m = new ResetAfterTest(wcm,
+                        new CollectMatch("switch", new StructuredSwitch(BytecodeLoc.NONE,
+                                new ArrayIndex(BytecodeLoc.NONE,
+                                        wcm.getExpressionWildCard("lut"),
+                                        wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
+                                null, wcm.getBlockIdentifier("block"))));
 
 
-            SwitchEnumMatchResultCollector matchResultCollector = new SwitchEnumMatchResultCollector();
-            while (mi.hasNext()) {
-                mi.advance();
-                matchResultCollector.clear();
-                if (m.match(mi, matchResultCollector)) {
-                    tryRewrite(matchResultCollector, false);
-                    mi.rewind1();
+                SwitchEnumMatchResultCollector matchResultCollector = new SwitchEnumMatchResultCollector();
+                while (mi.hasNext()) {
+                    mi.advance();
+                    matchResultCollector.clear();
+                    if (m.match(mi, matchResultCollector)) {
+                        tryRewrite(matchResultCollector, false);
+                        mi.rewind1();
+                    }
                 }
             }
+
+            /*
+             * Since java 21, switch statements have been a lot simpler - they just switch on ordinal.
+             */
+            {
+                MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(switchStatements);
+
+                Matcher<StructuredStatement> m = new ResetAfterTest(wcm,
+                        new CollectMatch("switch", new StructuredSwitch(BytecodeLoc.NONE,
+                                                                 wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object")),
+                                null, wcm.getBlockIdentifier("block"))));
+
+                SwitchEnumMatchResultCollector matchResultCollector = new SwitchEnumMatchResultCollector();
+                while (mi.hasNext()) {
+                    mi.advance();
+                    matchResultCollector.clear();
+                    if (m.match(mi, matchResultCollector)) {
+                        tryRewriteJ21(matchResultCollector, false);
+                        mi.rewind1();
+                    }
+                }
+            }
+
         }
 
         // We also have the vanishingly unlikely but quite silly case of switching on a literal with no content.
@@ -141,6 +167,63 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 }
 
      */
+
+    private void tryRewriteJ21(SwitchEnumMatchResultCollector mrc, boolean expression) {
+        Expression lvalue = mrc.getEnumObject();
+        if (lvalue instanceof LValueExpression) {
+            ClassFile enumClass;
+            try {
+                enumClass = dcCommonState.getClassFile(lvalue.getInferredJavaType().getJavaTypeInstance());
+            } catch (CannotLoadClassException e) {
+                // Oh dear, can't load that class.  Proceed without it.
+                return;
+            }
+            Method values = enumClass.getSingleMethodByNameOrNull("$values");
+            if (values == null) {
+                return;
+            }
+            Op04StructuredStatement valuesData = null;
+            try {
+                valuesData = values.getAnalysis();
+            } catch (ConfusedCFRException e) {
+                return;
+            }
+
+            List<StructuredStatement> decls = ListFactory.newList();
+            valuesData.linearizeStatementsInto(decls);
+            decls = Functional.filter(decls, new Predicate<StructuredStatement>() {
+                @Override
+                public boolean test(StructuredStatement in) {
+                    return !(in instanceof StructuredComment || in instanceof BeginBlock || in instanceof EndBlock) ;
+                }
+            });
+
+            if (decls.size() != 1) return;
+
+            StructuredStatement decl = decls.get(0);
+            if (!(decl instanceof StructuredReturn)) return;
+
+            Expression value = ((StructuredReturn) decl).getValue();
+            if (!(value instanceof NewAnonymousArray)) return;
+
+            List<Expression> enumValues = ((NewAnonymousArray) value).getValues();
+
+            int idx = 0;
+            Map<Integer, StaticVariable> ordinals = MapFactory.newMap();
+            for (Expression e : enumValues) {
+                if (!(e instanceof LValueExpression)) return;
+                LValue lv = ((LValueExpression) e).getLValue();
+                if (!(lv instanceof StaticVariable)) return;
+                if (!lv.getInferredJavaType().getJavaTypeInstance().equals(lvalue.getInferredJavaType().getJavaTypeInstance())) return;
+                ordinals.put(idx++, (StaticVariable) lv);
+            }
+
+
+            SwitchForeignEnumMatchResultCollector rlut = new SwitchForeignEnumMatchResultCollector(ordinals);
+            replaceIndexedSwitch(mrc, false, lvalue, rlut);
+        }
+    }
+
 
     private void tryRewrite(SwitchEnumMatchResultCollector mrc, boolean expression) {
         Expression lookup = mrc.getLookupTable();
@@ -559,10 +642,15 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
     private class SwitchForeignEnumMatchResultCollector extends AbstractMatchResultIterator {
         private final WildcardMatch wcmCase;
-        private final Map<Integer, StaticVariable> lutValues = MapFactory.newMap();
+        private Map<Integer, StaticVariable> lutValues = MapFactory.newMap();
 
         private SwitchForeignEnumMatchResultCollector(WildcardMatch wcmCase) {
             this.wcmCase = wcmCase;
+        }
+
+        public SwitchForeignEnumMatchResultCollector(Map<Integer, StaticVariable> ordinals) {
+            this.wcmCase = new WildcardMatch();
+            this.lutValues = ordinals;
         }
 
         Map<Integer, StaticVariable> getLUT() {
