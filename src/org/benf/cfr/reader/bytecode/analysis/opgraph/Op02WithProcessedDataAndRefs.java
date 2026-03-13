@@ -1523,7 +1523,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             throw new ConfusedCFRException("Expected a result from a dynamic literal");
         }
         AssignmentSimple as = (AssignmentSimple)s;
-        return new DynamicConstExpression(loc, as.getRValue());
+        return new DynamicConstExpression(loc, cpe, as.getRValue());
     }
 
     private StackValue getStackRValue(int idx) {

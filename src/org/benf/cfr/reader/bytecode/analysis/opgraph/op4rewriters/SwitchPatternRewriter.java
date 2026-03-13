@@ -208,9 +208,9 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
             if (!(stm instanceof Block)) return;
             Block blk = (Block)stm;
             List<Op04StructuredStatement> blkstm = blk.getBlockStatements();
-            if (blkstm.size() < 2) return;
+            if (blkstm.isEmpty()) return;
             Op04StructuredStatement defn = blkstm.get(0);
-            Op04StructuredStatement pred = blkstm.get(1);
+            Op04StructuredStatement pred = blkstm.size() > 1 ? blkstm.get(1) : null;
             StructuredStatement sdefn = defn.getStatement();
 
             /* There's two possibilities here - sdefn could be a cast,
@@ -244,7 +244,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
 
                 // If we've found an assignment, we might have found a when clause too
                 if (gathered.definitionLvalue != null /*  || gathered.anonymous != null */) {
-                    if (pred.getStatement() instanceof StructuredIf) {
+                    if (pred != null && pred.getStatement() instanceof StructuredIf) {
                         StructuredIf sif = (StructuredIf)pred.getStatement();
                         ConditionalExpression test = sif.getConditionalExpression();
                         // If it passes, we expect a body like :
