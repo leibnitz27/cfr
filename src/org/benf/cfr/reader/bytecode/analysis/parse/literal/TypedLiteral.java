@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -8,17 +9,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType.Source;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryDouble;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryFloat;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryInteger;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryLong;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodType;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryString;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
+import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
+import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
@@ -38,7 +30,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         NullObject,
         Class,
         MethodHandle,  // Only used for invokedynamic arguments
-        MethodType     // Only used for invokedynamic arguments
+        MethodType,     // Only used for invokedynamic arguments
+        DynamicLiteral
     }
 
     public enum FormatHint {
@@ -242,6 +235,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                 return d.literal(value.toString(), value);
             case Float:
                 return d.literal(value.toString() + "f", value);
+            case DynamicLiteral:
+                return d.dump((Expression)value);
             default:
                 return d.print(value.toString());
         }
@@ -318,6 +313,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return new TypedLiteral(LiteralType.Class, new InferredJavaType(tgt, InferredJavaType.Source.LITERAL), v);
     }
 
+    public static TypedLiteral getDynamicLiteral(Expression e) {
+        return new TypedLiteral(LiteralType.DynamicLiteral, e.getInferredJavaType(), e);
+    }
+
     public static TypedLiteral getString(String v) {
         return new TypedLiteral(LiteralType.String, new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.LITERAL), v);
     }
@@ -361,6 +360,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             return getMethodHandle((ConstantPoolEntryMethodHandle) cpe, cp);
         } else if (cpe instanceof ConstantPoolEntryMethodType) {
             return getMethodType((ConstantPoolEntryMethodType) cpe, cp);
+        } else if (cpe instanceof ConstantPoolEntryDynamicInfo) {
+            // This should have been filtered out at op02.
         }
         throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
     }

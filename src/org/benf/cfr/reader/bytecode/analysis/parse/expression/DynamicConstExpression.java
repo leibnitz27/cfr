@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryDynamicInfo;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /*
@@ -18,10 +19,12 @@ import org.benf.cfr.reader.util.output.Dumper;
  * something that *LOOKS* like it, and is legible.
  */
 public class DynamicConstExpression extends AbstractExpression {
+    private final ConstantPoolEntryDynamicInfo cpe;
     private Expression content;
 
-    public DynamicConstExpression(BytecodeLoc loc, Expression content) {
+    public DynamicConstExpression(BytecodeLoc loc, ConstantPoolEntryDynamicInfo cpe, Expression content) {
         super(loc, content.getInferredJavaType());
+        this.cpe = cpe;
         this.content = content;
     }
 
@@ -36,6 +39,10 @@ public class DynamicConstExpression extends AbstractExpression {
         if (o == null) return false;
         if (!(o instanceof DynamicConstExpression)) return false;
         return content.equals(((DynamicConstExpression) o).content);
+    }
+
+    public ConstantPoolEntryDynamicInfo getConstPoolEntry() {
+        return cpe;
     }
 
     @Override
@@ -59,14 +66,14 @@ public class DynamicConstExpression extends AbstractExpression {
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         Expression newContent = content.applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
         if (newContent == content) return this;
-        return new DynamicConstExpression(getLoc(), newContent);
+        return new DynamicConstExpression(getLoc(), cpe, newContent);
     }
 
     @Override
     public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         Expression newContent = content.applyReverseExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
         if (newContent == content) return this;
-        return new DynamicConstExpression(getLoc(), newContent);
+        return new DynamicConstExpression(getLoc(), cpe, newContent);
     }
 
     @Override
@@ -84,6 +91,10 @@ public class DynamicConstExpression extends AbstractExpression {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new DynamicConstExpression(getLoc(), content.deepClone(cloneHelper));
+        return new DynamicConstExpression(getLoc(), cpe, content.deepClone(cloneHelper));
+    }
+
+    public Expression getContent() {
+        return content;
     }
 }

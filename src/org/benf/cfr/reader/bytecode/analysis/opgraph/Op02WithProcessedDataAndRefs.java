@@ -30,6 +30,7 @@ import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
+import org.benf.cfr.reader.entities.bootstrap.KnownBootstraps;
 import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
@@ -533,9 +534,23 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return gtb.getBindingFor(classType);
     }
 
-    private static TypedLiteral getBootstrapArg(ConstantPoolEntry[] bootstrapArguments, int x, ConstantPool cp) {
+    private TypedLiteral getBootstrapArg(ClassFile cf, ConstantPoolEntry[] bootstrapArguments, int x, ConstantPool cp) {
         ConstantPoolEntry entry = bootstrapArguments[x];
-        return TypedLiteral.getConstantPoolEntry(cp, entry);
+
+        if (entry instanceof ConstantPoolEntryDynamicInfo) {
+            DecompilerComments tmp = new DecompilerComments();
+            Expression e = getLiteralConstantPoolEntry(cf, entry, tmp);
+
+            if (e instanceof Literal) {
+                return ((Literal) e).getValue();
+            } else if (e instanceof DynamicConstExpression) {
+                return KnownBootstraps.ConvertToLiteral((DynamicConstExpression) e, cp);
+            } else {
+                return TypedLiteral.getString(e.toString());
+            }
+        } else {
+            return TypedLiteral.getConstantPoolEntry(cp, entry);
+        }
     }
 
     @SuppressWarnings("unused")
@@ -563,6 +578,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * IF flags has BRIDGES set - int bridgeCount,
          * IF flags has BRIDGES set - MethodType... bridges )
          */
+        // TODO HACK
+        ClassFile cf = prototype.classFile;
+
         List<JavaTypeInstance> argTypes = prototype.getArgs();
         ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
         if (bootstrapArguments.length < 4) {
@@ -578,10 +596,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         /*
          * We can't really verify the bootstrap args against the arg type, as it's weak. (Object ... ).
          */
-        TypedLiteral tlMethodType = getBootstrapArg(bootstrapArguments, 0, cp);
-        TypedLiteral tlImplMethod = getBootstrapArg(bootstrapArguments, 1, cp);
-        TypedLiteral tlInstantiatedMethodType = getBootstrapArg(bootstrapArguments, 2, cp);
-        int iFlags = getBootstrapArg(bootstrapArguments, 3, cp).getIntValue();
+        TypedLiteral tlMethodType = getBootstrapArg(cf, bootstrapArguments, 0, cp);
+        TypedLiteral tlImplMethod = getBootstrapArg(cf, bootstrapArguments, 1, cp);
+        TypedLiteral tlInstantiatedMethodType = getBootstrapArg(cf, bootstrapArguments, 2, cp);
+        int iFlags = getBootstrapArg(cf, bootstrapArguments, 3, cp).getIntValue();
         int nextArgIdx = 4;
         // Really don't understand why serializable is special.....
         if ((iFlags & FLAG_SERIALIZABLE) != 0) {
@@ -590,9 +608,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             markerTypes.add(TypeConstants.SERIALIZABLE);
         }
         if ((iFlags & FLAG_MARKERS ) != 0) {
-            int nMarkers = getBootstrapArg(bootstrapArguments, nextArgIdx++, cp).getIntValue();
+            int nMarkers = getBootstrapArg(cf, bootstrapArguments, nextArgIdx++, cp).getIntValue();
             for (int x=0;x<nMarkers;++x) {
-                TypedLiteral marker = getBootstrapArg(bootstrapArguments, nextArgIdx++, cp);
+                TypedLiteral marker = getBootstrapArg(cf, bootstrapArguments, nextArgIdx++, cp);
                 if (marker.getType() == TypedLiteral.LiteralType.Class) {
                     JavaTypeInstance classType = marker.getClassValue();
                     markerTypes.add(classType);
@@ -620,6 +638,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         List<JavaTypeInstance> argTypes = prototype.getArgs();
         ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
 
+        ClassFile cf = classFile;
         boolean countMismatch = (bootstrapArguments.length + ARG_OFFSET) != argTypes.size();
 
         if (!argTypes.isEmpty()) {
@@ -627,11 +646,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             boolean maybeVarArgs = last.getNumArrayDimensions() == 1;
             if (maybeVarArgs) {
                 if (countMismatch) {
-                    return getVarArgs(last, bootstrapArguments);
+                    return getVarArgs(cf, last, bootstrapArguments);
                 }
-                TypedLiteral val = getBootstrapArg(bootstrapArguments, bootstrapArguments.length - 1, cp);
+                TypedLiteral val = getBootstrapArg(cf, bootstrapArguments, bootstrapArguments.length - 1, cp);
                 if (val.getInferredJavaType().getJavaTypeInstance().getNumArrayDimensions() != last.getNumArrayDimensions()) {
-                    return getVarArgs(last, bootstrapArguments);
+                    return getVarArgs(cf, last, bootstrapArguments);
                 }
             }
         }
@@ -653,7 +672,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
         for (int x = 0; x < bootstrapArguments.length; ++x) {
             JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
-            TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, x, cp);
+            TypedLiteral typedLiteral = getBootstrapArg(cf, bootstrapArguments, x, cp);
             Expression literal = new Literal(typedLiteral);
             if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
                 // This may not be a *LEGAL* cast, but it's probably the best we can do.
@@ -665,10 +684,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return callargs;
     }
 
-    private List<Expression> getVarArgs(JavaTypeInstance last, ConstantPoolEntry[] bootstrapArguments) {
+    private List<Expression> getVarArgs(ClassFile cf, JavaTypeInstance last, ConstantPoolEntry[] bootstrapArguments) {
         List<Expression> content = ListFactory.newList();
         for (int i=0;i<bootstrapArguments.length;++i) {
-            TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, i, cp);
+            TypedLiteral typedLiteral = getBootstrapArg(cf, bootstrapArguments, i, cp);
             content.add(new Literal(typedLiteral));
         }
         InferredJavaType arrayType = new InferredJavaType(last.getArrayStrippedType(), InferredJavaType.Source.UNKNOWN);
@@ -692,6 +711,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          *
          * So we expect our prototype to be equal to these 3, plus the arguments from our bootstrap.
          */
+        ClassFile cf = prototype.classFile;
+
         List<JavaTypeInstance> argTypes = prototype.getArgs();
         ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
         if ((bootstrapArguments.length + ARG_OFFSET) != argTypes.size()) {
@@ -706,7 +727,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         for (int x = 0; x < bootstrapArguments.length; ++x) {
             JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
-            TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, x, cp);
+            TypedLiteral typedLiteral = getBootstrapArg(cf, bootstrapArguments, x, cp);
             if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
                 throw new IllegalStateException("Dynamic invoke Expected " + expected + ", got " + typedLiteral);
             }
@@ -1398,7 +1419,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LDC:
             case LDC_W:
             case LDC2_W:
-                return new AssignmentSimple(loc, getStackLValue(0), getLiteralConstantPoolEntry(method, cpEntries[0], comments));
+                return new AssignmentSimple(loc, getStackLValue(0), getLiteralConstantPoolEntry(method.getClassFile(), cpEntries[0], comments));
             case MONITORENTER:
                 return new MonitorEnterStatement(loc, getStackRValue(0), blockIdentifierFactory.getNextBlockIdentifier(BlockType.MONITOR));
             case MONITOREXIT:
@@ -1474,12 +1495,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return Pair.make(variableIndex, incrAmount);
     }
 
-    private Expression getLiteralConstantPoolEntry(Method m, ConstantPoolEntry cpe, DecompilerComments comments) {
-        if (cpe instanceof ConstantPoolEntryLiteral) {
-            return new Literal(TypedLiteral.getConstantPoolEntry(cp, cpe));
-        }
+    private Expression getLiteralConstantPoolEntry(ClassFile classFile, ConstantPoolEntry cpe, DecompilerComments comments) {
         if (cpe instanceof ConstantPoolEntryDynamicInfo) {
-            return getDynamicLiteral(m, (ConstantPoolEntryDynamicInfo) cpe, comments);
+            return getDynamicLiteral(classFile, (ConstantPoolEntryDynamicInfo) cpe, comments);
         }
         if (cpe instanceof ConstantPoolEntryMethodHandle) {
             return getMethodHandleLiteral((ConstantPoolEntryMethodHandle) cpe);
@@ -1487,7 +1505,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         if (cpe instanceof ConstantPoolEntryMethodType) {
             return getMethodTypeLiteral((ConstantPoolEntryMethodType) cpe);
         }
-        throw new ConfusedCFRException("Constant pool entry is neither literal, dynamic literal, method handle or method type.");
+        return new Literal(TypedLiteral.getConstantPoolEntry(cp, cpe));
     }
 
     private Expression getMethodTypeLiteral(ConstantPoolEntryMethodType cpe) {
@@ -1499,19 +1517,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return new MethodHandlePlaceholder(loc, cpe);
     }
 
-    private Expression getDynamicLiteral(Method method, ConstantPoolEntryDynamicInfo cpe, DecompilerComments comments) {
-        ClassFile classFile = method.getClassFile();
+    private Expression getDynamicLiteral(ClassFile classFile, ConstantPoolEntryDynamicInfo cpe, DecompilerComments comments) {
         ConstantPoolEntryNameAndType nameAndType = cpe.getNameAndTypeEntry();
         int idx = cpe.getBootstrapMethodAttrIndex();
         MethodPrototype dynamicProto = new MethodPrototype(cp.getDCCommonState(), classFile, classFile.getClassType(), "???",
                 false, Method.MethodConstructor.NOT, Collections.<FormalTypeParameter>emptyList(), Collections.<JavaTypeInstance>emptyList(),
                 nameAndType.decodeTypeTok(), Collections.<JavaTypeInstance>emptyList(), false, new VariableNamerDefault(), false, "");
-        Statement s = buildInvokeDynamic(method.getClassFile(), cp.getDCCommonState(), nameAndType.getName().getValue(), dynamicProto, idx, true, comments);
+        Statement s = buildInvokeDynamic(classFile, cp.getDCCommonState(), nameAndType.getName().getValue(), dynamicProto, idx, true, comments);
         if (!(s instanceof AssignmentSimple)) {
             throw new ConfusedCFRException("Expected a result from a dynamic literal");
         }
         AssignmentSimple as = (AssignmentSimple)s;
-        return new DynamicConstExpression(loc, as.getRValue());
+        return new DynamicConstExpression(loc, cpe, as.getRValue());
     }
 
     private StackValue getStackRValue(int idx) {

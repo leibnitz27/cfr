@@ -76,7 +76,7 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final boolean varargs;
     private final String name;
     private @Nullable String fixedName;
-    private final ClassFile classFile;
+    public final ClassFile classFile;
     // Synthetic args are arguments which are not VISIBLY present in the method prototype at all, but
     // are nonetheless used by the method body.
     private final List<Slot> syntheticArgs = ListFactory.newList();

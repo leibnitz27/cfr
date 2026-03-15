@@ -9,6 +9,8 @@ public interface TypeConstants {
     String stringBufferName = "java.lang.StringBuffer";
     String className = "java.lang.Class";
     String objectName = "java.lang.Object";
+    String classDescName = "java.lang.constant.ClassDesc";
+    String enumDescName = "java.lang.Enum$EnumDesc";
 
     String methodHandleName = "java.lang.invoke.MethodHandle";
     String methodHandlesName = "java.lang.invoke.MethodHandles";
@@ -16,7 +18,10 @@ public interface TypeConstants {
     String methodTypeName = "java.lang.invoke.MethodType";
     String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
     String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
-    
+    String constantBootstrapsName = "java.lang.invoke.ConstantBootstraps";
+    String switchBootstrapsName = "java.lang.runtime.SwitchBootstraps";
+    String callSiteName = "java.lang.invoke.CallSite";
+
     JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
     JavaRefTypeInstance OBJECTS = JavaRefTypeInstance.createTypeConstant(objectsName);
     JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Enum");
@@ -40,6 +45,8 @@ public interface TypeConstants {
     JavaRefTypeInstance OVERRIDE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Override");
     JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record");
     JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods");
+    JavaRefTypeInstance SWITCHBOOTSTRAPS = JavaRefTypeInstance.createTypeConstant(switchBootstrapsName);
+    JavaRefTypeInstance CALLSITE = JavaRefTypeInstance.createTypeConstant(callSiteName);
     JavaRefTypeInstance METHOD_HANDLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandleName);
     JavaRefTypeInstance METHOD_HANDLES = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesName);
     JavaRefTypeInstance METHOD_HANDLES$LOOKUP = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesLookupName);
