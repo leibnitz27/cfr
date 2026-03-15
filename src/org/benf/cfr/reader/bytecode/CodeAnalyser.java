@@ -907,7 +907,9 @@ public class CodeAnalyser {
             }
 
             // Have to rewrite switch patterns BEFORE we rewrite switch expressions, because.....
-            new SwitchPatternRewriter(options, classFileVersion, bytecodeMeta).rewrite(block);
+            if (options.getOption(OptionsImpl.PATTERN_SWITCH, classFileVersion)) {
+                new SwitchPatternRewriter(options, classFileVersion, bytecodeMeta, dcCommonState).rewrite(block);
+            }
 
             if (options.getOption(OptionsImpl.SWITCH_EXPRESSION, classFileVersion)) {
                 Op04StructuredStatement.switchExpression(method, block, comments);

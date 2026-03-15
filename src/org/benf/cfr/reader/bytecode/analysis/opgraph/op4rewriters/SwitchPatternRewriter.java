@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredCaseDefinitionExpression;
@@ -16,6 +17,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.classfilehelpers.SwitchClassHelper;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -31,12 +34,15 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
     private final Options options;
     private final ClassFileVersion classFileVersion;
     private final BytecodeMeta bytecodeMeta;
+    private final DCCommonState dcCommonState;
     private static Literal typeSwitchLabel = new Literal(TypedLiteral.getString("\"typeSwitch\""));
+    private static Literal enumSwitchLabel = new Literal(TypedLiteral.getString("\"enumSwitch\""));
 
-    public SwitchPatternRewriter(Options options, ClassFileVersion classFileVersion, BytecodeMeta bytecodeMeta) {
+    public SwitchPatternRewriter(Options options, ClassFileVersion classFileVersion, BytecodeMeta bytecodeMeta, DCCommonState dcCommonState) {
         this.options = options;
         this.classFileVersion = classFileVersion;
         this.bytecodeMeta = bytecodeMeta;
+        this.dcCommonState = dcCommonState;
     }
 
     static class Gathered {
@@ -47,12 +53,12 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
         public ConditionalExpression test;
         public boolean underscore;
         List<Integer> cases;
-        List<Expression> types;
+        List<Expression> replacements;
 
         public Gathered(StructuredCase cas) {
             this.cas = cas;
             cases = ListFactory.newList();
-            types = ListFactory.newList();
+            replacements = ListFactory.newList();
         }
     }
 
@@ -82,21 +88,62 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
         // Switchbootstraps arg 1 is types/values, arg 2 is switch values, arg 3 is "search from this index".
         if (args.size() != 4) return;
         Expression name = args.get(0);
-        if (!name.equals(typeSwitchLabel)) return;
+
         Expression objects = args.get(1);
         if (!(objects instanceof NewAnonymousArray)) return;
         Expression originalSwitchValue = args.get(2);
         // use CastExpression.tryRemoveCast
         Expression actualSwitchValue = originalSwitchValue instanceof CastExpression ? ((CastExpression) originalSwitchValue).getChild() : originalSwitchValue;
+        NewAnonymousArray aargs = (NewAnonymousArray) objects;
+        if (aargs.getNumDims() != 1) return;
+        List<Expression> argList = aargs.getValues();
+
+        if (name.equals(typeSwitchLabel)) {
+            typeSwitch(switchStatement, args, swatch, argList, actualSwitchValue, originalSwitchValue);
+        } else if (name.equals(enumSwitchLabel)) {
+            enumSwitch(switchStatement, args, swatch, argList, actualSwitchValue, originalSwitchValue);
+        }
+    }
+
+    private void enumSwitch(StructuredStatement switchStatement, List<Expression> args, StructuredSwitch swatch, List<Expression> argList, Expression actualSwitchValue, Expression originalSwitchValue) {
+        // We don't strictly need them by ordinal.  We don't EVEN really need them, this just generates confidence.
+//        Map<Integer, StaticVariable> byOrdinal = SwitchClassHelper.getSwitchEntriesByOrdinal(dcCommonState, actualSwitchValue);
+//        Map<String, StaticVariable> byName = MapFactory.newMap();
+//        // If we failed to load the class, byOrdinal is null.
+//        if (byOrdinal != null) {
+//            for (StaticVariable sv : byOrdinal.values()) {
+//                byName.put(sv.getFieldName(), sv);
+//            }
+//        }
+
+        // We *could* use the actual references to the static variables from the ordinals above - BUT - if it failed to decompile,
+        // we'd have to construct them.  So we'd have fallback behaviour.
+        // Since the fallback behavior is actually good, for now, let's just always do it!
+        for (int x=0;x<argList.size();++x) {
+            Expression arg = argList.get(x);
+            if (arg instanceof Literal) {
+                TypedLiteral tl = ((Literal) arg).getValue();
+                if (tl.getType() == TypedLiteral.LiteralType.String) {
+                    String name = (String)tl.getValue();
+                    if (name.startsWith("\"") && name.endsWith("\"")) {
+                        name = name.substring(1,name.length()-1);
+                    }
+                    StaticVariable sv = new StaticVariable(originalSwitchValue.getInferredJavaType(), originalSwitchValue.getInferredJavaType().getJavaTypeInstance(), name);
+                    argList.set(x, new LValueExpression(sv));
+                }
+            }
+        }
+
+        typeSwitch(switchStatement, args, swatch, argList, actualSwitchValue, originalSwitchValue);
+    }
+
+    private void typeSwitch(StructuredStatement switchStatement, List<Expression> args, StructuredSwitch swatch, List<Expression> argList, Expression actualSwitchValue, Expression originalSwitchValue) {
 
         Expression originalSearchControlValue = args.get(3);
         // use CastExpression.tryRemoveCast
         originalSearchControlValue = originalSearchControlValue instanceof CastExpression ? ((CastExpression) originalSearchControlValue).getChild() : originalSearchControlValue;
         LValue actualSearchControlValue = originalSearchControlValue instanceof LValueExpression ? ((LValueExpression) originalSearchControlValue).getLValue() : null;
 
-        NewAnonymousArray aargs = (NewAnonymousArray)objects;
-        if (aargs.getNumDims() != 1) return;
-        List<Expression> types = aargs.getValues();
         StructuredStatement body = swatch.getBody().getStatement();
         if (!(body instanceof Block)) return;
         Block block = (Block) body;
@@ -117,7 +164,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                     nul = cays;
                     continue;
                 }
-                if (i >= types.size()) return;
+                if (i >= argList.size()) return;
                 cases.put(i, cays);
             }
             if (values.isEmpty()) {
@@ -126,10 +173,10 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
         }
         // If there's a size mismatch, pad it out with 'default' for the missing branch.
         // BUT - a default can legitimately exist.
-        if (types.size() == cases.size() + 1) {
+        if (argList.size() == cases.size() + 1) {
             if (defalt != null) {
                 // Other than -1, a value won't be assigned.
-                for (int x=0;x<types.size();++x) {
+                for (int x = 0; x < argList.size(); ++x) {
                     if (!cases.containsKey(x)) {
                         cases.put(x, defalt);
                         defalt = null;
@@ -138,52 +185,52 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                 }
             }
         }
-        /*
-           Conditions are implemented by (!!) having a loop around the switch statement, and
-           repeatedly calling switchBootstraps, with a higher 4th arg to preclude earlier cases.
-           We expect something like
+            /*
+               Conditions are implemented by (!!) having a loop around the switch statement, and
+               repeatedly calling switchBootstraps, with a higher 4th arg to preclude earlier cases.
+               We expect something like
 
-           block5 : while (true) {
-             switch (n3) {
-               case Integer.class: {
-                    Integer i = n3;
-                    if (i <= n2) {
-                        n4 = 2;
-                        continue block5;
+               block5 : while (true) {
+                 switch (n3) {
+                   case Integer.class: {
+                        Integer i = n3;
+                        if (i <= n2) {
+                            n4 = 2;
+                            continue block5;
+                        }
+                        res = "bigger than n";
+                        break block5;
                     }
+
+               This becomes:
+
+               block5 : while (true) {
+                 switch (n3) {
+                   case Integer i : {
+                        if (i <= n2) {
+                            n4 = 2;
+                            continue block5;
+                        }
+                        res = "bigger than n";
+                        break block5;
+                    }
+
+               This becomes:
+
+               block5 : while (true) {
+                 switch (n3) {
+                  case Integer i when i > n2:
                     res = "bigger than n";
                     break block5;
-                }
 
-           This becomes:
+               We then eliminate the loop block5, and it becomes
 
-           block5 : while (true) {
-             switch (n3) {
-               case Integer i : {
-                    if (i <= n2) {
-                        n4 = 2;
-                        continue block5;
-                    }
-                    res = "bigger than n";
-                    break block5;
-                }
+               switch (n3) {
+                 case Integer i when i > n2:
+                  res = "bigger than n";
+                  break;
 
-           This becomes:
-
-           block5 : while (true) {
-             switch (n3) {
-              case Integer i when i > n2:
-                res = "bigger than n";
-                break block5;
-
-           We then eliminate the loop block5, and it becomes
-
-           switch (n3) {
-             case Integer i when i > n2:
-              res = "bigger than n";
-              break;
-
-         */
+             */
 
         Map<StructuredCase, Gathered> rev = MapFactory.newLazyMap(new UnaryFunction<StructuredCase, Gathered>() {
             @Override
@@ -196,7 +243,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
             Integer key = kv.getKey();
             Gathered gathered = rev.get(kv.getValue());
             gathered.cases.add(key);
-            gathered.types.add(types.get(key));
+            gathered.replacements.add(argList.get(key));
         }
 
         List<StructuredContinue> controlSources = ListFactory.newList();
@@ -206,7 +253,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
             Op04StructuredStatement caseBody = k.getBody();
             StructuredStatement stm = caseBody.getStatement();
             if (!(stm instanceof Block)) return;
-            Block blk = (Block)stm;
+            Block blk = (Block) stm;
             List<Op04StructuredStatement> blkstm = blk.getBlockStatements();
             if (blkstm.isEmpty()) return;
             Op04StructuredStatement defn = blkstm.get(0);
@@ -228,7 +275,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
              */
 
             if (sdefn instanceof StructuredAssignment) {
-                StructuredAssignment sdef =(StructuredAssignment) sdefn;
+                StructuredAssignment sdef = (StructuredAssignment) sdefn;
                 LValue lv = sdef.getLvalue();
                 if (sdef.isCreator(lv)) {
                     Expression rhs = sdef.getRvalue();
@@ -245,7 +292,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                 // If we've found an assignment, we might have found a when clause too
                 if (gathered.definitionLvalue != null /*  || gathered.anonymous != null */) {
                     if (pred != null && pred.getStatement() instanceof StructuredIf) {
-                        StructuredIf sif = (StructuredIf)pred.getStatement();
+                        StructuredIf sif = (StructuredIf) pred.getStatement();
                         ConditionalExpression test = sif.getConditionalExpression();
                         // If it passes, we expect a body like :
                         // nextTest = 3
@@ -257,7 +304,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                 }
 
             } else if (sdefn instanceof StructuredIf) {
-                StructuredIf sif = (StructuredIf)sdefn;
+                StructuredIf sif = (StructuredIf) sdefn;
                 ConditionalExpression ce = sif.getConditionalExpression();
                 ce = ce.simplify();
                 if (!(ce instanceof NotOperation)) {
@@ -323,16 +370,16 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
 
         // Ok - we now know everything we need to rebuild!
         // At this point we can abort if we don't have enough info.
-        
+
         for (Gathered g : rev.values()) {
             StructuredCase cas = g.cas;
             if (g.definitionAssignment != null) {
                 g.definitionAssignment.nopOut();
             }
             cas.getValues().clear();
-            for (Expression e : g.types) {
+            for (Expression e : g.replacements) {
                 if (e.getInferredJavaType().getJavaTypeInstance().getDeGenerifiedType().equals(TypeConstants.CLASS)) {
-                    TypedLiteral lit = ((Literal)e).getValue();
+                    TypedLiteral lit = ((Literal) e).getValue();
                     JavaTypeInstance typ = lit.getClassValue();
 
                     if (g.underscore) {

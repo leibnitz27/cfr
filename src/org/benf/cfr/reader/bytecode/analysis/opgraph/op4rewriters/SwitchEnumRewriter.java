@@ -38,6 +38,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static org.benf.cfr.reader.entities.classfilehelpers.SwitchClassHelper.getSwitchEntriesByOrdinal;
+
 public class SwitchEnumRewriter implements Op04Rewriter {
     private final DCCommonState dcCommonState;
     private final ClassFile classFile;
@@ -171,59 +173,14 @@ public class SwitchEnumRewriter implements Op04Rewriter {
     private void tryRewriteJ21(SwitchEnumMatchResultCollector mrc, boolean expression) {
         Expression lvalue = mrc.getEnumObject();
         if (lvalue instanceof LValueExpression) {
-            ClassFile enumClass;
-            try {
-                enumClass = dcCommonState.getClassFile(lvalue.getInferredJavaType().getJavaTypeInstance());
-            } catch (CannotLoadClassException e) {
-                // Oh dear, can't load that class.  Proceed without it.
-                return;
-            }
-            Method values = enumClass.getSingleMethodByNameOrNull("$values");
-            if (values == null) {
-                return;
-            }
-            Op04StructuredStatement valuesData = null;
-            try {
-                valuesData = values.getAnalysis();
-            } catch (ConfusedCFRException e) {
-                return;
-            }
-
-            List<StructuredStatement> decls = ListFactory.newList();
-            valuesData.linearizeStatementsInto(decls);
-            decls = Functional.filter(decls, new Predicate<StructuredStatement>() {
-                @Override
-                public boolean test(StructuredStatement in) {
-                    return !(in instanceof StructuredComment || in instanceof BeginBlock || in instanceof EndBlock) ;
-                }
-            });
-
-            if (decls.size() != 1) return;
-
-            StructuredStatement decl = decls.get(0);
-            if (!(decl instanceof StructuredReturn)) return;
-
-            Expression value = ((StructuredReturn) decl).getValue();
-            if (!(value instanceof NewAnonymousArray)) return;
-
-            List<Expression> enumValues = ((NewAnonymousArray) value).getValues();
-
-            int idx = 0;
-            Map<Integer, StaticVariable> ordinals = MapFactory.newMap();
-            for (Expression e : enumValues) {
-                if (!(e instanceof LValueExpression)) return;
-                LValue lv = ((LValueExpression) e).getLValue();
-                if (!(lv instanceof StaticVariable)) return;
-                if (!lv.getInferredJavaType().getJavaTypeInstance().equals(lvalue.getInferredJavaType().getJavaTypeInstance())) return;
-                ordinals.put(idx++, (StaticVariable) lv);
-            }
+            Map<Integer, StaticVariable> ordinals = getSwitchEntriesByOrdinal(dcCommonState, lvalue);
+            if (ordinals == null) return;
 
 
             SwitchForeignEnumMatchResultCollector rlut = new SwitchForeignEnumMatchResultCollector(ordinals);
             replaceIndexedSwitch(mrc, false, lvalue, rlut);
         }
     }
-
 
     private void tryRewrite(SwitchEnumMatchResultCollector mrc, boolean expression) {
         Expression lookup = mrc.getLookupTable();

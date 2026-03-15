@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -29,7 +30,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         NullObject,
         Class,
         MethodHandle,  // Only used for invokedynamic arguments
-        MethodType     // Only used for invokedynamic arguments
+        MethodType,     // Only used for invokedynamic arguments
+        DynamicLiteral
     }
 
     public enum FormatHint {
@@ -233,6 +235,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                 return d.literal(value.toString(), value);
             case Float:
                 return d.literal(value.toString() + "f", value);
+            case DynamicLiteral:
+                return d.dump((Expression)value);
             default:
                 return d.print(value.toString());
         }
@@ -307,6 +311,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     public static TypedLiteral getClass(JavaTypeInstance v) {
         JavaTypeInstance tgt = new JavaGenericRefTypeInstance(TypeConstants.CLASS, ListFactory.newImmutableList(v));
         return new TypedLiteral(LiteralType.Class, new InferredJavaType(tgt, InferredJavaType.Source.LITERAL), v);
+    }
+
+    public static TypedLiteral getDynamicLiteral(Expression e) {
+        return new TypedLiteral(LiteralType.DynamicLiteral, e.getInferredJavaType(), e);
     }
 
     public static TypedLiteral getString(String v) {

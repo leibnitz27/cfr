@@ -9,6 +9,8 @@ public interface TypeConstants {
     String stringBufferName = "java.lang.StringBuffer";
     String className = "java.lang.Class";
     String objectName = "java.lang.Object";
+    String classDescName = "java.lang.constant.ClassDesc";
+    String enumDescName = "java.lang.Enum$EnumDesc";
 
     String methodHandleName = "java.lang.invoke.MethodHandle";
     String methodHandlesName = "java.lang.invoke.MethodHandles";
