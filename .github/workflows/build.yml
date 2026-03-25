@@ -25,7 +25,7 @@ jobs:
 
     - id: maven-build
       name: Build with Maven
-      run: mvn package
+      run: mvn package -Dmaven.javadoc.skip=true -Dmaven.source.skip=true
 
     - name: Upload jar artifact
       uses: actions/upload-artifact@v7
