@@ -262,9 +262,11 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
             if (!(stm instanceof Block)) return;
             Block blk = (Block) stm;
             List<Op04StructuredStatement> blkstm = blk.getBlockStatements();
-            if (blkstm.isEmpty()) return;
-            Op04StructuredStatement defn = blkstm.get(0);
-            Op04StructuredStatement pred = blkstm.size() > 1 ? blkstm.get(1) : null;
+            // Apparently in some cases local var definitions can come before assignment, therefore skip all those local var definitions when looking for assignment
+            int defnIndex = getFirstNonDefinitionIndex(blkstm);
+            if (defnIndex == -1) return;
+            Op04StructuredStatement defn = blkstm.get(defnIndex);
+            Op04StructuredStatement pred = blkstm.size() > defnIndex + 1 ? blkstm.get(defnIndex + 1) : null;
             StructuredStatement sdefn = defn.getStatement();
 
             /* There's two possibilities here - sdefn could be a cast,
@@ -422,6 +424,19 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                 originalSwitchValue,
                 swatch.getBody(),
                 resultBlock, false));
+    }
+
+    /**
+     * Gets the index of the first non-StructuredDefinition, or -1.
+     */
+    private static int getFirstNonDefinitionIndex(List<Op04StructuredStatement> blkstm) {
+        int i = 0;
+        for (; i < blkstm.size(); i++) {
+            if (!(blkstm.get(i).getStatement() instanceof StructuredDefinition)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static boolean extractGuards(StructuredIf sif, LValue actualSearchControlValue, List<StructuredContinue> controlSources) {
