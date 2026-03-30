@@ -54,6 +54,10 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
         this.values = values;
     }
 
+    public boolean handlesNull() {
+        return handlesNull;
+    }
+
     public void markHandlesNull() {
         if (!isDefault()) {
             throw new ConfusedCFRException("Should only occur for default case");
