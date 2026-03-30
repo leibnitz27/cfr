@@ -288,7 +288,7 @@ public class OptionsImpl implements Options {
             "Re-sugar enums - see " + CFR_WEBSITE + "how-are-enums-implemented.html"));
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> PATTERN_SWITCH = register(new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodepatternswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_21, true),
-            "Re-sugar switch on patterns - see " + CFR_WEBSITE + "java25switchonpatterns.html"));
+            "Re-sugar switch on patterns - see " + CFR_WEBSITE + "java21patterns.html"));
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> STRING_SWITCH = register(new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true),
             "Re-sugar switch on String - see " + CFR_WEBSITE + "java7switchonstring.html"));
