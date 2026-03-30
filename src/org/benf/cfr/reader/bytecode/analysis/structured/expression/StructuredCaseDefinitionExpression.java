@@ -53,9 +53,7 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
-        if (content != null) {
-            content.collectTypeUsages(collector);
-        }
+        content.collectTypeUsages(collector);
     }
 
     @Override
@@ -66,10 +64,8 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         StructuredScope scope = new StructuredScope();
-        if (content != null) {
-            scope.add(content);
-            new ExpressionRewriterTransformer(expressionRewriter).transform(content, scope);
-        }
+        scope.add(content);
+        new ExpressionRewriterTransformer(expressionRewriter).transform(content, scope);
         return this;
     }
 
@@ -84,9 +80,7 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
         if (lValueUsageCollector instanceof LValueScopeDiscoverer) {
             LValueScopeDiscoverer scopeDiscoverer = (LValueScopeDiscoverer) lValueUsageCollector;
 //            scopeDiscoverer.enterBlock(content);
-            if (content != null) {
-                content.traceLocalVariableScope(scopeDiscoverer);
-            }
+            content.traceLocalVariableScope(scopeDiscoverer);
 //            scopeDiscoverer.leaveBlock(content);
         }
     }
@@ -104,14 +98,12 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        if (content != null) {
-            LValue.Creation.dump(d, content.getLvalue());
-            if (predicate != null) {
-                d.separator(" ");
-                d.keyword("when");
-                d.separator(" ");
-                predicate.dump(d);
-            }
+        LValue.Creation.dump(d, content.getLvalue());
+        if (predicate != null) {
+            d.separator(" ");
+            d.keyword("when");
+            d.separator(" ");
+            predicate.dump(d);
         }
         return d;
     }
@@ -123,8 +115,7 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
 
         StructuredCaseDefinitionExpression that = (StructuredCaseDefinitionExpression) o;
 
-        if ((content == null) != (that.content == null)) return false;
-        if (content != null && !content.equals(that.content)) return false;
+        if (!content.equals(that.content)) return false;
         if ((predicate == null) != (that.predicate == null)) return false;
         if (predicate != null && !predicate.equals(that.predicate)) return false;
         return true;

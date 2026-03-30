@@ -390,10 +390,12 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                     TypedLiteral lit = ((Literal) e).getValue();
                     JavaTypeInstance typ = lit.getClassValue();
 
-                    if (g.underscore) {
+                    // If `g.definitionLvalue` is null we were most likely unable to fully restructure switch, but at least emit a
+                    // 'case' matching the class, to produce valid Java code
+                    if (g.underscore || g.definitionLvalue == null) {
                         cas.getValues().add(new StructuredCaseUnassignedExpression(new InferredJavaType(typ, InferredJavaType.Source.LITERAL)));
                     } else {
-                        StructuredDefinition d = g.definitionLvalue == null ? null : new StructuredDefinition(g.definitionLvalue);
+                        StructuredDefinition d = new StructuredDefinition(g.definitionLvalue);
                         cas.getValues().add(new StructuredCaseDefinitionExpression(new InferredJavaType(typ, InferredJavaType.Source.LITERAL), d, g.test));
                         if (g.testContainer != null) {
                             g.testContainer.nopOut();
