@@ -35,8 +35,8 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
     private final ClassFileVersion classFileVersion;
     private final BytecodeMeta bytecodeMeta;
     private final DCCommonState dcCommonState;
-    private static Literal typeSwitchLabel = new Literal(TypedLiteral.getString("\"typeSwitch\""));
-    private static Literal enumSwitchLabel = new Literal(TypedLiteral.getString("\"enumSwitch\""));
+    private static final Literal typeSwitchLabel = new Literal(TypedLiteral.getString("\"typeSwitch\""));
+    private static final Literal enumSwitchLabel = new Literal(TypedLiteral.getString("\"enumSwitch\""));
 
     public SwitchPatternRewriter(Options options, ClassFileVersion classFileVersion, BytecodeMeta bytecodeMeta, DCCommonState dcCommonState) {
         this.options = options;
@@ -167,10 +167,17 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                 if (i >= argList.size()) return;
                 cases.put(i, cays);
             }
-            if (values.isEmpty()) {
+            if (cays.isDefault()) {
                 defalt = cays;
             }
         }
+
+        // If no branch for 'case null' exists, add one because `SwitchBootstraps` allows null values;
+        // otherwise the dumped code would erroneously fail with a NullPointerException
+        if (nul == null && defalt != null) {
+            defalt.markHandlesNull();
+        }
+
         // If there's a size mismatch, pad it out with 'default' for the missing branch.
         // BUT - a default can legitimately exist.
         if (argList.size() == cases.size() + 1) {
@@ -321,8 +328,7 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                 gathered.definitionAssignment = sdefn.getContainer();
                 if (!extractGuards(sif, actualSearchControlValue, controlSources)) return;
             } else {
-                // This doesn't match known patterns.  Fail.
-                return;
+                // This doesn't match known patterns. Probably user-written code; emit it as is.
             }
         }
 
