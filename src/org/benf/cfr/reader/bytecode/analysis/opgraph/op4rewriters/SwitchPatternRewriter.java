@@ -321,11 +321,15 @@ public class SwitchPatternRewriter  implements Op04Rewriter {
                 }
                 // We expect a disjunction inside not.
                 if (!(ce instanceof NotOperation)) {
-                    return;
+                    // Probably user-written code, and not a guard
+                    continue;
                 }
                 ce = ce.getNegated().getRightDeep(); // it was a not, so strip that.
                 // At this point, it SHOULD be a right deep tree in DNF.
-                if (!extractUnderscores(ce, actualSwitchValue)) return;
+                if (!extractUnderscores(ce, actualSwitchValue)) {
+                    // Probably user-written code, and not a guard
+                    continue;
+                }
                 gathered.underscore = true;
                 gathered.definitionAssignment = sdefn.getContainer();
                 if (!extractGuards(sif, actualSearchControlValue, controlSources)) return;
