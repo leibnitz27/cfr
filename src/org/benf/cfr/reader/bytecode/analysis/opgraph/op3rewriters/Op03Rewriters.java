@@ -153,6 +153,10 @@ public class Op03Rewriters {
         return RedundantTries.removeRedundantTries(op03SimpleParseNodes);
     }
 
+    public static List<Op03SimpleStatement>  removePatternSwitchSugar(DCCommonState dcCommonState, List<Op03SimpleStatement> op03SimpleParseNodes) {
+        return RedundantPatternSwitchExceptions.removeRedundantTries(dcCommonState, op03SimpleParseNodes);
+    }
+
     public static void commentMonitors(List<Op03SimpleStatement> op03SimpleParseNodes) {
         MonitorRewriter.commentMonitors(op03SimpleParseNodes);
     }

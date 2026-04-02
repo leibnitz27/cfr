@@ -33,6 +33,11 @@ public class ThrowStatement extends ReturnStatement {
     }
 
     @Override
+    public Expression getRValue() {
+        return rvalue;
+    }
+
+    @Override
     public Dumper dump(Dumper dumper) {
         return dumper.keyword("throw ").dump(rvalue).endCodeln();
     }

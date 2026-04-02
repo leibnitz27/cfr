@@ -545,6 +545,9 @@ public class CodeAnalyser {
         StaticInitReturnRewriter.rewrite(options, method, op03SimpleParseNodes);
 
         op03SimpleParseNodes = Op03Rewriters.removeRedundantTries(op03SimpleParseNodes);
+        if (options.getOption(OptionsImpl.PATTERN_SWITCH, classFileVersion)) {
+            op03SimpleParseNodes = Op03Rewriters.removePatternSwitchSugar(dcCommonState, op03SimpleParseNodes);
+        }
 
         FinallyRewriter.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 

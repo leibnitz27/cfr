@@ -587,23 +587,39 @@ lbl10: // 1 sources:
             if (blocksAtStart.size() == blocksAtEnd.size()+1) {
                 List<BlockIdentifier> change = SetUtil.differenceAtakeBtoList(blocksAtStart, blocksAtEnd);
                 // size == 1 already verified, but...
-                if (change.size() == 1 &&
-                        (change.get(0).getBlockType() == BlockType.CASE ||
-                         change.get(0).getBlockType() == BlockType.CATCHBLOCK)) {
-                    if (takenTarget.getStatement() instanceof CaseStatement) {
-                        // We need to check if the statement LINEARLY preceeding this is in the block we've left.
-                        if (stmtLastBlock.getBlockIdentifiers().contains(change.get(0))) {
+                if (change.size() == 1) {
+                    if ((change.get(0).getBlockType() == BlockType.CASE ||
+                            change.get(0).getBlockType() == BlockType.CATCHBLOCK)) {
+                        if (takenTarget.getStatement() instanceof CaseStatement) {
+                            // We need to check if the statement LINEARLY preceeding this is in the block we've left.
+                            if (stmtLastBlock.getBlockIdentifiers().contains(change.get(0))) {
+                                break mismatchedBlocks;
+                            }
+                        }
+                        // Ok, but what about SwitchTest38?  Jump if still inside the case, but the last item in the
+                        // else block is the end of the case.
+                        Op03SimpleStatement beforeRealEnd = statements.get(idxEnd - 1);
+                        if (blocksAtStart.equals(beforeRealEnd.getBlockIdentifiers())) {
                             break mismatchedBlocks;
                         }
                     }
-                    // Ok, but what about SwitchTest38?  Jump if still inside the case, but the last item in the
-                    // else block is the end of the case.
-                    Op03SimpleStatement beforeRealEnd = statements.get(idxEnd-1);
-                    if (blocksAtStart.equals(beforeRealEnd.getBlockIdentifiers())) {
-                        break mismatchedBlocks;
+                    /*
+                     * If we're jumping over a terminal back referencing while loop, we allow it.  This is common when handling j21 record destructuring.
+                     */
+                    // TODO: This is required for java 21.  But...... is it REALLY?
+                    if (change.get(0).getBlockType() == BlockType.TRYBLOCK) {
+                        // If the last statement was a backfacing while, we'll allow it.
+                        if (takenTarget == stmtLastBlock.getLinearlyNext()) {
+                            if (stmtLastBlockInner instanceof WhileStatement) {
+                                if (stmtLastBlock.getTargets().get(0).getIndex().isBackJumpFrom(stmtLastBlock.getIndex())) {
+                                    break mismatchedBlocks;
+                                }
+                            }
+                        }
                     }
                 }
             }
+
             /*
              * Handle some ugly kinds of conditionals that dex2jar generates. (Comments at function).
              */

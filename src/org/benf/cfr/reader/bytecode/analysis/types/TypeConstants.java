@@ -21,6 +21,7 @@ public interface TypeConstants {
     String constantBootstrapsName = "java.lang.invoke.ConstantBootstraps";
     String switchBootstrapsName = "java.lang.runtime.SwitchBootstraps";
     String callSiteName = "java.lang.invoke.CallSite";
+    String matchExceptionName = "java.lang.MatchException";
 
     JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
     JavaRefTypeInstance OBJECTS = JavaRefTypeInstance.createTypeConstant(objectsName);
@@ -40,6 +41,7 @@ public interface TypeConstants {
     JavaRefTypeInstance NOSUCHMETHOD_EXCEPTION = JavaRefTypeInstance.createTypeConstant("java.lang.NoSuchMethodException");
     JavaRefTypeInstance ILLEGALACCESS_EXCEPTION = JavaRefTypeInstance.createTypeConstant("java.lang.IllegalAccessException");
     JavaRefTypeInstance ILLEGALARGUMENT_EXCEPTION = JavaRefTypeInstance.createTypeConstant("java.lang.IllegalArgumentException");
+    JavaRefTypeInstance MATCH_EXCEPTION = JavaRefTypeInstance.createTypeConstant(matchExceptionName);
     JavaRefTypeInstance COMPARABLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Comparable");
     JavaRefTypeInstance MATH = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Math");
     JavaRefTypeInstance OVERRIDE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Override");

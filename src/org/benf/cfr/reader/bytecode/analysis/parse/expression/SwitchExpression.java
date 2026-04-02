@@ -17,16 +17,18 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 public class SwitchExpression extends AbstractExpression {
-    private Expression value;
-    private List<Branch> cases;
+    private final Expression value;
+    private final List<Branch> cases;
 
     public static class Branch {
-        List<Expression> cases;
-        Expression value;
+        final List<Expression> cases;
+        final Expression value;
+        final boolean handlesNull;
 
-        public Branch(List<Expression> cases, Expression value) {
+        public Branch(List<Expression> cases, Expression value, boolean handlesNull) {
             this.cases = cases;
             this.value = value;
+            this.handlesNull = handlesNull;
         }
 
         private Branch rewrite(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
@@ -40,11 +42,11 @@ public class SwitchExpression extends AbstractExpression {
                 newCases.add(newExp);
             }
             Expression newValue = expressionRewriter.rewriteExpression(value, ssaIdentifiers, statementContainer, flags);
-            if (newValue !=value) {
+            if (newValue != value) {
                 thisChanged = true;
             }
             if (!thisChanged) return this;
-            return new Branch(newCases, newValue);
+            return new Branch(newCases, newValue, handlesNull);
         }
 
     }
@@ -85,6 +87,9 @@ public class SwitchExpression extends AbstractExpression {
             boolean first = true;
             List<Expression> cases = item.cases;
             if (cases.isEmpty()) {
+                if (item.handlesNull) {
+                    d.keyword("case ").keyword("null").separator(", ");
+                }
                 d.keyword("default");
             } else {
                 d.keyword("case ");
@@ -165,7 +170,7 @@ public class SwitchExpression extends AbstractExpression {
     public Expression deepClone(CloneHelper cloneHelper) {
         List<Branch> res = ListFactory.newList();
         for (Branch case1 : cases) {
-            res.add(new Branch(cloneHelper.replaceOrClone(case1.cases), cloneHelper.replaceOrClone(case1.value)));
+            res.add(new Branch(cloneHelper.replaceOrClone(case1.cases), cloneHelper.replaceOrClone(case1.value), case1.handlesNull));
         }
         return new SwitchExpression(getLoc(), getInferredJavaType(), cloneHelper.replaceOrClone(value), res);
     }

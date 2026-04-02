@@ -17,6 +17,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -30,6 +31,7 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
     // Because enum values inside a switch are written without the class name, (but ONLY in a switch
     // on that enum!) we have to know about the context of usage.
     private final boolean enumSwitch;
+    private boolean handlesNull = false;
 
     public StructuredCase(BytecodeLoc loc, List<Expression> values, InferredJavaType inferredJavaTypeOfSwitch, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
         this(loc, values, inferredJavaTypeOfSwitch, body, blockIdentifier, false);
@@ -49,6 +51,17 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
             }
         }
         this.values = values;
+    }
+
+    public boolean handlesNull() {
+        return handlesNull;
+    }
+
+    public void markHandlesNull() {
+        if (!isDefault()) {
+            throw new ConfusedCFRException("Should only occur for default case");
+        }
+        handlesNull = true;
     }
 
     @Override
@@ -72,7 +85,10 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        if (values.isEmpty()) {
+        if (isDefault()) {
+            if (handlesNull) {
+                dumper.keyword("case ").keyword("null").separator(", ");
+            }
             dumper.keyword("default").separator(": ");
         } else {
             for (int x = 0, len = values.size(), last = len - 1; x < len; ++x) {

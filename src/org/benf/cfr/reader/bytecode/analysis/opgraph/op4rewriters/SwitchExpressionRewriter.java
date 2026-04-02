@@ -276,7 +276,8 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         }
         List<SwitchExpression.Branch> items = ListFactory.newList();
         for (Pair<StructuredCase, Expression> e : extracted) {
-            items.add(new SwitchExpression.Branch(e.getFirst().getValues(), e.getSecond()));
+            StructuredCase cas = e.getFirst();
+            items.add(new SwitchExpression.Branch(cas.getValues(), e.getSecond(), cas.handlesNull()));
         }
 
         definition.nopOut();
@@ -823,7 +824,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         newBlockContent.add(other.stm);
         newBlockContent.add(new Op04StructuredStatement(new StructuredExpressionYield(BytecodeLoc.TODO, new LValueExpression(tmp))));
         Block newBlock = new Block(newBlockContent, true);
-        SwitchExpression nse = new SwitchExpression(BytecodeLoc.TODO, lv.getInferredJavaType(), Literal.INT_ZERO, Collections.singletonList(new SwitchExpression.Branch(Collections.<Expression>emptyList(), new StructuredStatementExpression(lv.getInferredJavaType(), newBlock))));
+        SwitchExpression nse = new SwitchExpression(BytecodeLoc.TODO, lv.getInferredJavaType(), Literal.INT_ZERO, Collections.singletonList(new SwitchExpression.Branch(Collections.<Expression>emptyList(), new StructuredStatementExpression(lv.getInferredJavaType(), newBlock), false)));
         StructuredAssignment nsa = new StructuredAssignment(BytecodeLoc.TODO, lv, nse, true);
         other.type = ClassifyType.SWITCH_EXPRESSION;
         other.stm = new Op04StructuredStatement(nsa);

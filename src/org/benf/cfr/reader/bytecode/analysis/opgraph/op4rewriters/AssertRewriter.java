@@ -486,7 +486,7 @@ public class AssertRewriter {
                 cfset.totalStatements == 0 ?
                 cfset.single :
                 new StructuredStatementExpression(boolIjt, body.getStatement());
-            return new SwitchExpression.Branch(caseStm.getValues(), value);
+            return new SwitchExpression.Branch(caseStm.getValues(), value, caseStm.handlesNull());
         }
 
         private StructuredStatement processSwitchEmbeddedThrow(StructuredStatement ifStm, BlockIdentifier outer, Block swBodyBlock, Op04StructuredStatement switchStm, StructuredSwitch struSwi) {

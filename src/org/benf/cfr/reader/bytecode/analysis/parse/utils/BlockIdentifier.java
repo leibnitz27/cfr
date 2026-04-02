@@ -43,6 +43,11 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         knownForeignReferences--;
     }
 
+    public void releaseForeignRefs(int controlRefCnt) {
+        knownForeignReferences -= controlRefCnt;
+        if (knownForeignReferences < 0) knownForeignReferences = 0;
+    }
+
     public boolean hasForeignReferences() {
         return knownForeignReferences > 0;
     }

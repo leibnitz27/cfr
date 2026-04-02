@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.ExpressionRewriterTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Pattern;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
@@ -27,11 +28,11 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class StructuredCaseDefinitionExpression extends AbstractExpression {
 
     @Nullable
-    private final StructuredDefinition content;
+    private final Pattern content;
     @Nullable
     private final ConditionalExpression predicate;
 
-    public StructuredCaseDefinitionExpression(InferredJavaType inferredJavaType, StructuredDefinition content, ConditionalExpression predicate) {
+    public StructuredCaseDefinitionExpression(InferredJavaType inferredJavaType, Pattern content, ConditionalExpression predicate) {
         super(BytecodeLoc.TODO, inferredJavaType);
         this.content = content;
         this.predicate = predicate;
@@ -65,11 +66,11 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        StructuredScope scope = new StructuredScope();
-        if (content != null) {
-            scope.add(content);
-            new ExpressionRewriterTransformer(expressionRewriter).transform(content, scope);
-        }
+//        StructuredScope scope = new StructuredScope();
+//        if (content != null) {
+//            scope.add(content);
+//            new ExpressionRewriterTransformer(expressionRewriter).transform(content, scope);
+//        }
         return this;
     }
 
@@ -80,15 +81,15 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        // Fugly.  TODO: Fix interface.
-        if (lValueUsageCollector instanceof LValueScopeDiscoverer) {
-            LValueScopeDiscoverer scopeDiscoverer = (LValueScopeDiscoverer) lValueUsageCollector;
-//            scopeDiscoverer.enterBlock(content);
-            if (content != null) {
-                content.traceLocalVariableScope(scopeDiscoverer);
-            }
-//            scopeDiscoverer.leaveBlock(content);
-        }
+//        // Fugly.  TODO: Fix interface.
+//        if (lValueUsageCollector instanceof LValueScopeDiscoverer) {
+//            LValueScopeDiscoverer scopeDiscoverer = (LValueScopeDiscoverer) lValueUsageCollector;
+////            scopeDiscoverer.enterBlock(content);
+//            if (content != null) {
+//                content.traceLocalVariableScope(scopeDiscoverer);
+//            }
+////            scopeDiscoverer.leaveBlock(content);
+//        }
     }
 
 
@@ -97,21 +98,14 @@ public class StructuredCaseDefinitionExpression extends AbstractExpression {
         return Precedence.WEAKEST;
     }
 
-    @Nullable
-    public StructuredStatement getContent() {
-        return content;
-    }
-
     @Override
     public Dumper dumpInner(Dumper d) {
-        if (content != null) {
-            LValue.Creation.dump(d, content.getLvalue());
-            if (predicate != null) {
-                d.separator(" ");
-                d.keyword("when");
-                d.separator(" ");
-                predicate.dump(d);
-            }
+        d.dump(content);
+        if (predicate != null) {
+            d.separator(" ");
+            d.keyword("when");
+            d.separator(" ");
+            predicate.dump(d);
         }
         return d;
     }

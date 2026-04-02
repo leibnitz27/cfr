@@ -483,7 +483,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             castJavaType.shallowSetCanBeVar();
         }
         funcCall = new DynamicInvokation(loc, castJavaType, funcCall, dynamicArgs);
-        if (stackProduced.size() == 0) {
+        if (stackProduced.isEmpty()) {
             return new ExpressionStatement(funcCall);
         } else {
             return new AssignmentSimple(loc, getStackLValue(0), funcCall);
