@@ -538,6 +538,20 @@ public class CondenseConditionals {
         return effect;
     }
 
+    /**
+     * Returns whether {@code cond} is a redundant null-check for the known non-null {@code nonNullVar}.
+     *
+     * <p>This only covers the artificially introduced null-check added by {@link #condenseInstanceOfAssign}.
+     */
+    public static boolean isRedundantInstanceOfNullCheck(ConditionalExpression cond, LValue nonNullVar) {
+        if (cond instanceof ComparisonOperation) {
+            ComparisonOperation comp = (ComparisonOperation) cond;
+            return comp.getOp() == CompOp.NE && comp.getLhs().equals(Literal.NULL)
+                    && (comp.getRhs() instanceof LValueExpression) && ((LValueExpression) comp.getRhs()).getLValue().equals(nonNullVar);
+        }
+        return false;
+    }
+
     /*
      * Return the InstanceOfExpression if the condition is SOLELY a negated instanceof,
      * i.e.  !(o instanceof T)  or  (o instanceof T) == false.

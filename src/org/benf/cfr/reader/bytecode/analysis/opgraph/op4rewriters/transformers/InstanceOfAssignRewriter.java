@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
 import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.CondenseConditionals;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -228,7 +229,13 @@ public class InstanceOfAssignRewriter {
                     scopedEntity
             ));
             ConditionalExpression newRhs = new ExpressionReplacingRewriter(originalAssign, new LValueExpression(scopedEntity)).rewriteExpression(bo.getRhs(), null, null, null);
-            ce = new BooleanOperation(BytecodeLoc.NONE, newLhs, newRhs, bo.getOp());
+            // `scopedEntity` is assigned by instanceof and is therefore known to be non-null
+            if (CondenseConditionals.isRedundantInstanceOfNullCheck(newRhs, scopedEntity)) {
+                // Ignore the redundant newRhs
+                ce = newLhs;
+            } else {
+                ce = new BooleanOperation(BytecodeLoc.NONE, newLhs, newRhs, bo.getOp());
+            }
         }
         if (!ct.isPositive) {
             ce = ce.getNegated();
