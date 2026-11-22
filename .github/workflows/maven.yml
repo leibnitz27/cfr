@@ -14,12 +14,22 @@ jobs:
       uses: actions/checkout@v6
       with:
         # Clone decompilation test data submodule
-        submodules: true
+        submodules: recursive
 
     - name: Set up Java
+      id: setup_temurin_java_8
+      continue-on-error: true
       uses: actions/setup-java@v5
       with:
         distribution: temurin
+        java-version: 8
+        cache: maven
+
+    - name: Fall back to Zulu Java 8
+      if: steps.setup_temurin_java_8.outcome == 'failure'
+      uses: actions/setup-java@v5
+      with:
+        distribution: zulu
         java-version: 8
         cache: maven
 
@@ -27,8 +37,25 @@ jobs:
       name: Build with Maven
       run: mvn --batch-mode --update-snapshots -Dgpg.skip=true clean verify
 
+    - name: Check JaCoCo coverage report
+      run: test -s target/site/jacoco/jacoco.xml
+
+    - name: Upload coverage report artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: jacoco-coverage-report
+        path: target/site/jacoco/
+        if-no-files-found: error
+
+    - name: Upload snapshot regression coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: target/site/jacoco/jacoco.xml
+        flags: snapshot-tests
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+
     - name: Upload decompilation test failures artifact
-      # Only run when Maven build failed, see https://github.community/t/run-step-only-if-previous-step-failed/127124/3
       if: failure() && steps.maven-build.outcome == 'failure'
       uses: actions/upload-artifact@v7
       with:
@@ -59,3 +86,131 @@ jobs:
          name: CFR All JARs
          path: target/*.jar
          archive: true
+
+  corpus:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        fixture_set:
+        - ecj_8
+        - java_6
+        - java_8
+        - java_10
+        - java_12
+        - java_13
+        - java_14
+        - java_16
+        - ojava_8
+        - hardcoded
+        - java_21
+        - java_25
+
+    steps:
+    - name: Check out Git repository and test submodule
+      uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Set up Java 8
+      id: setup_corpus_temurin_java_8
+      continue-on-error: true
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 8
+        cache: maven
+
+    - name: Fall back to Zulu Java 8
+      if: steps.setup_corpus_temurin_java_8.outcome == 'failure'
+      uses: actions/setup-java@v5
+      with:
+        distribution: zulu
+        java-version: 8
+        cache: maven
+
+    - name: Compile CFR with the JaCoCo agent
+      run: mvn --batch-mode --update-snapshots -Dgpg.skip=true -DskipTests clean compile
+
+    - name: Build comparison baseline from master
+      run: |
+        git fetch --no-tags --unshallow origin master
+        git clone --no-hardlinks --recurse-submodules . target/coverage-baseline-source
+        git -C target/coverage-baseline-source checkout --detach "$(git rev-parse FETCH_HEAD)"
+        mvn --batch-mode -f target/coverage-baseline-source/pom.xml -Dgpg.skip=true -DskipTests compile
+
+    - name: Set up Java 21 for fixture compilation
+      if: matrix.fixture_set == 'java_21'
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 21
+
+    - name: Compile Java 21 fixtures
+      if: matrix.fixture_set == 'java_21'
+      run: mvn --batch-mode -f decompilation-test/test-data/pom.xml -P java_21 -DJAVA_21_HOME="$JAVA_HOME" compile
+
+    - name: Set up Java 25 for fixture compilation
+      if: matrix.fixture_set == 'java_25'
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 25
+
+    - name: Compile Java 25 fixtures
+      if: matrix.fixture_set == 'java_25'
+      run: mvn --batch-mode -f decompilation-test/test-data/pom.xml -P java_25 -DJAVA_25_HOME="$JAVA_HOME" compile
+
+    - name: Restore Java 8
+      id: restore_temurin_java_8
+      if: matrix.fixture_set == 'java_21' || matrix.fixture_set == 'java_25'
+      continue-on-error: true
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 8
+
+    - name: Fall back to Zulu Java 8 after fixture compilation
+      if: (matrix.fixture_set == 'java_21' || matrix.fixture_set == 'java_25') && steps.restore_temurin_java_8.outcome == 'failure'
+      uses: actions/setup-java@v5
+      with:
+        distribution: zulu
+        java-version: 8
+
+    - id: corpus_regression
+      name: Compare compiled fixtures against master
+      run: bash .github/scripts/corpus-regression-coverage.sh target/coverage-baseline-source/target/classes target/classes "${{ matrix.fixture_set }}"
+
+    - name: Regenerate JaCoCo coverage report
+      run: mvn --batch-mode -Dgpg.skip=true jacoco:report
+
+    - name: Check JaCoCo coverage report
+      run: test -s target/site/jacoco/jacoco.xml
+
+    - name: Upload corpus regression failures
+      if: failure() && steps.corpus_regression.outcome == 'failure'
+      uses: actions/upload-artifact@v7
+      with:
+        name: corpus-regression-failures-${{ matrix.fixture_set }}
+        path: |
+          target/corpus-regression/*.diff
+          target/corpus-regression/*.log
+
+    - name: Upload corpus JaCoCo report
+      uses: actions/upload-artifact@v7
+      with:
+        name: jacoco-corpus-${{ matrix.fixture_set }}
+        path: target/site/jacoco/
+        if-no-files-found: error
+
+    - name: Upload corpus coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: target/site/jacoco/jacoco.xml
+        flags: corpus-${{ matrix.fixture_set }}
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false

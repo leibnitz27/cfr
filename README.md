@@ -2,6 +2,8 @@
 
 This is the public repository for the CFR decompiler, main site hosted at [benf.org/other/cfr](https://www.benf.org/other/cfr)
 
+[![Code coverage](https://codecov.io/gh/nbauma109/cfr/branch/master/graph/badge.svg)](https://app.codecov.io/gh/nbauma109/cfr)
+
 CFR will decompile modern Java features - [including much of Java 9](https://www.benf.org/other/cfr/java9observations.html), [12](https://www.benf.org/other/cfr/switch_expressions.html) & [14](https://www.benf.org/other/cfr/java14instanceof_pattern), but is written entirely in Java 6, so will work anywhere!  ([FAQ](https://www.benf.org/other/cfr/faq.html)) - It'll even make a decent go of turning class files from other JVM languages back into java!
 
 To use, simply run the specific version jar, with the class name(s) you want to decompile (either as a path to a class file, or as a fully qualified classname on your classpath).
@@ -40,6 +42,14 @@ to get CFR to decompile `java.lang.Object`.
 
 
 ## Decompilation tests
+
+The Maven verification build also generates a [JaCoCo](https://www.jacoco.org/jacoco/) coverage report at `target/site/jacoco/index.html` and `target/site/jacoco/jacoco.xml`. GitHub Actions archives this report and uploads it to [Codecov](https://app.codecov.io/gh/nbauma109/cfr). To enable uploads, add the repository to Codecov and configure the `CODECOV_TOKEN` GitHub Actions secret if required.
+
+The coverage workflow runs the Maven regression suite and a parallelized class-file corpus comparison. The Maven suite compares six selected decompilations with checked-in expected output and runs two other tests. Twelve separate GitHub Actions jobs cover every checked-in `.class` and `.jar` fixture under `decompilation-test/test-data/precompiled_tests` and `decompilation-test/test-data/hardcoded`, plus class files compiled from the separate test repository's Java 21 and Java 25 source profiles. Each fixture set is decompiled with the proposed branch and the fork's current `master`, and any generated Java output differences fail the job. Codecov combines the JaCoCo reports from the Maven tests and all twelve fixture jobs.
+
+The pinned test submodule contains multiple compiler and Java versions. The corpus comparison reuses the historical precompiled fixtures and compiles Java 21 and 25 fixtures with their respective JDKs, without requiring every historical Java compiler and publishes diagnostic logs and differences on failure. It is a differential non-regression check, **not** an independent correctness oracle: unchanged but incorrect decompilation results will still pass, and class-file inputs that produce no Java output are not individually verified against a snapshot.
+
+Coverage measures which CFR code paths these checks exercise; it does not prove that decompiled programs preserve their original runtime behavior.
 
 As part of the Maven build automatic decompilation tests are performed. They verify that the current decompiled output of CFR matches the expected previous output. The test data (Java class and JAR files) are part of a separate Git repository; it is therefore necessary to clone this repository with `git clone --recurse-submodules`. The expected output and CFR test configuration is however part of this repository to allow altering it without having to modify the corresponding test data. The test data is in the `decompilation-test/test-data` directory, and the respective expected data and custom configuration is in the `decompilation-test/test-data-expected-output` directory (with a similar directory structure, see [Expected data structure](#expected-data-structure) below).
 

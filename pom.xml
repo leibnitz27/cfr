@@ -72,6 +72,25 @@
         <sourceDirectory>src</sourceDirectory>
         <testSourceDirectory>decompilation-test/src</testSourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.16</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>coverage-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- For getting Git revision information -->
             <plugin>
                 <groupId>pl.project13.maven</groupId>
